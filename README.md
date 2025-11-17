@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BPR Backend - Car Price Prediction API
 
 [![Build and Deploy](https://github.com/igorcretu/BPR-BackEnd/actions/workflows/docker-build-deploy.yml/badge.svg)](https://github.com/igorcretu/BPR-BackEnd/actions)
@@ -498,3 +499,6 @@ sudo kill -9 <PID>
 ## 📞 Support
 
 For issues or questions, please open an issue on GitHub or contact the team.
+=======
+# BPR-BackEnd-API
+>>>>>>> 9acdd47e81b94fcfc069ded98f2016f67ba01042
