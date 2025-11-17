@@ -1,0 +1,81 @@
+version: '3.8'
+
+# Development setup with optional Cloudflare Tunnel testing
+# Use this on your PC to test the exact same setup as production
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: bpr-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-car_prediction}
+      POSTGRES_USER: ${POSTGRES_USER:-bpr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bpr_password}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"  # Expose for local database tools
+    networks:
+      - bpr-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bpr_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask Backend (local build)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bpr-flask-dev
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_APP: app.main
+      FLASK_ENV: ${FLASK_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD:-bpr_password}@db:5432/${POSTGRES_DB:-car_prediction}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+    ports:
+      - "5000:5000"  # Expose for local testing
+    networks:
+      - bpr-network
+    volumes:
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./app:/app/app  # Hot reload for development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Cloudflare Tunnel (optional - for testing tunnel locally)
+  # Start with: docker compose -f docker-compose.dev.yml --profile cloudflare up -d
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: bpr-cloudflared-dev
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - bpr-network
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    profiles:
+      - cloudflare
+
+volumes:
+  postgres_data_dev:
+
+networks:
+  bpr-network:
+    driver: bridge

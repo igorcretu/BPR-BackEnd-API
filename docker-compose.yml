@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: bpr-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-car_prediction}
+      POSTGRES_USER: ${POSTGRES_USER:-bpr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bpr_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - bpr-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bpr_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bpr-flask
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_APP: app.main
+      FLASK_ENV: ${FLASK_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD:-bpr_password}@db:5432/${POSTGRES_DB:-car_prediction}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+    ports:
+      - "5000:5000"
+    networks:
+      - bpr-network
+    volumes:
+      - ./models:/app/models
+      - ./logs:/app/logs
+      # For development: mount source code
+      - ./app:/app/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+
+networks:
+  bpr-network:
+    driver: bridge
