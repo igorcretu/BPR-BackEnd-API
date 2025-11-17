@@ -66,8 +66,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/bpr-backend:latest
-            ghcr.io/${{ github.repository_owner }}/bpr-backend:${{ github.sha }}
+            ghcr.io/igorcretu/bpr-backend:latest
+            ghcr.io/igorcretu/bpr-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -130,7 +130,7 @@ jobs:
             fi
             
             # Check public endpoint
-            if curl -f https://api.bachelorproject26.site/health; then
+            if curl -f https://test.bachelorproject26.site/health; then
               echo "✅ Public API health check passed!"
             else
               echo "❌ Public API health check failed!"
@@ -143,7 +143,7 @@ jobs:
         run: |
           if [ "${{ job.status }}" = "success" ]; then
             echo "✅ Deployment successful!"
-            echo "API available at: https://api.bachelorproject26.site"
+            echo "API available at: https://test.bachelorproject26.site"
           else
             echo "❌ Deployment failed!"
           fi
