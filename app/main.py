@@ -12,7 +12,14 @@ app = Flask(__name__)
 allowed_origins = os.getenv('ALLOWED_ORIGINS', '*')
 if allowed_origins != '*':
     allowed_origins = allowed_origins.split(',')
-CORS(app, origins=allowed_origins, supports_credentials=True)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": allowed_origins,
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": True
+    }
+})
 
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://bpr_user:bpr_password@db:5432/car_prediction')
