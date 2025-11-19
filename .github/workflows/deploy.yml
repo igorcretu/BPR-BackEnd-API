@@ -66,8 +66,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/igorcretu/bpr-backend:latest
-            ghcr.io/igorcretu/bpr-backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/bpr-backend:latest
+            ghcr.io/${{ github.repository_owner }}/bpr-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
