@@ -85,14 +85,14 @@ jobs:
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PI_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.PI_SSH_KEY }}" > ~/.ssh/pi_deploy
+          chmod 600 ~/.ssh/pi_deploy
           
       - name: Deploy
         run: |
           ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/pi_deploy \
               -o ProxyCommand="cloudflared access ssh --hostname ssh.bachelorproject26.site" \
-              -i ~/.ssh/id_ed25519 \
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
             cd ~/BachelorApi/BPR-BackEnd-API
             git pull origin main
@@ -105,8 +105,8 @@ jobs:
       - name: Health Check
         run: |
           ssh -o StrictHostKeyChecking=no \
+              -i ~/.ssh/pi_deploy \
               -o ProxyCommand="cloudflared access ssh --hostname ssh.bachelorproject26.site" \
-              -i ~/.ssh/id_ed25519 \
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
             if docker exec bpr-flask curl -f http://localhost:5000/health; then
               echo "✅ Backend health check passed!"
