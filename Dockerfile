@@ -29,12 +29,7 @@ COPY . .
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs && \
-    chmod -R 755 /app/logs
-
-# Create non-root user for security
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
-USER appuser
+    chmod -R 777 /app/logs
 
 # Expose port
 EXPOSE 5000

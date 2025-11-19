@@ -26,21 +26,28 @@ def setup_logging():
     
     # Create logs directory if it doesn't exist
     log_dir = os.path.join(os.path.dirname(__file__), '../logs')
-    os.makedirs(log_dir, exist_ok=True)
+    
+    handlers = [
+        # Console handler - for Docker logs (always works)
+        logging.StreamHandler(sys.stdout)
+    ]
+    
+    # Try to add file handlers if logs directory is writable
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        handlers.extend([
+            logging.FileHandler(os.path.join(log_dir, 'api.log')),
+            logging.FileHandler(os.path.join(log_dir, 'errors.log'))
+        ])
+    except (PermissionError, OSError) as e:
+        print(f"Warning: Could not create file handlers: {e}. Logging to stdout only.", file=sys.stderr)
     
     # Configure root logger
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] [%(name)s] [Worker-%(process)d] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
-        handlers=[
-            # Console handler - for Docker logs
-            logging.StreamHandler(sys.stdout),
-            # File handler - for persistent logs
-            logging.FileHandler(os.path.join(log_dir, 'api.log')),
-            # Error file handler - separate file for errors
-            logging.FileHandler(os.path.join(log_dir, 'errors.log'))
-        ]
+        handlers=handlers
     )
     
     # Set specific log levels for different modules
