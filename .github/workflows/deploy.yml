@@ -101,6 +101,11 @@ jobs:
             sleep 20
             docker compose -f docker-compose.prod.yml ps
           EOF
+
+      - name: Wait for service to be ready
+        run: |
+          echo "Waiting for services to start..."
+          sleep 30  # Increase from ~10 to 30 seconds
       
       - name: Health Check
         run: |
@@ -108,23 +113,47 @@ jobs:
               -i ~/.ssh/pi_deploy \
               -o ProxyCommand="cloudflared access ssh --hostname ssh.bachelorproject26.site" \
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
-            if docker exec bpr-flask curl -f http://localhost:5000/health; then
-              echo "✅ Backend health check passed!"
-            else
-              echo "❌ Backend health check failed!"
-              docker logs bpr-flask --tail=50
-              exit 1
-            fi
+            # Wait for Gunicorn to fully start
+            echo "Waiting for backend to start..."
+            sleep 30
             
-            if curl -f https://test.bachelorproject26.site/health; then
-              echo "✅ Public API health check passed!"
-            else
-              echo "❌ Public API health check failed!"
-              docker logs bpr-cloudflared --tail=50
-              exit 1
-            fi
+            # Internal health check with retries
+            max_attempts=10
+            attempt=0
+            while [ $attempt -lt $max_attempts ]; do
+              if docker exec bpr-flask curl -f http://localhost:5000/health; then
+                echo "✅ Backend health check passed!"
+                break
+              fi
+              echo "Attempt $((attempt+1))/$max_attempts failed, retrying in 10s..."
+              sleep 10
+              attempt=$((attempt+1))
+              if [ $attempt -eq $max_attempts ]; then
+                echo "❌ Backend health check failed!"
+                docker logs bpr-flask --tail=50
+                exit 1
+              fi
+            done
+            
+            # Public API check with retries
+            attempt=0
+            while [ $attempt -lt $max_attempts ]; do
+              if curl -f https://test.bachelorproject26.site/health; then
+                echo "✅ Public API health check passed!"
+                break
+              fi
+              echo "Attempt $((attempt+1))/$max_attempts failed, retrying in 10s..."
+              sleep 10
+              attempt=$((attempt+1))
+              if [ $attempt -eq $max_attempts ]; then
+                echo "❌ Public API health check failed!"
+                docker logs bpr-cloudflared --tail=50
+                exit 1
+              fi
+            done
           EOF
-      
+
+
       - name: Notification
         if: always()
         run: |
