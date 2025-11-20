@@ -7,6 +7,14 @@ from flask import Flask, jsonify, request, g
 from flask_cors import CORS
 from app.models import db, Car, PricePrediction, ScrapingLog, MarketStatistics
 from app.ml.predictor import CarPricePredictor
+from app.utils.request_validation import (
+    get_pagination_params,
+    normalize_string,
+    parse_json_body,
+    validate_non_negative_number,
+    validate_positive_number,
+    validate_year,
+)
 from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
 import os
@@ -85,7 +93,7 @@ CORS(app,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 @app.after_request
-def after_request(response):
+def add_cors_and_request_id_headers(response):
     """Add CORS headers to every response"""
     origin = request.headers.get('Origin')
     if allowed_origins == '*':
@@ -95,6 +103,8 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
+    if hasattr(g, 'request_id'):
+        response.headers['X-Request-ID'] = g.request_id
     return response
 
 # ============================================
@@ -140,7 +150,8 @@ except Exception as e:
 def before_request():
     """Log request details and start timing"""
     g.start_time = time.time()
-    g.request_id = f"{int(time.time() * 1000)}"
+    incoming_request_id = request.headers.get('X-Request-ID')
+    g.request_id = incoming_request_id or f"{int(time.time() * 1000)}"
     
     logger.info(
         f"[{g.request_id}] "
@@ -172,6 +183,16 @@ def after_request_logging(response):
             f"Size: {response.content_length or 0} bytes"
         )
     return response
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    """Ensure scoped sessions do not leak between requests."""
+    try:
+        if exception:
+            db.session.rollback()
+    finally:
+        db.session.remove()
 
 # ============================================
 # ERROR HANDLING DECORATOR
@@ -254,22 +275,21 @@ def get_cars():
     logger.info(f"[{g.request_id}] Fetching cars with filters: {request.args}")
     
     # Pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    pagination = get_pagination_params(request.args)
     
     # Filters
     filters = {
-        'brand': request.args.get('brand'),
-        'model': request.args.get('model'),
+        'brand': normalize_string(request.args.get('brand')),
+        'model': normalize_string(request.args.get('model')),
         'year_min': request.args.get('year_min', type=int),
         'year_max': request.args.get('year_max', type=int),
         'price_min': request.args.get('price_min', type=float),
         'price_max': request.args.get('price_max', type=float),
         'mileage_max': request.args.get('mileage_max', type=int),
-        'fuel_type': request.args.get('fuel_type'),
-        'transmission': request.args.get('transmission'),
-        'body_type': request.args.get('body_type'),
-        'location': request.args.get('location')
+        'fuel_type': normalize_string(request.args.get('fuel_type')),
+        'transmission': normalize_string(request.args.get('transmission')),
+        'body_type': normalize_string(request.args.get('body_type')),
+        'location': normalize_string(request.args.get('location'))
     }
     
     # Sorting
@@ -312,24 +332,32 @@ def get_cars():
             query = query.order_by(sort_column)
     
     # Execute query with pagination
-    logger.debug(f"[{g.request_id}] Executing query for page {page}, per_page {per_page}")
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    logger.debug(
+        f"[{g.request_id}] Executing query for page {pagination.page}, "
+        f"per_page {pagination.per_page}"
+    )
+    pagination_result = query.paginate(
+        page=pagination.page,
+        per_page=pagination.per_page,
+        error_out=False
+    )
     
     logger.info(
-        f"[{g.request_id}] Found {pagination.total} cars, "
-        f"returning page {page}/{pagination.pages} with {len(pagination.items)} items"
+        f"[{g.request_id}] Found {pagination_result.total} cars, "
+        f"returning page {pagination.page}/{pagination_result.pages} "
+        f"with {len(pagination_result.items)} items"
     )
     
     return jsonify({
         'success': True,
-        'cars': [car.to_dict() for car in pagination.items],
+        'cars': [car.to_dict() for car in pagination_result.items],
         'pagination': {
-            'total': pagination.total,
-            'pages': pagination.pages,
-            'current_page': page,
-            'per_page': per_page,
-            'has_next': pagination.has_next,
-            'has_prev': pagination.has_prev
+            'total': pagination_result.total,
+            'pages': pagination_result.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination_result.has_next,
+            'has_prev': pagination_result.has_prev
         }
     }), 200
 
@@ -361,23 +389,36 @@ def get_car(car_id):
 @handle_errors
 def create_car():
     """Create a new car listing"""
-    data = request.get_json()
-    logger.info(f"[{g.request_id}] Creating new car: {data.get('brand')} {data.get('model')}")
-    
-    # Validate required fields
     required_fields = ['brand', 'model', 'year', 'mileage', 'fuel_type', 
                       'transmission', 'body_type', 'price']
-    missing_fields = [field for field in required_fields if field not in data]
-    
-    if missing_fields:
-        raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+    data = parse_json_body(request, required_fields=required_fields)
+    logger.info(f"[{g.request_id}] Creating new car: {data.get('brand')} {data.get('model')}")
+
+    # Sanitize numeric fields
+    try:
+        year = int(data['year'])
+    except (TypeError, ValueError):
+        raise ValueError('Year must be an integer')
+    validate_year(year)
+
+    try:
+        mileage = int(data['mileage'])
+    except (TypeError, ValueError):
+        raise ValueError('Mileage must be an integer')
+    validate_non_negative_number('mileage', mileage)
+
+    try:
+        price = float(data['price'])
+    except (TypeError, ValueError):
+        raise ValueError('Price must be a number')
+    validate_positive_number('price', price)
     
     # Create new car
     car = Car(
         brand=data['brand'],
         model=data['model'],
-        year=data['year'],
-        mileage=data['mileage'],
+        year=year,
+        mileage=mileage,
         fuel_type=data['fuel_type'],
         transmission=data['transmission'],
         body_type=data['body_type'],
@@ -386,7 +427,7 @@ def create_car():
         doors=data.get('doors'),
         seats=data.get('seats'),
         color=data.get('color'),
-        price=data['price'],
+        price=price,
         source_url=data.get('source_url'),
         location=data.get('location'),
         dealer_name=data.get('dealer_name')
@@ -411,7 +452,9 @@ def create_car():
 @handle_errors
 def predict_price():
     """Predict car price based on features"""
-    data = request.get_json()
+    required_fields = ['brand', 'model', 'year', 'mileage', 'fuel_type', 
+                      'transmission', 'body_type']
+    data = parse_json_body(request, required_fields=required_fields)
     logger.info(
         f"[{g.request_id}] Price prediction requested for: "
         f"{data.get('brand')} {data.get('model')} {data.get('year')}"
@@ -419,23 +462,31 @@ def predict_price():
     
     if not predictor:
         raise ValueError("ML predictor not available")
+
+    # Validate numeric inputs
+    try:
+        data['year'] = int(data['year'])
+    except (TypeError, ValueError):
+        raise ValueError('Year must be an integer')
+    validate_year(data['year'])
     
-    # Validate required fields
-    required_fields = ['brand', 'model', 'year', 'mileage', 'fuel_type', 
-                      'transmission', 'body_type']
-    missing_fields = [field for field in required_fields if field not in data]
-    
-    if missing_fields:
-        raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
-    
-    # Validate year
-    current_year = datetime.now().year
-    if data['year'] < 1900 or data['year'] > current_year + 1:
-        raise ValueError(f"Year must be between 1900 and {current_year + 1}")
-    
-    # Validate mileage
-    if data['mileage'] < 0:
-        raise ValueError("Mileage cannot be negative")
+    try:
+        data['mileage'] = int(data['mileage'])
+    except (TypeError, ValueError):
+        raise ValueError('Mileage must be an integer')
+    validate_non_negative_number('mileage', data['mileage'])
+
+    for optional_field in ['horsepower', 'doors', 'seats']:
+        if optional_field in data and data[optional_field] is not None:
+            try:
+                data[optional_field] = int(data[optional_field])
+            except (TypeError, ValueError):
+                raise ValueError(f"{optional_field} must be an integer")
+    if data.get('engine_size') is not None:
+        try:
+            data['engine_size'] = float(data['engine_size'])
+        except (TypeError, ValueError):
+            raise ValueError('engine_size must be numeric')
     
     # Get prediction
     logger.debug(f"[{g.request_id}] Running ML prediction...")
@@ -464,14 +515,17 @@ def predict_price():
 @handle_errors
 def get_predictions():
     """Get prediction history"""
-    page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    pagination_params = get_pagination_params(request.args)
     
-    logger.info(f"[{g.request_id}] Fetching predictions page {page}")
+    logger.info(f"[{g.request_id}] Fetching predictions page {pagination_params.page}")
     
     pagination = PricePrediction.query.order_by(
         desc(PricePrediction.created_at)
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    ).paginate(
+        page=pagination_params.page,
+        per_page=pagination_params.per_page,
+        error_out=False
+    )
     
     logger.info(f"[{g.request_id}] Found {pagination.total} predictions")
     
@@ -481,7 +535,10 @@ def get_predictions():
         'pagination': {
             'total': pagination.total,
             'pages': pagination.pages,
-            'current_page': page
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
         }
     }), 200
 
@@ -511,20 +568,24 @@ def get_brands():
 @handle_errors
 def get_models(brand):
     """Get all models for a specific brand"""
-    logger.info(f"[{g.request_id}] Fetching models for brand: {brand}")
+    brand_normalized = normalize_string(brand)
+    if not brand_normalized:
+        raise ValueError("Brand is required")
+
+    logger.info(f"[{g.request_id}] Fetching models for brand: {brand_normalized}")
     
     models = db.session.query(
         Car.model,
         func.count(Car.id).label('count')
     ).filter(
-        Car.brand.ilike(brand)
+        Car.brand.ilike(brand_normalized)
     ).group_by(Car.model).order_by(Car.model).all()
     
-    logger.info(f"[{g.request_id}] Found {len(models)} models for {brand}")
+    logger.info(f"[{g.request_id}] Found {len(models)} models for {brand_normalized}")
     
     return jsonify({
         'success': True,
-        'brand': brand,
+        'brand': brand_normalized,
         'models': [{'name': model, 'count': count} for model, count in models]
     }), 200
 
@@ -626,9 +687,13 @@ def get_statistics():
 @handle_errors
 def get_brand_statistics(brand):
     """Get statistics for a specific brand"""
-    logger.info(f"[{g.request_id}] Fetching statistics for brand: {brand}")
+    brand_normalized = normalize_string(brand)
+    if not brand_normalized:
+        raise ValueError("Brand is required")
+
+    logger.info(f"[{g.request_id}] Fetching statistics for brand: {brand_normalized}")
     
-    brand_cars = Car.query.filter(Car.brand.ilike(brand))
+    brand_cars = Car.query.filter(Car.brand.ilike(brand_normalized))
     total = brand_cars.count()
     
     if total == 0:
@@ -638,21 +703,21 @@ def get_brand_statistics(brand):
         func.avg(Car.price).label('avg_price'),
         func.min(Car.price).label('min_price'),
         func.max(Car.price).label('max_price')
-    ).filter(Car.brand.ilike(brand)).first()
+    ).filter(Car.brand.ilike(brand_normalized)).first()
     
     models = db.session.query(
         Car.model,
         func.count(Car.id).label('count'),
         func.avg(Car.price).label('avg_price')
     ).filter(
-        Car.brand.ilike(brand)
+        Car.brand.ilike(brand_normalized)
     ).group_by(Car.model).order_by(desc('count')).all()
     
     logger.info(f"[{g.request_id}] Brand statistics: {total} cars, {len(models)} models")
     
     return jsonify({
         'success': True,
-        'brand': brand,
+        'brand': brand_normalized,
         'statistics': {
             'total_listings': total,
             'average_price': float(price_stats.avg_price) if price_stats.avg_price else 0,
@@ -677,14 +742,17 @@ def get_brand_statistics(brand):
 @handle_errors
 def get_scraping_logs():
     """Get scraping execution logs"""
-    page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    pagination_params = get_pagination_params(request.args)
     
-    logger.info(f"[{g.request_id}] Fetching scraping logs page {page}")
+    logger.info(f"[{g.request_id}] Fetching scraping logs page {pagination_params.page}")
     
     pagination = ScrapingLog.query.order_by(
         desc(ScrapingLog.created_at)
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    ).paginate(
+        page=pagination_params.page,
+        per_page=pagination_params.per_page,
+        error_out=False
+    )
     
     return jsonify({
         'success': True,
@@ -692,7 +760,10 @@ def get_scraping_logs():
         'pagination': {
             'total': pagination.total,
             'pages': pagination.pages,
-            'current_page': page
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
         }
     }), 200
 
@@ -704,14 +775,16 @@ def get_scraping_logs():
 @handle_errors
 def search_cars():
     """Search cars by keyword"""
-    query_text = request.args.get('q', '')
-    page = request.args.get('page', 1, type=int)
-    per_page = min(request.args.get('per_page', 20, type=int), 100)
+    query_text = normalize_string(request.args.get('q'))
+    pagination_params = get_pagination_params(request.args)
     
     if not query_text:
         raise ValueError("Search query is required")
     
-    logger.info(f"[{g.request_id}] Searching for: {query_text}")
+    logger.info(
+        f"[{g.request_id}] Searching for: {query_text} "
+        f"(page {pagination_params.page})"
+    )
     
     # Search in brand, model, and location
     search_filter = db.or_(
@@ -722,7 +795,11 @@ def search_cars():
     
     pagination = Car.query.filter(search_filter).order_by(
         desc(Car.listing_date)
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    ).paginate(
+        page=pagination_params.page,
+        per_page=pagination_params.per_page,
+        error_out=False
+    )
     
     logger.info(f"[{g.request_id}] Search found {pagination.total} results")
     
@@ -733,7 +810,10 @@ def search_cars():
         'pagination': {
             'total': pagination.total,
             'pages': pagination.pages,
-            'current_page': page
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
         }
     }), 200
 
