@@ -86,15 +86,14 @@ logger.info("=" * 80)
 # CORS CONFIGURATION
 # ============================================
 
-allowed_origins = os.getenv('ALLOWED_ORIGINS', '*')
-if allowed_origins != '*':
-    allowed_origins = [origin.strip() for origin in allowed_origins.split(',')]
-    logger.info(f"CORS configured for specific origins: {allowed_origins}")
-else:
-    logger.warning("CORS configured to allow all origins (*)")
+ALLOWED_ORIGINS = [
+    "https://bpr-g26.netlify.app",
+    "http://localhost:5173",
+]
+logger.info(f"CORS locked to: {ALLOWED_ORIGINS}")
 
-CORS(app, 
-     resources={r"/*": {"origins": allowed_origins}},
+CORS(app,
+     resources={r"/*": {"origins": ALLOWED_ORIGINS}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
@@ -103,9 +102,7 @@ CORS(app,
 def add_cors_and_request_id_headers(response):
     """Add CORS headers to every response"""
     origin = request.headers.get('Origin')
-    if allowed_origins == '*':
-        response.headers.add('Access-Control-Allow-Origin', '*')
-    elif origin in allowed_origins:
+    if origin in ALLOWED_ORIGINS:
         response.headers.add('Access-Control-Allow-Origin', origin)
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
