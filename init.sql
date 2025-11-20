@@ -71,6 +71,21 @@ CREATE TABLE IF NOT EXISTS market_statistics (
     calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Prediction jobs queue
+CREATE TABLE IF NOT EXISTS prediction_jobs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    priority INTEGER NOT NULL DEFAULT 100 CHECK (priority >= 0),
+    payload JSONB NOT NULL,
+    result JSONB,
+    error_message TEXT,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    last_error_at TIMESTAMP
+);
+
 -- Create indexes for better query performance
 CREATE INDEX idx_cars_brand ON cars(brand);
 CREATE INDEX idx_cars_model ON cars(model);
@@ -80,6 +95,9 @@ CREATE INDEX idx_cars_fuel_type ON cars(fuel_type);
 CREATE INDEX idx_cars_listing_date ON cars(listing_date);
 CREATE INDEX idx_predictions_car_id ON price_predictions(car_id);
 CREATE INDEX idx_predictions_created_at ON price_predictions(created_at);
+CREATE INDEX idx_prediction_jobs_status ON prediction_jobs(status);
+CREATE INDEX idx_prediction_jobs_created_at ON prediction_jobs(created_at);
+CREATE INDEX idx_prediction_jobs_priority ON prediction_jobs(priority);
 
 -- Insert sample data for testing (30 cars with variety)
 INSERT INTO cars (brand, model, year, mileage, fuel_type, transmission, body_type, engine_size, horsepower, doors, seats, color, price, location, dealer_name, source_url) VALUES

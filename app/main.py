@@ -3,9 +3,9 @@ BPR Backend API - Car Price Prediction Platform
 Improved version with comprehensive logging and production-ready configuration
 """
 
-from flask import Flask, jsonify, request, g
+from flask import Flask, jsonify, request, g, url_for, abort
 from flask_cors import CORS
-from app.models import db, Car, PricePrediction, ScrapingLog, MarketStatistics
+from app.models import db, Car, PricePrediction, ScrapingLog, MarketStatistics, PredictionJob
 from app.ml.predictor import CarPricePredictor
 from app.utils.request_validation import (
     get_pagination_params,
@@ -14,6 +14,13 @@ from app.utils.request_validation import (
     validate_non_negative_number,
     validate_positive_number,
     validate_year,
+)
+from app.services.prediction_queue import (
+    calculate_position,
+    decide_dispatch_mode,
+    enqueue_job,
+    QueueDecision,
+    get_job,
 )
 from sqlalchemy import func, desc
 from sqlalchemy.exc import SQLAlchemyError
@@ -124,6 +131,9 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['JSON_SORT_KEYS'] = False
+app.config['PREDICTION_QUEUE_MODE'] = os.getenv('PREDICTION_QUEUE_MODE', 'hybrid')
+app.config['PREDICTION_QUEUE_THRESHOLD'] = int(os.getenv('PREDICTION_QUEUE_THRESHOLD', '5'))
+app.config['PREDICTION_QUEUE_PRIORITY_DEFAULT'] = int(os.getenv('PREDICTION_QUEUE_PRIORITY_DEFAULT', '100'))
 
 # Initialize database
 db.init_app(app)
@@ -459,9 +469,6 @@ def predict_price():
         f"[{g.request_id}] Price prediction requested for: "
         f"{data.get('brand')} {data.get('model')} {data.get('year')}"
     )
-    
-    if not predictor:
-        raise ValueError("ML predictor not available")
 
     # Validate numeric inputs
     try:
@@ -487,6 +494,42 @@ def predict_price():
             data['engine_size'] = float(data['engine_size'])
         except (TypeError, ValueError):
             raise ValueError('engine_size must be numeric')
+
+    sanitized_payload = dict(data)
+
+    decision = decide_dispatch_mode(
+        queue_mode=app.config['PREDICTION_QUEUE_MODE'],
+        requested_mode=request.args.get('mode'),
+        queue_threshold=app.config['PREDICTION_QUEUE_THRESHOLD']
+    )
+
+    if not predictor:
+        logger.warning(f"[{g.request_id}] Predictor unavailable, forcing queue")
+        decision = QueueDecision(mode='queue', reason='predictor_unavailable')
+
+    if decision.mode == 'queue':
+        requested_priority = request.args.get('priority', type=int)
+        priority = (
+            requested_priority
+            if isinstance(requested_priority, int) and requested_priority >= 0
+            else app.config['PREDICTION_QUEUE_PRIORITY_DEFAULT']
+        )
+        job = enqueue_job(sanitized_payload, priority=priority)
+        position = calculate_position(job)
+        logger.info(
+            f"[{g.request_id}] Queued prediction job {job.id} "
+            f"(mode={decision.reason}, priority={priority}, position={position})"
+        )
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'job': job.to_dict(position=position),
+            'status_url': url_for('get_prediction_job', job_id=job.id, _external=True),
+            'decision': decision.reason
+        }), 202
+    
+    if not predictor:
+        raise ValueError("ML predictor not available")
     
     # Get prediction
     logger.debug(f"[{g.request_id}] Running ML prediction...")
@@ -540,6 +583,64 @@ def get_predictions():
             'has_next': pagination.has_next,
             'has_prev': pagination.has_prev
         }
+    }), 200
+
+
+# ============================================
+# PREDICTION JOB QUEUE ENDPOINTS
+# ============================================
+
+@app.route('/api/predict/jobs', methods=['GET'])
+@handle_errors
+def list_prediction_jobs():
+    """List queued prediction jobs."""
+    pagination_params = get_pagination_params(request.args)
+    status_filter = normalize_string(request.args.get('status'))
+    include_position = request.args.get('include_position', 'false').lower() == 'true'
+
+    query = PredictionJob.query
+    if status_filter:
+        query = query.filter(PredictionJob.status == status_filter)
+
+    pagination = query.order_by(desc(PredictionJob.created_at)).paginate(
+        page=pagination_params.page,
+        per_page=pagination_params.per_page,
+        error_out=False
+    )
+
+    jobs = []
+    for job in pagination.items:
+        position = calculate_position(job) if include_position else None
+        jobs.append(job.to_dict(position=position))
+
+    return jsonify({
+        'success': True,
+        'jobs': jobs,
+        'pagination': {
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    }), 200
+
+
+@app.route('/api/predict/jobs/<job_id>', methods=['GET'])
+@handle_errors
+def get_prediction_job(job_id):
+    """Retrieve the status/result of a single prediction job."""
+    job = get_job(job_id)
+    if not job:
+        abort(404, description='Prediction job not found')
+
+    include_payload = request.args.get('include', '').lower() == 'payload'
+    position = calculate_position(job)
+
+    return jsonify({
+        'success': True,
+        'job': job.to_dict(include_payload=include_payload, position=position)
     }), 200
 
 # ============================================

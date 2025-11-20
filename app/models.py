@@ -126,3 +126,42 @@ class MarketStatistics(db.Model):
             'total_listings': self.total_listings,
             'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None
         }
+
+
+class PredictionJob(db.Model):
+    __tablename__ = 'prediction_jobs'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    status = db.Column(db.String(20), nullable=False, default='pending', index=True)
+    priority = db.Column(db.Integer, nullable=False, default=100, index=True)
+    payload = db.Column(db.JSON, nullable=False)
+    result = db.Column(db.JSON)
+    error_message = db.Column(db.Text)
+    attempts = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    last_error_at = db.Column(db.DateTime)
+
+    __table_args__ = (
+        db.CheckConstraint('priority >= 0', name='prediction_jobs_priority_check'),
+    )
+
+    def to_dict(self, *, include_payload: bool = False, position: int | None = None):
+        data = {
+            'id': self.id,
+            'status': self.status,
+            'priority': self.priority,
+            'attempts': self.attempts,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'last_error_at': self.last_error_at.isoformat() if self.last_error_at else None,
+            'result': self.result if self.status == 'completed' else None,
+            'error_message': self.error_message if self.status == 'failed' else None,
+        }
+        if include_payload:
+            data['payload'] = self.payload
+        if position is not None:
+            data['queue_position'] = position
+        return data

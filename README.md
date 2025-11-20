@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # BPR Backend - Car Price Prediction API
 
 [![Build and Deploy](https://github.com/igorcretu/BPR-BackEnd/actions/workflows/docker-build-deploy.yml/badge.svg)](https://github.com/igorcretu/BPR-BackEnd/actions)
@@ -16,6 +15,7 @@ Backend API for the Car Price Prediction Platform for the Danish automotive mark
 - **Web Scraping Integration** - Automated data collection from Danish car sites
 - **Docker Support** - Containerized deployment with PostgreSQL
 - **CI/CD Pipeline** - Automated testing and deployment to Raspberry Pi 5
+- **Asynchronous Queue** - Built-in prediction worker prevents overloads
 
 ## 🏗️ Tech Stack
 
@@ -33,28 +33,37 @@ Backend API for the Car Price Prediction Platform for the Danish automotive mark
 **Base URL (Production):** `https://api.yourdomain.com` (via Cloudflare Tunnel)
 
 ### Health & Info
+
 - `GET /health` - Health check and service status
 
 ### Cars
+
 - `GET /api/cars` - List all cars (with pagination & filters)
 - `GET /api/cars/{id}` - Get specific car details
 - `POST /api/cars` - Create new car listing
 - `GET /api/search?q={query}` - Search cars by keyword
 
 ### Predictions
+
 - `POST /api/predict` - Predict car price
+- `POST /api/predict?mode=queue` - Enqueue a prediction job for deferred processing
+- `GET /api/predict/jobs` - List queued jobs with statuses
+- `GET /api/predict/jobs/{job_id}` - Check a specific job's status/result
 - `GET /api/predictions` - Get prediction history
 
 ### Filters & Options
+
 - `GET /api/brands` - Get all available brands
 - `GET /api/models/{brand}` - Get models for a brand
 - `GET /api/filters` - Get all available filter options
 
 ### Statistics
+
 - `GET /api/stats` - Get overall market statistics
 - `GET /api/stats/brand/{brand}` - Get statistics for specific brand
 
 ### Scraping
+
 - `GET /api/scraping/logs` - Get web scraping execution logs
 
 ## 🚀 Quick Start (Local Development)
@@ -67,28 +76,33 @@ Backend API for the Car Price Prediction Platform for the Danish automotive mark
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/igorcretu/BPR-BackEnd.git
    cd BPR-BackEnd
    ```
 
 2. **Create environment file**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 3. **Start the services**
+
    ```bash
    docker compose up -d
    ```
 
 4. **Check the logs**
+
    ```bash
    docker compose logs -f backend
    ```
 
 5. **Test the API**
+
    ```bash
    curl http://localhost:5000/health
    ```
@@ -97,9 +111,38 @@ The API will be available at `http://localhost:5000`
 
 The database is automatically initialized with sample data (30 cars) on first run.
 
+## 🧵 Prediction Job Queue
+
+High traffic from Cloudflare or the public frontend can now be absorbed by an internal job queue. Clients can opt-in (`POST /api/predict?mode=queue`) or let the API decide based on the backlog. Jobs are persisted in PostgreSQL, processed in FIFO order (respecting priority), and exposed through `/api/predict/jobs` endpoints for progress polling.
+
+### Queue workflow
+
+1. Submit a job via `POST /api/predict?mode=queue` (or let `mode=auto`/default handle it).
+2. Receive a `job_id` plus `status_url` for polling.
+3. Poll `GET /api/predict/jobs/{job_id}` until status becomes `completed` or `failed`.
+4. A dedicated `prediction-worker` service pulls from the queue and runs the ML predictor.
+
+Synchronous predictions still work (`mode=sync`), so existing integrations remain unaffected.
+
+### Configuration knobs
+
+- `PREDICTION_QUEUE_MODE` (`sync`, `queue`, `hybrid`, default `hybrid`).
+- `PREDICTION_QUEUE_THRESHOLD` – backlog size that flips hybrid mode to queue (default `5`).
+- `PREDICTION_QUEUE_PRIORITY_DEFAULT` – numeric priority assigned when clients do not provide one.
+- `PREDICTION_QUEUE_POLL_INTERVAL` – worker sleep duration when idle (seconds, default `1.5`).
+- `PREDICTION_QUEUE_MAX_ATTEMPTS` – worker retry limit before marking a job as failed (default `3`).
+
+Set these in `.env` to tune behavior for production versus local development.
+
+### Running the worker
+
+- Docker Compose (`docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.prod.yml`) already defines a `prediction-worker` service; `docker compose up -d` will bring it online automatically.
+- For ad-hoc debugging you can run the worker locally: `python -m app.worker` from the `API/` folder.
+- Tail worker logs with `docker compose logs -f prediction-worker` to monitor throughput/errors.
+
 ## 📁 Project Structure
 
-```
+```text
 BPR-BackEnd/
 ├── app/
 │   ├── __init__.py
@@ -163,14 +206,16 @@ curl "http://localhost:5000/api/search?q=Toyota"
 
 The ML predictor is currently a placeholder implementation in `app/ml/predictor.py`.
 
-### To add your trained model:
+### To add your trained model
 
 1. Train your model and save it:
+
    ```python
    model.save('models/car_price_model.h5')
    ```
 
 2. Replace the mock implementation in `app/ml/predictor.py`:
+
    ```python
    def _load_model(self):
        from tensorflow import keras
@@ -179,6 +224,7 @@ The ML predictor is currently a placeholder implementation in `app/ml/predictor.
    ```
 
 3. Update the `predict()` method to use the actual model:
+
    ```python
    def predict(self, car_features):
        features_array = self._preprocess_features(car_features)
@@ -216,14 +262,14 @@ docker compose exec db psql -U bpr_user -d car_prediction
 
 The project uses GitHub Actions for continuous integration and deployment.
 
-### Workflow:
+### Workflow
 
 1. **Push to `main`** → Triggers CI/CD
 2. **Build Docker image** → Creates container image
 3. **Push to GitHub Container Registry** → Stores image at `ghcr.io/igorcretu/bpr-backend:latest`
 4. **Deploy to Raspberry Pi** → SSH to Pi, pull new image, restart containers
 
-### Setup GitHub Secrets:
+### Setup GitHub Secrets
 
 Add these secrets in your GitHub repository settings:
 
@@ -259,7 +305,7 @@ Add these secrets in your GitHub repository settings:
 
 **Done!** Your backend is live. ✅
 
-### Setting up Cloudflare Tunnel (Recommended)
+### Cloudflare Tunnel Details (Recommended)
 
 ```bash
 # Install Docker
@@ -293,9 +339,10 @@ docker compose -f docker-compose.prod.yml ps
 docker compose -f docker-compose.prod.yml logs -f
 ```
 
-### Setting up Cloudflare Tunnel (Recommended)
+### Cloudflare Tunnel Quick Setup
 
 **Why Cloudflare Tunnel?**
+
 - ✅ Expose your Pi to the internet securely (no port forwarding)
 - ✅ Free HTTPS/SSL certificates
 - ✅ DDoS protection
@@ -306,7 +353,7 @@ docker compose -f docker-compose.prod.yml logs -f
 **🐳 Docker Method (Recommended - Easiest & Portable):**
 
 1. **Create tunnel in Cloudflare Dashboard:**
-   - Go to https://one.dash.cloudflare.com/
+   - Go to [Cloudflare Dashboard](https://one.dash.cloudflare.com/)
    - Access → Tunnels → Create a tunnel
    - Name: `bpr-backend`
    - Copy the tunnel token (starts with `eyJ...`)
@@ -319,16 +366,19 @@ docker compose -f docker-compose.prod.yml logs -f
    - Save tunnel
 
 3. **Add token to `.env`:**
+
    ```bash
    echo "CLOUDFLARE_TUNNEL_TOKEN=your-token-here" >> .env
    ```
 
 4. **Start with tunnel:**
+
    ```bash
    docker compose -f docker-compose.prod.yml --profile cloudflare up -d
    ```
 
 5. **Test:**
+
    ```bash
    curl https://api.yourdomain.com/health
    ```
@@ -340,6 +390,7 @@ docker compose -f docker-compose.prod.yml logs -f
 **Alternative:** See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md) for local installation method.
 
 **After Cloudflare Tunnel setup:**
+
 - Your API: `https://api.yourdomain.com`
 - Update frontend `.env`: `VITE_API_URL=https://api.yourdomain.com/api`
 - Same token works on PC and Raspberry Pi!
@@ -349,7 +400,8 @@ docker compose -f docker-compose.prod.yml logs -f
 The Docker method makes this **super easy**:
 
 1. **On PC:** Test everything works
-2. **On Raspberry Pi:** 
+2. **On Raspberry Pi:**
+
    ```bash
    git clone https://github.com/igorcretu/BPR-BackEnd.git
    cd BPR-BackEnd
@@ -357,9 +409,10 @@ The Docker method makes this **super easy**:
    # Add same CLOUDFLARE_TUNNEL_TOKEN as PC
    docker compose -f docker-compose.prod.yml --profile cloudflare up -d
    ```
+
 3. **Done!** Same tunnel, same configuration, works immediately.
 
-### Manual deployment:
+### Manual deployment
 
 ```bash
 cd ~/bpr-backend
@@ -376,12 +429,14 @@ The database includes these main tables:
 
 - **cars** - Car listings with all details
 - **price_predictions** - ML prediction history
+- **prediction_jobs** - Asynchronous queue entries and their lifecycle metadata
 - **scraping_logs** - Web scraping execution logs
 - **market_statistics** - Aggregated market data
 
 ### Sample Data
 
 The `init.sql` script automatically creates:
+
 - 30 sample cars (various brands and models)
 - 20 sample predictions
 - 4 scraping logs
@@ -431,14 +486,14 @@ docker compose logs -f
 
 ## 🛠️ Development
 
-### Adding new endpoints:
+### Adding new endpoints
 
 1. Add route in `app/main.py`
 2. Update README with new endpoint
 3. Test locally
 4. Push to GitHub (CI/CD handles deployment)
 
-### Adding new models:
+### Adding new models
 
 1. Define model in `app/models.py`
 2. Add to database via migration or `init.sql`
@@ -499,6 +554,3 @@ sudo kill -9 <PID>
 ## 📞 Support
 
 For issues or questions, please open an issue on GitHub or contact the team.
-=======
-# BPR-BackEnd-API
->>>>>>> 9acdd47e81b94fcfc069ded98f2016f67ba01042

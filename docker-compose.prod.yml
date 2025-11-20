@@ -35,6 +35,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-car_prediction}
       SECRET_KEY: ${SECRET_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      PREDICTION_QUEUE_MODE: ${PREDICTION_QUEUE_MODE:-hybrid}
+      PREDICTION_QUEUE_THRESHOLD: ${PREDICTION_QUEUE_THRESHOLD:-5}
+      PREDICTION_QUEUE_PRIORITY_DEFAULT: ${PREDICTION_QUEUE_PRIORITY_DEFAULT:-100}
     # Don't expose to host - only accessible through Cloudflare Tunnel
     networks:
       - bpr-network
@@ -56,6 +59,27 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - bpr-network
+
+  prediction-worker:
+    image: ghcr.io/igorcretu/bpr-backend:latest
+    container_name: bpr-prediction-worker
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FLASK_APP: app.main
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-car_prediction}
+      SECRET_KEY: ${SECRET_KEY}
+      PREDICTION_QUEUE_MODE: ${PREDICTION_QUEUE_MODE:-hybrid}
+      PREDICTION_QUEUE_THRESHOLD: ${PREDICTION_QUEUE_THRESHOLD:-5}
+      PREDICTION_QUEUE_PRIORITY_DEFAULT: ${PREDICTION_QUEUE_PRIORITY_DEFAULT:-100}
+      PREDICTION_QUEUE_POLL_INTERVAL: ${PREDICTION_QUEUE_POLL_INTERVAL:-1.5}
+      PREDICTION_QUEUE_MAX_ATTEMPTS: ${PREDICTION_QUEUE_MAX_ATTEMPTS:-3}
+    command: ["python", "-m", "app.worker"]
     networks:
       - bpr-network
 
