@@ -1,7 +1,6 @@
 # BPR Backend - Car Price Prediction API
 
-[![Build and Deploy](https://github.com/igorcretu/BPR-BackEnd/actions/workflows/docker-build-deploy.yml/badge.svg)](https://github.com/igorcretu/BPR-BackEnd/actions)
-
+[![Build and Deploy to Raspberry Pi](https://github.com/igorcretu/BPR-BackEnd-API/actions/workflows/deploy.yml/badge.svg)](https://github.com/igorcretu/BPR-BackEnd-API/actions/workflows/deploy.yml)
 > Bachelor Thesis Project - Group 26 | VIA University College
 
 Backend API for the Car Price Prediction Platform for the Danish automotive market. Built with Flask, PostgreSQL, and Machine Learning.
