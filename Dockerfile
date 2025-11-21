@@ -35,7 +35,7 @@ RUN mkdir -p /app/models /app/logs && \
 EXPOSE 5000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # Run with Gunicorn for production
@@ -49,7 +49,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # - error-log: - (log to stderr for Docker)
 CMD ["gunicorn", \
      "--bind", "0.0.0.0:5000", \
-     "--workers", "4", \
+     "--workers", "8", \
      "--threads", "2", \
      "--timeout", "120", \
      "--worker-class", "sync", \
