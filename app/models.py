@@ -8,23 +8,61 @@ class Car(db.Model):
     __tablename__ = 'cars'
     
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    url = db.Column(db.Text)
     brand = db.Column(db.String(100), nullable=False, index=True)
     model = db.Column(db.String(100), nullable=False, index=True)
-    year = db.Column(db.Integer, nullable=False, index=True)
-    mileage = db.Column(db.Integer, nullable=False)
-    fuel_type = db.Column(db.String(20), nullable=False, index=True)
-    transmission = db.Column(db.String(20), nullable=False)
-    body_type = db.Column(db.String(20), nullable=False)
-    engine_size = db.Column(db.Numeric(3, 1))
+    variant = db.Column(db.String(200))
+    title = db.Column(db.String(300))
+    description = db.Column(db.Text)
+    price = db.Column(db.Numeric(12, 2), nullable=False, index=True)
+    new_price = db.Column(db.Numeric(12, 2))
+    model_year = db.Column(db.Integer)
+    year = db.Column(db.Integer, index=True)
+    first_registration = db.Column(db.String(20))
+    production_date = db.Column(db.String(20))
+    mileage = db.Column(db.Integer)
+    fuel_type = db.Column(db.String(50), index=True)
+    transmission = db.Column(db.String(50))
+    gear_count = db.Column(db.Integer)
+    cylinders = db.Column(db.Integer)
     horsepower = db.Column(db.Integer)
+    torque_nm = db.Column(db.Integer)
+    acceleration = db.Column(db.Numeric(4, 1))
+    top_speed = db.Column(db.Integer)
+    range_km = db.Column(db.Integer)
+    battery_capacity = db.Column(db.Numeric(5, 1))
+    energy_consumption = db.Column(db.Integer)
+    home_charging_ac = db.Column(db.String(50))
+    fast_charging_dc = db.Column(db.String(50))
+    charging_time_dc = db.Column(db.String(50))
+    fuel_consumption = db.Column(db.String(50))
+    co2_emission = db.Column(db.String(50))
+    euro_norm = db.Column(db.String(10))
+    tank_capacity = db.Column(db.Integer)
+    body_type = db.Column(db.String(50), index=True)
+    weight = db.Column(db.Integer)
+    width = db.Column(db.Integer)
+    length = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    trunk_size = db.Column(db.Integer)
+    load_capacity = db.Column(db.Integer)
+    towing_capacity = db.Column(db.Integer)
+    max_towing_weight = db.Column(db.Integer)
+    drive_type = db.Column(db.String(50))
+    abs_brakes = db.Column(db.Boolean, default=True)
+    esp = db.Column(db.Boolean, default=True)
+    airbags = db.Column(db.Integer)
     doors = db.Column(db.Integer)
     seats = db.Column(db.Integer)
-    color = db.Column(db.String(50))
-    price = db.Column(db.Numeric(10, 2), nullable=False, index=True)
-    listing_date = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    color = db.Column(db.String(100))
+    category = db.Column(db.String(50))
+    equipment = db.Column(db.Text)
+    periodic_tax = db.Column(db.String(50))
+    engine_size = db.Column(db.Numeric(3, 1))
     source_url = db.Column(db.Text)
-    location = db.Column(db.String(100))
-    dealer_name = db.Column(db.String(200))
+    location = db.Column(db.String(200))
+    dealer_name = db.Column(db.String(300))
+    listing_date = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -33,23 +71,41 @@ class Car(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'url': self.url,
             'brand': self.brand,
             'model': self.model,
-            'year': self.year,
+            'variant': self.variant,
+            'title': self.title,
+            'description': self.description,
+            'price': float(self.price) if self.price else None,
+            'new_price': float(self.new_price) if self.new_price else None,
+            'year': self.year or self.model_year,
+            'model_year': self.model_year,
+            'first_registration': self.first_registration,
             'mileage': self.mileage,
             'fuel_type': self.fuel_type,
             'transmission': self.transmission,
-            'body_type': self.body_type,
-            'engine_size': float(self.engine_size) if self.engine_size else None,
+            'gear_count': self.gear_count,
             'horsepower': self.horsepower,
+            'torque_nm': self.torque_nm,
+            'acceleration': float(self.acceleration) if self.acceleration else None,
+            'top_speed': self.top_speed,
+            'range_km': self.range_km,
+            'battery_capacity': float(self.battery_capacity) if self.battery_capacity else None,
+            'body_type': self.body_type,
+            'weight': self.weight,
+            'trunk_size': self.trunk_size,
+            'drive_type': self.drive_type,
             'doors': self.doors,
             'seats': self.seats,
             'color': self.color,
-            'price': float(self.price),
+            'engine_size': float(self.engine_size) if self.engine_size else None,
+            'equipment': self.equipment,
+            'periodic_tax': self.periodic_tax,
             'listing_date': self.listing_date.isoformat() if self.listing_date else None,
             'location': self.location,
             'dealer_name': self.dealer_name,
-            'source_url': self.source_url
+            'source_url': self.source_url or self.url
         }
 
 class PricePrediction(db.Model):
