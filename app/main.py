@@ -86,10 +86,22 @@ logger.info("=" * 80)
 # CORS CONFIGURATION
 # ============================================
 
-ALLOWED_ORIGINS = [
-    "https://bpr-g26.netlify.app",
-    "http://localhost:5173",
-]
+def parse_allowed_origins():
+    """Resolve CORS origins from env var or fall back to sensible defaults."""
+    raw = os.getenv('ALLOWED_ORIGINS')
+    if raw:
+        return [origin.strip() for origin in raw.split(',') if origin.strip()]
+
+    return [
+        "https://bpr-g26.netlify.app",
+        "https://test.bachelorproject26.site",
+        "https://bachelorproject26.site",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+
+ALLOWED_ORIGINS = parse_allowed_origins()
 logger.info(f"CORS locked to: {ALLOWED_ORIGINS}")
 
 CORS(app,
