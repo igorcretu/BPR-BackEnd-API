@@ -210,12 +210,18 @@ class CarPricePredictor:
         return features
     
     def _normalize_fuel_type(self, fuel_type):
+        if fuel_type is None:
+            return 'Petrol'
         return self.fuel_type_mapping.get(fuel_type, fuel_type)
     
     def _normalize_transmission(self, transmission):
+        if transmission is None:
+            return 'Automatic'
         return self.transmission_mapping.get(transmission, transmission)
     
     def _normalize_body_type(self, body_type):
+        if body_type is None:
+            return 'Sedan'
         return self.body_type_mapping.get(body_type, body_type)
     
     def _normalize_drive_type(self, drive_type):
@@ -297,13 +303,13 @@ class CarPricePredictor:
         transmission_factors = {'automatic': 1.08, 'manual': 1.0, 'semi-automatic': 1.05}
         
         base_price = 180000
-        brand = features.get('brand', '').lower()
+        brand = (features.get('brand') or '').lower()
         brand_factor = brand_factors.get(brand, 1.0)
-        body_type = self._normalize_body_type(features.get('body_type', 'Sedan')).lower()
+        body_type = (self._normalize_body_type(features.get('body_type')) or 'Sedan').lower()
         body_factor = body_factors.get(body_type, 1.0)
-        fuel_type = self._normalize_fuel_type(features.get('fuel_type', 'Petrol')).lower()
+        fuel_type = (self._normalize_fuel_type(features.get('fuel_type')) or 'Petrol').lower()
         fuel_factor = fuel_factors.get(fuel_type, 1.0)
-        transmission = self._normalize_transmission(features.get('transmission', 'Automatic')).lower()
+        transmission = (self._normalize_transmission(features.get('transmission')) or 'Automatic').lower()
         transmission_factor = transmission_factors.get(transmission, 1.0)
         
         horsepower = features.get('horsepower', 120)
