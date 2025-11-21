@@ -97,7 +97,8 @@ def parse_allowed_origins():
         "https://test.bachelorproject26.site",
         "https://bachelorproject26.site",
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5173", 
+        "carpredict.netlify.app"
     ]
 
 
