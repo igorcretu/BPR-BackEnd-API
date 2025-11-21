@@ -92,7 +92,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
               -i ~/.ssh/pi_deploy \
-              -o ProxyCommand="cloudflared access ssh --hostname ssh.bachelorproject26.site --ip-prefer4" \
+              -o ProxyCommand="cloudflared access tcp --hostname ssh.bachelorproject26.site" \
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
             cd ~/BachelorApi/BPR-BackEnd-API
             git pull origin main
