@@ -39,6 +39,8 @@ services:
       PREDICTION_QUEUE_THRESHOLD: ${PREDICTION_QUEUE_THRESHOLD:-5}
       PREDICTION_QUEUE_PRIORITY_DEFAULT: ${PREDICTION_QUEUE_PRIORITY_DEFAULT:-100}
     # Don't expose to host - only accessible through Cloudflare Tunnel
+    ports:
+      - "5000:5000"
     networks:
       - bpr-network
     volumes:
