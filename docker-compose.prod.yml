@@ -52,18 +52,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Cloudflare Tunnel - provides secure HTTPS access
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: bpr-cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - bpr-network
-
   prediction-worker:
     image: ghcr.io/igorcretu/bpr-backend:latest
     container_name: bpr-prediction-worker
