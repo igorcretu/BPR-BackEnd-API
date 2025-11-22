@@ -78,7 +78,7 @@ class CarPricePredictor:
                 self.model = joblib.load(model_path)
                 logger.info(f"Loaded model from {model_path}")
             else:
-                for name in ['best_model_xgboost.pkl', 'best_model_lightgbm.pkl', 'best_model_random_forest.pkl']:
+                for name in ['best_model_catboost.pkl', 'best_model_xgboost.pkl', 'best_model_lightgbm.pkl', 'best_model_random_forest.pkl']:
                     alt_path = os.path.join(self.model_dir, name)
                     if os.path.exists(alt_path):
                         self.model = joblib.load(alt_path)
