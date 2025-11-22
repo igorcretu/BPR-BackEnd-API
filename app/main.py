@@ -1020,149 +1020,160 @@ def get_market_statistics():
     """Get comprehensive market statistics for data visualization"""
     logger.info(f"[{g.request_id}] Fetching market statistics")
     
-    # Price statistics by brand (top 15 brands by count)
-    brand_stats = db.session.query(
-        Car.brand,
-        func.count(Car.id).label('total_cars'),
-        func.avg(Car.price).label('avg_price'),
-        func.min(Car.price).label('min_price'),
-        func.max(Car.price).label('max_price')
-    ).filter(
-        Car.price.isnot(None)
-    ).group_by(Car.brand).order_by(desc('total_cars')).limit(15).all()
+    try:
+        # Check if we have any data
+        total_cars = db.session.query(func.count(Car.id)).scalar()
+        if not total_cars or total_cars == 0:
+            logger.warning(f"[{g.request_id}] No cars in database for statistics")
+            return jsonify({
+                'success': False,
+                'error': 'No data available',
+                'message': 'The database does not contain any car listings yet.'
+            }), 404
     
-    # Fuel type distribution
-    fuel_type_dist = db.session.query(
-        Car.fuel_type,
-        func.count(Car.id).label('count'),
-        func.avg(Car.price).label('avg_price')
-    ).filter(
-        Car.fuel_type.isnot(None),
-        Car.price.isnot(None)
-    ).group_by(Car.fuel_type).all()
-    
-    # Body type distribution
-    body_type_dist = db.session.query(
-        Car.body_type,
-        func.count(Car.id).label('count'),
-        func.avg(Car.price).label('avg_price')
-    ).filter(
-        Car.body_type.isnot(None),
-        Car.price.isnot(None)
-    ).group_by(Car.body_type).order_by(desc('count')).all()
-    
-    # Transmission distribution
-    transmission_dist = db.session.query(
-        Car.transmission,
-        func.count(Car.id).label('count')
-    ).filter(
-        Car.transmission.isnot(None)
-    ).group_by(Car.transmission).all()
-    
-    # Year distribution (last 10 years)
-    current_year = datetime.now().year
-    year_dist = db.session.query(
-        Car.year,
-        func.count(Car.id).label('count'),
-        func.avg(Car.price).label('avg_price'),
-        func.avg(Car.mileage).label('avg_mileage')
-    ).filter(
-        Car.year.isnot(None),
-        Car.year >= current_year - 10,
-        Car.price.isnot(None)
-    ).group_by(Car.year).order_by(Car.year).all()
-    
-    # Price ranges distribution
-    price_ranges = db.session.query(
-        func.count(Car.id).label('count'),
-        func.case(
-            (Car.price < 100000, 'Under 100k'),
-            (Car.price < 200000, '100k-200k'),
-            (Car.price < 300000, '200k-300k'),
-            (Car.price < 500000, '300k-500k'),
-            (Car.price < 1000000, '500k-1M'),
-            else_='Over 1M'
-        ).label('range')
-    ).filter(
-        Car.price.isnot(None)
-    ).group_by('range').all()
-    
-    # Mileage statistics by year
-    mileage_by_year = db.session.query(
-        Car.year,
-        func.avg(Car.mileage).label('avg_mileage'),
-        func.min(Car.mileage).label('min_mileage'),
-        func.max(Car.mileage).label('max_mileage')
-    ).filter(
-        Car.year.isnot(None),
-        Car.mileage.isnot(None),
-        Car.year >= current_year - 10
-    ).group_by(Car.year).order_by(Car.year).all()
-    
-    # Top models by brand (top 5 brands)
-    top_brands = [b[0] for b in brand_stats[:5]]
-    models_by_brand = {}
-    for brand in top_brands:
-        models = db.session.query(
-            Car.model,
+        # Price statistics by brand (top 15 brands by count)
+        brand_stats = db.session.query(
+            Car.brand,
+            func.count(Car.id).label('total_cars'),
+            func.avg(Car.price).label('avg_price'),
+            func.min(Car.price).label('min_price'),
+            func.max(Car.price).label('max_price')
+        ).filter(
+            Car.price.isnot(None)
+        ).group_by(Car.brand).order_by(desc('total_cars')).limit(15).all()
+        
+        # Fuel type distribution
+        fuel_type_dist = db.session.query(
+            Car.fuel_type,
             func.count(Car.id).label('count'),
             func.avg(Car.price).label('avg_price')
         ).filter(
-            Car.brand == brand,
+            Car.fuel_type.isnot(None),
             Car.price.isnot(None)
-        ).group_by(Car.model).order_by(desc('count')).limit(5).all()
-        models_by_brand[brand] = [
-            {'model': m[0], 'count': m[1], 'avg_price': float(m[2])}
-            for m in models
-        ]
-    
-    # Overall statistics
-    overall_stats = db.session.query(
-        func.count(Car.id).label('total_cars'),
-        func.avg(Car.price).label('avg_price'),
-        func.min(Car.price).label('min_price'),
-        func.max(Car.price).label('max_price'),
-        func.avg(Car.mileage).label('avg_mileage'),
-        func.avg(Car.year).label('avg_year')
-    ).filter(Car.price.isnot(None)).first()
-    
-    # Price trend by listing date (last 30 days if available)
-    price_trend = db.session.query(
-        func.date(Car.listing_date).label('date'),
-        func.avg(Car.price).label('avg_price'),
-        func.count(Car.id).label('listings')
-    ).filter(
-        Car.listing_date.isnot(None),
-        Car.price.isnot(None)
-    ).group_by(func.date(Car.listing_date)).order_by(func.date(Car.listing_date).desc()).limit(30).all()
-    
-    # Horsepower distribution
-    hp_ranges = db.session.query(
-        func.count(Car.id).label('count'),
-        func.case(
-            (Car.horsepower < 100, 'Under 100 HP'),
-            (Car.horsepower < 150, '100-150 HP'),
-            (Car.horsepower < 200, '150-200 HP'),
-            (Car.horsepower < 300, '200-300 HP'),
-            else_='Over 300 HP'
-        ).label('range')
-    ).filter(
-        Car.horsepower.isnot(None)
-    ).group_by('range').all()
-    
-    logger.info(f"[{g.request_id}] Market statistics compiled successfully")
-    
-    return jsonify({
-        'success': True,
-        'statistics': {
-            'overall': {
-                'total_cars': overall_stats.total_cars,
-                'avg_price': float(overall_stats.avg_price) if overall_stats.avg_price else None,
-                'min_price': float(overall_stats.min_price) if overall_stats.min_price else None,
-                'max_price': float(overall_stats.max_price) if overall_stats.max_price else None,
-                'avg_mileage': float(overall_stats.avg_mileage) if overall_stats.avg_mileage else None,
-                'avg_year': float(overall_stats.avg_year) if overall_stats.avg_year else None
-            },
+        ).group_by(Car.fuel_type).all()
+        
+        # Body type distribution
+        body_type_dist = db.session.query(
+            Car.body_type,
+            func.count(Car.id).label('count'),
+            func.avg(Car.price).label('avg_price')
+        ).filter(
+            Car.body_type.isnot(None),
+            Car.price.isnot(None)
+        ).group_by(Car.body_type).order_by(desc('count')).all()
+        
+        # Transmission distribution
+        transmission_dist = db.session.query(
+            Car.transmission,
+            func.count(Car.id).label('count')
+        ).filter(
+            Car.transmission.isnot(None)
+        ).group_by(Car.transmission).all()
+        
+        # Year distribution (last 10 years)
+        current_year = datetime.now().year
+        year_dist = db.session.query(
+            Car.year,
+            func.count(Car.id).label('count'),
+            func.avg(Car.price).label('avg_price'),
+            func.avg(Car.mileage).label('avg_mileage')
+        ).filter(
+            Car.year.isnot(None),
+            Car.year >= current_year - 10,
+            Car.price.isnot(None)
+        ).group_by(Car.year).order_by(Car.year).all()
+        
+        # Price ranges distribution
+        price_ranges = db.session.query(
+            func.count(Car.id).label('count'),
+            func.case(
+                (Car.price < 100000, 'Under 100k'),
+                (Car.price < 200000, '100k-200k'),
+                (Car.price < 300000, '200k-300k'),
+                (Car.price < 500000, '300k-500k'),
+                (Car.price < 1000000, '500k-1M'),
+                else_='Over 1M'
+            ).label('range')
+        ).filter(
+            Car.price.isnot(None)
+        ).group_by('range').all()
+        
+        # Mileage statistics by year
+        mileage_by_year = db.session.query(
+            Car.year,
+            func.avg(Car.mileage).label('avg_mileage'),
+            func.min(Car.mileage).label('min_mileage'),
+            func.max(Car.mileage).label('max_mileage')
+        ).filter(
+            Car.year.isnot(None),
+            Car.mileage.isnot(None),
+            Car.year >= current_year - 10
+        ).group_by(Car.year).order_by(Car.year).all()
+        
+        # Top models by brand (top 5 brands)
+        top_brands = [b[0] for b in brand_stats[:5]]
+        models_by_brand = {}
+        for brand in top_brands:
+            models = db.session.query(
+                Car.model,
+                func.count(Car.id).label('count'),
+                func.avg(Car.price).label('avg_price')
+            ).filter(
+                Car.brand == brand,
+                Car.price.isnot(None)
+            ).group_by(Car.model).order_by(desc('count')).limit(5).all()
+            models_by_brand[brand] = [
+                {'model': m[0], 'count': m[1], 'avg_price': float(m[2])}
+                for m in models
+            ]
+        
+        # Overall statistics
+        overall_stats = db.session.query(
+            func.count(Car.id).label('total_cars'),
+            func.avg(Car.price).label('avg_price'),
+            func.min(Car.price).label('min_price'),
+            func.max(Car.price).label('max_price'),
+            func.avg(Car.mileage).label('avg_mileage'),
+            func.avg(Car.year).label('avg_year')
+        ).filter(Car.price.isnot(None)).first()
+        
+        # Price trend by listing date (last 30 days if available)
+        price_trend = db.session.query(
+            func.date(Car.listing_date).label('date'),
+            func.avg(Car.price).label('avg_price'),
+            func.count(Car.id).label('listings')
+        ).filter(
+            Car.listing_date.isnot(None),
+            Car.price.isnot(None)
+        ).group_by(func.date(Car.listing_date)).order_by(func.date(Car.listing_date).desc()).limit(30).all()
+        
+        # Horsepower distribution
+        hp_ranges = db.session.query(
+            func.count(Car.id).label('count'),
+            func.case(
+                (Car.horsepower < 100, 'Under 100 HP'),
+                (Car.horsepower < 150, '100-150 HP'),
+                (Car.horsepower < 200, '150-200 HP'),
+                (Car.horsepower < 300, '200-300 HP'),
+                else_='Over 300 HP'
+            ).label('range')
+        ).filter(
+            Car.horsepower.isnot(None)
+        ).group_by('range').all()
+        
+        logger.info(f"[{g.request_id}] Market statistics compiled successfully")
+        
+        return jsonify({
+            'success': True,
+            'statistics': {
+                'overall': {
+                    'total_cars': overall_stats.total_cars,
+                    'avg_price': float(overall_stats.avg_price) if overall_stats.avg_price else None,
+                    'min_price': float(overall_stats.min_price) if overall_stats.min_price else None,
+                    'max_price': float(overall_stats.max_price) if overall_stats.max_price else None,
+                    'avg_mileage': float(overall_stats.avg_mileage) if overall_stats.avg_mileage else None,
+                    'avg_year': float(overall_stats.avg_year) if overall_stats.avg_year else None
+                },
             'brands': [
                 {
                     'brand': b[0],
@@ -1228,8 +1239,17 @@ def get_market_statistics():
                 {'range': h[1], 'count': h[0]}
                 for h in hp_ranges
             ]
-        }
-    }), 200
+            }
+        }), 200
+    
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Error fetching market statistics: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch market statistics',
+            'message': str(e)
+        }), 500
 
 # ============================================
 # ERROR HANDLERS
