@@ -713,6 +713,62 @@ def get_models(brand):
         'models': [{'name': model, 'count': count} for model, count in models]
     }), 200
 
+@app.route('/api/model-specs/<brand>/<model>', methods=['GET'])
+@handle_errors
+def get_model_specs(brand, model):
+    """Get specifications for a specific brand-model combination"""
+    brand_normalized = normalize_string(brand)
+    model_normalized = normalize_string(model)
+    
+    if not brand_normalized or not model_normalized:
+        raise ValueError("Brand and model are required")
+
+    logger.info(f"[{g.request_id}] Fetching specs for {brand_normalized} {model_normalized}")
+    
+    # Get distinct specifications for this brand-model combination
+    specs = db.session.query(
+        Car.body_type,
+        Car.fuel_type,
+        Car.transmission,
+        func.count(Car.id).label('count')
+    ).filter(
+        Car.brand.ilike(brand_normalized),
+        Car.model.ilike(model_normalized)
+    ).group_by(
+        Car.body_type,
+        Car.fuel_type,
+        Car.transmission
+    ).all()
+    
+    # Organize data
+    body_types = {}
+    fuel_types = {}
+    transmissions = {}
+    
+    for spec in specs:
+        if spec.body_type:
+            body_types[spec.body_type] = body_types.get(spec.body_type, 0) + spec.count
+        if spec.fuel_type:
+            fuel_types[spec.fuel_type] = fuel_types.get(spec.fuel_type, 0) + spec.count
+        if spec.transmission:
+            transmissions[spec.transmission] = transmissions.get(spec.transmission, 0) + spec.count
+    
+    # Sort by count (most common first)
+    body_types_list = sorted([{'value': k, 'count': v} for k, v in body_types.items()], key=lambda x: x['count'], reverse=True)
+    fuel_types_list = sorted([{'value': k, 'count': v} for k, v in fuel_types.items()], key=lambda x: x['count'], reverse=True)
+    transmissions_list = sorted([{'value': k, 'count': v} for k, v in transmissions.items()], key=lambda x: x['count'], reverse=True)
+    
+    logger.info(f"[{g.request_id}] Found {len(body_types_list)} body types, {len(fuel_types_list)} fuel types, {len(transmissions_list)} transmissions")
+    
+    return jsonify({
+        'success': True,
+        'brand': brand_normalized,
+        'model': model_normalized,
+        'body_types': body_types_list,
+        'fuel_types': fuel_types_list,
+        'transmissions': transmissions_list
+    }), 200
+
 @app.route('/api/filters', methods=['GET'])
 @handle_errors
 def get_filter_options():
