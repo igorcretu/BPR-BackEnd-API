@@ -26,7 +26,7 @@ class TestHealthEndpoint:
         
         # Should be healthy when db is connected
         assert data['status'] == 'healthy'
-        assert data['database'] == 'connected'
+        assert data['database']['status'] == 'connected'
         assert data['service'] == 'BPR Backend API'
     
     def test_health_check_database_error(self, client, app):
@@ -47,7 +47,7 @@ class TestHealthEndpoint:
                 
                 data = response.get_json()
                 assert data['status'] == 'degraded'
-                assert 'error' in data['database'].lower()
+                assert 'error' in data['database']['status'].lower()
     
     def test_health_check_ml_model_info(self, client):
         """Test that health check returns ML model information."""
@@ -143,7 +143,7 @@ class TestHealthEndpoint:
         assert response.status_code in [200, 503]
         
         data = response.get_json()
-        db_status = data['database']
+        db_status = data['database']['status']
         
         # Should be either 'connected' or contain 'error'
         assert db_status == 'connected' or 'error' in db_status.lower()

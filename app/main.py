@@ -287,7 +287,11 @@ def health_check():
         'service': 'BPR Backend API',
         'version': '1.0.0',
         'timestamp': datetime.utcnow().isoformat(),
-        'database': db_status,
+        'message': 'API is operational',
+        'database': {
+            'status': db_status,
+            'message': 'Database is connected' if db_status == 'connected' else db_status
+        },
         'ml_model': ml_info
     }
     
