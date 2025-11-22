@@ -5,6 +5,7 @@ Improved version with comprehensive logging and production-ready configuration
 
 from flask import Flask, jsonify, request, g, url_for, abort
 from flask_cors import CORS
+from werkzeug.exceptions import HTTPException
 from app.models import db, Car, PricePrediction, ScrapingLog, MarketStatistics, PredictionJob
 from app.ml.predictor import CarPricePredictor
 from app.utils.request_validation import (
@@ -134,12 +135,17 @@ logger.info(f"Database URL configured: {database_url.split('@')[1] if '@' in dat
 
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 10,
-    'pool_recycle': 3600,
-    'pool_pre_ping': True,  # Test connections before using them
-    'max_overflow': 20
-}
+
+# Only set pooling options for PostgreSQL, not SQLite
+if not database_url.startswith('sqlite'):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,  # Test connections before using them
+        'max_overflow': 20
+    }
+else:
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['JSON_SORT_KEYS'] = False
 app.config['PREDICTION_QUEUE_MODE'] = os.getenv('PREDICTION_QUEUE_MODE', 'hybrid')
@@ -225,6 +231,9 @@ def handle_errors(f):
     def decorated_function(*args, **kwargs):
         try:
             return f(*args, **kwargs)
+        except HTTPException:
+            # Re-raise HTTP exceptions (404, 405, etc.) to be handled by Flask's error handlers
+            raise
         except SQLAlchemyError as e:
             logger.error(f"[{g.request_id}] Database error in {f.__name__}: {str(e)}")
             logger.error(traceback.format_exc())
@@ -1020,8 +1029,22 @@ def internal_error(error):
         'error': 'Internal server error'
     }), 500
 
+@app.errorhandler(405)
+def method_not_allowed(error):
+    logger.warning(f"[{g.request_id}] 405 error: {request.method} {request.path}")
+    return jsonify({
+        'success': False,
+        'error': 'Method not allowed',
+        'method': request.method,
+        'path': request.path
+    }), 405
+
 @app.errorhandler(Exception)
 def handle_exception(error):
+    # Don't catch HTTP exceptions, let Flask handle them
+    if isinstance(error, HTTPException):
+        return error
+    
     logger.error(f"[{g.request_id}] Unhandled exception: {str(error)}")
     logger.error(traceback.format_exc())
     db.session.rollback()
