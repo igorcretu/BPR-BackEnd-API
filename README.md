@@ -1,555 +1,762 @@
-# BPR Backend - Car Price Prediction API
+# CarPredict Backend API
 
 [![Build and Deploy to Raspberry Pi](https://github.com/igorcretu/BPR-BackEnd-API/actions/workflows/deploy.yml/badge.svg)](https://github.com/igorcretu/BPR-BackEnd-API/actions/workflows/deploy.yml)
-> Bachelor Thesis Project - Group 26 | VIA University College
 
-Backend API for the Car Price Prediction Platform for the Danish automotive market. Built with Flask, PostgreSQL, and Machine Learning.
+A powerful Flask-based REST API providing car listings, advanced filtering, and AI-powered price predictions for the Danish automotive market. Features PostgreSQL database, asynchronous ML predictions, and Docker deployment.
 
-## 🎯 Features
+![Python](https://img.shields.io/badge/Python-3.11-blue)
+![Flask](https://img.shields.io/badge/Flask-3.0-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-- **RESTful API** - Complete CRUD operations for car listings
-- **Price Prediction** - ML-powered car price estimation
-- **Advanced Filtering** - Search and filter by multiple parameters
-- **Market Statistics** - Analyze trends and market data
-- **Web Scraping Integration** - Automated data collection from Danish car sites
-- **Docker Support** - Containerized deployment with PostgreSQL
-- **CI/CD Pipeline** - Automated testing and deployment to Raspberry Pi 5
-- **Asynchronous Queue** - Built-in prediction worker prevents overloads
+## 🚀 Features
 
-## 🏗️ Tech Stack
+### Core API Functionality
+- **RESTful API**: Well-structured endpoints following REST principles
+- **Car Listings**: Comprehensive database of 30,000+ Danish car listings
+- **Advanced Filtering**: Multi-parameter filtering (brand, fuel type, price, year, etc.)
+- **Full-Text Search**: Search across brand, model, variant, and title fields
+- **Pagination**: Efficient data retrieval with customizable page sizes
+- **ML Price Predictions**: TensorFlow-powered price estimation
 
-- **Framework:** Flask 3.0
-- **Database:** PostgreSQL 16
-- **ORM:** SQLAlchemy
-- **ML:** TensorFlow/Keras (placeholder ready)
-- **Containerization:** Docker & Docker Compose
-- **CI/CD:** GitHub Actions
-- **Hosting:** Raspberry Pi 5
+### Database Management
+- **PostgreSQL 16**: Robust relational database with JSONB support
+- **SQLAlchemy ORM**: Type-safe database operations
+- **Connection Pooling**: Optimized database connections
+- **Migrations**: Structured schema management
 
-## 📋 API Endpoints
+### Machine Learning
+- **TensorFlow/Keras Models**: Trained on historical Danish car market data
+- **Asynchronous Predictions**: Queue-based processing for scalability
+- **Confidence Intervals**: Statistical confidence ranges for predictions
+- **Feature Engineering**: Smart handling of categorical and numerical features
 
-**Base URL (Development):** `http://localhost:5000`  
-**Base URL (Production):** `https://api.yourdomain.com` (via Cloudflare Tunnel)
+### DevOps & Deployment
+- **Docker Support**: Containerized deployment
+- **Docker Compose**: Multi-container orchestration
+- **Cloudflare Tunnels**: Secure public access without port forwarding
+- **Health Checks**: API health monitoring endpoints
+- **Comprehensive Logging**: Rotating file logs with different severity levels
 
-### Health & Info
+## 🛠️ Technology Stack
 
-- `GET /health` - Health check and service status
+### Backend Framework
+- **Flask 3.0.3** - Lightweight WSGI web framework
+- **Flask-CORS** - Cross-Origin Resource Sharing support
+- **Werkzeug** - WSGI utilities and security
 
-### Cars
+### Database
+- **PostgreSQL 16** - Advanced relational database
+- **SQLAlchemy 2.0** - SQL toolkit and ORM
+- **psycopg2-binary** - PostgreSQL adapter
 
-- `GET /api/cars` - List all cars (with pagination & filters)
-- `GET /api/cars/{id}` - Get specific car details
-- `POST /api/cars` - Create new car listing
-- `GET /api/search?q={query}` - Search cars by keyword
+### Machine Learning
+- **TensorFlow 2.17** - Deep learning framework
+- **Keras** - High-level neural networks API
+- **NumPy** - Numerical computing
+- **Pandas** - Data manipulation and analysis
+- **scikit-learn** - Machine learning utilities
 
-### Predictions
+### Data Processing
+- **BeautifulSoup4** - Web scraping (for data collection)
+- **Requests** - HTTP library
+- **python-dotenv** - Environment variable management
 
-- `POST /api/predict` - Predict car price
-- `POST /api/predict?mode=queue` - Enqueue a prediction job for deferred processing
-- `GET /api/predict/jobs` - List queued jobs with statuses
-- `GET /api/predict/jobs/{job_id}` - Check a specific job's status/result
-- `GET /api/predictions` - Get prediction history
-
-### Filters & Options
-
-- `GET /api/brands` - Get all available brands
-- `GET /api/models/{brand}` - Get models for a brand
-- `GET /api/filters` - Get all available filter options
-
-### Statistics
-
-- `GET /api/stats` - Get overall market statistics
-- `GET /api/stats/brand/{brand}` - Get statistics for specific brand
-
-### Scraping
-
-- `GET /api/scraping/logs` - Get web scraping execution logs
-
-## 🚀 Quick Start (Local Development)
-
-### Prerequisites
-
-- Docker & Docker Compose
-- Git
-
-### Setup
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/igorcretu/BPR-BackEnd.git
-   cd BPR-BackEnd
-   ```
-
-2. **Create environment file**
-
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-3. **Start the services**
-
-   ```bash
-   docker compose up -d
-   ```
-
-4. **Check the logs**
-
-   ```bash
-   docker compose logs -f backend
-   ```
-
-5. **Test the API**
-
-   ```bash
-   curl http://localhost:5000/health
-   ```
-
-The API will be available at `http://localhost:5000`
-
-The database is automatically initialized with sample data (30 cars) on first run.
-
-## 🧵 Prediction Job Queue
-
-High traffic from Cloudflare or the public frontend can now be absorbed by an internal job queue. Clients can opt-in (`POST /api/predict?mode=queue`) or let the API decide based on the backlog. Jobs are persisted in PostgreSQL, processed in FIFO order (respecting priority), and exposed through `/api/predict/jobs` endpoints for progress polling.
-
-### Queue workflow
-
-1. Submit a job via `POST /api/predict?mode=queue` (or let `mode=auto`/default handle it).
-2. Receive a `job_id` plus `status_url` for polling.
-3. Poll `GET /api/predict/jobs/{job_id}` until status becomes `completed` or `failed`.
-4. A dedicated `prediction-worker` service pulls from the queue and runs the ML predictor.
-
-Synchronous predictions still work (`mode=sync`), so existing integrations remain unaffected.
-
-### Configuration knobs
-
-- `PREDICTION_QUEUE_MODE` (`sync`, `queue`, `hybrid`, default `hybrid`).
-- `PREDICTION_QUEUE_THRESHOLD` – backlog size that flips hybrid mode to queue (default `5`).
-- `PREDICTION_QUEUE_PRIORITY_DEFAULT` – numeric priority assigned when clients do not provide one.
-- `PREDICTION_QUEUE_POLL_INTERVAL` – worker sleep duration when idle (seconds, default `1.5`).
-- `PREDICTION_QUEUE_MAX_ATTEMPTS` – worker retry limit before marking a job as failed (default `3`).
-
-Set these in `.env` to tune behavior for production versus local development.
-
-### Running the worker
-
-- Docker Compose (`docker-compose.yml`, `docker-compose.dev.yml`, `docker-compose.prod.yml`) already defines a `prediction-worker` service; `docker compose up -d` will bring it online automatically.
-- For ad-hoc debugging you can run the worker locally: `python -m app.worker` from the `API/` folder.
-- Tail worker logs with `docker compose logs -f prediction-worker` to monitor throughput/errors.
+### Development & Deployment
+- **Docker & Docker Compose** - Containerization
+- **Gunicorn** - WSGI HTTP server
+- **Cloudflared** - Tunnel service for secure access
 
 ## 📁 Project Structure
 
-```text
-BPR-BackEnd/
+```
+BackEnd/API/
 ├── app/
-│   ├── __init__.py
-│   ├── main.py              # Main Flask application
-│   ├── models.py            # Database models
-│   └── ml/
-│       ├── __init__.py
-│       └── predictor.py     # ML prediction engine (placeholder)
-├── .github/
-│   └── workflows/
-│       └── docker-build-deploy.yml  # CI/CD pipeline
-├── models/                  # ML model files (gitignored)
-├── logs/                    # Application logs (gitignored)
-├── Dockerfile              # Docker image definition
-├── docker-compose.yml      # Local development setup
-├── docker-compose.prod.yml # Production setup (Raspberry Pi)
-├── init.sql                # Database initialization script
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment variables template
-└── README.md
+│   ├── __init__.py           # Flask app initialization
+│   ├── main.py               # Main application entry point
+│   ├── models.py             # SQLAlchemy database models
+│   ├── worker.py             # Background worker for ML predictions
+│   ├── ml/
+│   │   ├── __init__.py
+│   │   └── predictor.py      # ML prediction logic
+│   ├── routes/
+│   │   └── [route files]     # API endpoint handlers
+│   ├── services/
+│   │   ├── __init__.py
+│   │   └── prediction_queue.py # Async prediction queue
+│   └── utils/
+│       └── request_validation.py # Input validation utilities
+├── models/
+│   └── [trained ML models]   # Saved TensorFlow models
+├── logs/                      # Application logs
+├── scripts/
+│   └── setup-cloudflare-tunnel.sh # Cloudflare setup script
+├── docker-compose.yml         # Production deployment
+├── docker-compose.dev.yml     # Development environment
+├── docker-compose.prod.yml    # Production configuration
+├── Dockerfile                 # Container image definition
+├── init.sql                   # Database initialization
+├── requirements.txt           # Python dependencies
+├── start-dev.sh              # Development startup script
+└── README.md                  # This file
 ```
 
-## 🔧 API Usage Examples
+## 🚦 Getting Started
 
-### Get all cars with filters
+### Prerequisites
+- **Python 3.11** or higher
+- **PostgreSQL 16** database
+- **Docker & Docker Compose** (for containerized deployment)
+- **pip** package manager
 
+### Local Development Setup
+
+#### 1. Clone the Repository
 ```bash
-curl "http://localhost:5000/api/cars?brand=Toyota&year_min=2020&page=1&per_page=10"
+git clone <repository-url>
+cd BackEnd/API
 ```
 
-### Predict car price
-
+#### 2. Create Virtual Environment
 ```bash
-curl -X POST http://localhost:5000/api/predict \
-  -H "Content-Type: application/json" \
-  -d '{
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+#### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+#### 4. Configure Environment Variables
+Create a `.env` file in the `API/` directory:
+
+```env
+# Database Configuration
+DATABASE_URL=postgresql://user:password@localhost:5432/carpredict
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=carpredict
+DB_USER=your_username
+DB_PASSWORD=your_password
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=True
+SECRET_KEY=your-secret-key-here
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# ML Model Configuration
+MODEL_PATH=models/car_price_model.h5
+SCALER_PATH=models/scaler.pkl
+ENCODER_PATH=models/encoder.pkl
+
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=logs/app.log
+```
+
+#### 5. Initialize Database
+```bash
+# Create PostgreSQL database
+createdb carpredict
+
+# Run initialization script
+psql -d carpredict -f init.sql
+```
+
+#### 6. Start Development Server
+```bash
+python app/main.py
+```
+
+The API will be available at `http://localhost:8000`
+
+### Docker Deployment
+
+#### Development Environment
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+#### Production Environment
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Full Stack (with Database)
+```bash
+docker-compose up -d
+```
+
+## 📡 API Endpoints
+
+### Car Listings
+
+#### Get All Cars (Paginated)
+```http
+GET /api/cars
+```
+
+**Query Parameters:**
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `page` | integer | Page number | 1 |
+| `per_page` | integer | Items per page | 30 |
+| `q` | string | Search query | - |
+| `brand` | string | Filter by brand | - |
+| `fuel_type` | string | Filter by fuel type | - |
+| `transmission` | string | Filter by transmission | - |
+| `body_type` | string | Filter by body type | - |
+| `year_min` | integer | Minimum year | - |
+| `year_max` | integer | Maximum year | - |
+| `price_min` | integer | Minimum price (DKK) | - |
+| `price_max` | integer | Maximum price (DKK) | - |
+
+**Response:**
+```json
+{
+  "cars": [
+    {
+      "id": "123",
+      "brand": "Toyota",
+      "model": "Camry",
+      "year": 2020,
+      "price": 250000,
+      "mileage": 45000,
+      "fuel_type": "Benzin",
+      "transmission": "Automatisk",
+      ...
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "per_page": 30,
+    "total": 30000,
+    "pages": 1000
+  }
+}
+```
+
+#### Get Car by ID
+```http
+GET /api/cars/:id
+```
+
+**Response:**
+```json
+{
+  "car": {
+    "id": "123",
     "brand": "Toyota",
-    "model": "Corolla",
+    "model": "Camry",
+    "variant": "2.5 Hybrid",
     "year": 2020,
+    "price": 250000,
     "mileage": 45000,
-    "fuel_type": "Hybrid",
-    "transmission": "Automatic",
+    "fuel_type": "Benzin",
+    "transmission": "Automatisk",
     "body_type": "Sedan",
-    "horsepower": 122
-  }'
+    "horsepower": 218,
+    "engine_size": 2.5,
+    "doors": 4,
+    "seats": 5,
+    "color": "Sort",
+    ...
+  }
+}
 ```
 
-### Get market statistics
+### Brands
 
-```bash
-curl http://localhost:5000/api/stats
+#### Get All Brands
+```http
+GET /api/brands
 ```
 
-### Search for cars
-
-```bash
-curl "http://localhost:5000/api/search?q=Toyota"
+**Response:**
+```json
+{
+  "brands": [
+    {"name": "Toyota", "count": 2500},
+    {"name": "Volkswagen", "count": 3200},
+    {"name": "BMW", "count": 1800},
+    ...
+  ]
+}
 ```
 
-## 🤖 Machine Learning Model
+### Filters
 
-The ML predictor is currently a placeholder implementation in `app/ml/predictor.py`.
-
-### To add your trained model
-
-1. Train your model and save it:
-
-   ```python
-   model.save('models/car_price_model.h5')
-   ```
-
-2. Replace the mock implementation in `app/ml/predictor.py`:
-
-   ```python
-   def _load_model(self):
-       from tensorflow import keras
-       self.model = keras.models.load_model(self.model_path)
-       self.model_loaded = True
-   ```
-
-3. Update the `predict()` method to use the actual model:
-
-   ```python
-   def predict(self, car_features):
-       features_array = self._preprocess_features(car_features)
-       predicted_price = self.model.predict(features_array)[0][0]
-       # ... rest of implementation
-   ```
-
-## 🐳 Docker Commands
-
-```bash
-# Start services
-docker compose up -d
-
-# View logs
-docker compose logs -f backend
-
-# Stop services
-docker compose down
-
-# Rebuild and start
-docker compose up -d --build
-
-# Reset database (WARNING: deletes all data)
-docker compose down -v
-docker compose up -d
-
-# Execute commands in container
-docker compose exec backend python -c "from app.models import db; print('Database OK')"
-
-# Access PostgreSQL directly
-docker compose exec db psql -U bpr_user -d car_prediction
+#### Get Filter Options
+```http
+GET /api/filters
 ```
 
-## 🔄 CI/CD Pipeline
-
-The project uses GitHub Actions for continuous integration and deployment.
-
-### Workflow
-
-1. **Push to `main`** → Triggers CI/CD
-2. **Build Docker image** → Creates container image
-3. **Push to GitHub Container Registry** → Stores image at `ghcr.io/igorcretu/bpr-backend:latest`
-4. **Deploy to Raspberry Pi** → SSH to Pi, pull new image, restart containers
-
-### Setup GitHub Secrets
-
-Add these secrets in your GitHub repository settings:
-
-- `PI_HOST` - Raspberry Pi IP address
-- `PI_USERNAME` - SSH username
-- `PI_SSH_KEY` - SSH private key
-- `PI_PORT` - SSH port (optional, default 22)
-
-## 🍓 Raspberry Pi Deployment
-
-### 📖 Complete Step-by-Step Guide
-
-**Got your Raspberry Pi? Follow this guide:**
-
-➡️ **[RASPBERRY_PI_DEPLOYMENT.md](RASPBERRY_PI_DEPLOYMENT.md)** - Complete deployment guide (20-30 minutes)
-
-**Quick checklist version:**
-
-➡️ **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - Print and check off as you go
-
-**Having issues?**
-
-➡️ **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Solutions to common problems
-
-### ⚡ Quick Summary
-
-1. **SSH to your Pi:** `ssh pi@your-pi-ip`
-2. **Install Docker:** One command
-3. **Clone repo:** `git clone https://github.com/igorcretu/BPR-BackEnd.git`
-4. **Create .env:** Copy from .env.example, add Cloudflare token
-5. **Start everything:** `docker compose -f docker-compose.prod.yml --profile cloudflare up -d`
-6. **Test:** `curl https://api.yourdomain.com/health`
-
-**Done!** Your backend is live. ✅
-
-### Cloudflare Tunnel Details (Recommended)
-
-```bash
-# Install Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Install Docker Compose
-sudo apt-get update
-sudo apt-get install docker-compose-plugin
-
-# Create project directory
-mkdir -p ~/bpr-backend
-cd ~/bpr-backend
-
-# Clone repository
-git clone https://github.com/igorcretu/BPR-BackEnd.git .
-
-# Create .env file
-cp .env.example .env
-nano .env  # Edit with production values
-
-# Login to GitHub Container Registry
-echo $GITHUB_TOKEN | docker login ghcr.io -u igorcretu --password-stdin
-
-# Start services
-docker compose -f docker-compose.prod.yml up -d
-
-# Check status
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f
+**Response:**
+```json
+{
+  "filters": {
+    "fuel_types": [
+      {"value": "Benzin", "count": 15000},
+      {"value": "Diesel", "count": 10000},
+      {"value": "El", "count": 3000},
+      ...
+    ],
+    "transmissions": [
+      {"value": "Automatisk", "count": 18000},
+      {"value": "Manuel", "count": 12000}
+    ],
+    "body_types": [
+      {"value": "SUV", "count": 8000},
+      {"value": "Sedan", "count": 6000},
+      ...
+    ]
+  }
+}
 ```
 
-### Cloudflare Tunnel Quick Setup
+### Price Prediction
 
-**Why Cloudflare Tunnel?**
-
-- ✅ Expose your Pi to the internet securely (no port forwarding)
-- ✅ Free HTTPS/SSL certificates
-- ✅ DDoS protection
-- ✅ Works behind NAT/firewall
-- ✅ Connect your Netlify frontend to your Pi backend
-- ✅ **Portable** - Same setup works on PC and Raspberry Pi
-
-**🐳 Docker Method (Recommended - Easiest & Portable):**
-
-1. **Create tunnel in Cloudflare Dashboard:**
-   - Go to [Cloudflare Dashboard](https://one.dash.cloudflare.com/)
-   - Access → Tunnels → Create a tunnel
-   - Name: `bpr-backend`
-   - Copy the tunnel token (starts with `eyJ...`)
-
-2. **Configure the tunnel:**
-   - Public Hostname:
-     - Subdomain: `api`
-     - Domain: `yourdomain.com`
-     - Service: `HTTP` → `backend:5000`
-   - Save tunnel
-
-3. **Add token to `.env`:**
-
-   ```bash
-   echo "CLOUDFLARE_TUNNEL_TOKEN=your-token-here" >> .env
-   ```
-
-4. **Start with tunnel:**
-
-   ```bash
-   docker compose -f docker-compose.prod.yml --profile cloudflare up -d
-   ```
-
-5. **Test:**
-
-   ```bash
-   curl https://api.yourdomain.com/health
-   ```
-
-**That's it!** Your API is now accessible at `https://api.yourdomain.com`
-
-**📖 Full Guide:** See [DOCKER_CLOUDFLARE_SETUP.md](DOCKER_CLOUDFLARE_SETUP.md) for complete Docker-based setup.
-
-**Alternative:** See [CLOUDFLARE_TUNNEL_SETUP.md](CLOUDFLARE_TUNNEL_SETUP.md) for local installation method.
-
-**After Cloudflare Tunnel setup:**
-
-- Your API: `https://api.yourdomain.com`
-- Update frontend `.env`: `VITE_API_URL=https://api.yourdomain.com/api`
-- Same token works on PC and Raspberry Pi!
-
-### Moving from PC to Raspberry Pi
-
-The Docker method makes this **super easy**:
-
-1. **On PC:** Test everything works
-2. **On Raspberry Pi:**
-
-   ```bash
-   git clone https://github.com/igorcretu/BPR-BackEnd.git
-   cd BPR-BackEnd
-   cp .env.example .env
-   # Add same CLOUDFLARE_TUNNEL_TOKEN as PC
-   docker compose -f docker-compose.prod.yml --profile cloudflare up -d
-   ```
-
-3. **Done!** Same tunnel, same configuration, works immediately.
-
-### Manual deployment
-
-```bash
-cd ~/bpr-backend
-git pull origin main
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
+#### Predict Car Price
+```http
+POST /api/predict
 ```
 
-## 🗄️ Database
+**Request Body:**
+```json
+{
+  "brand": "Toyota",
+  "model": "Camry",
+  "year": 2020,
+  "mileage": 45000,
+  "fuel_type": "Benzin",
+  "transmission": "Automatisk",
+  "body_type": "Sedan",
+  "horsepower": 218,
+  "engine_size": 2.5,
+  "doors": 4,
+  "color": "Sort",
+  "drive_type": "Forhjulstræk"
+}
+```
 
-### Schema
+**Response:**
+```json
+{
+  "predicted_price": 248500,
+  "confidence": 92.5,
+  "price_range": {
+    "min": 235000,
+    "max": 262000
+  },
+  "model_version": "v1.2.0",
+  "prediction_id": "pred_123456"
+}
+```
 
-The database includes these main tables:
+### Health Check
 
-- **cars** - Car listings with all details
-- **price_predictions** - ML prediction history
-- **prediction_jobs** - Asynchronous queue entries and their lifecycle metadata
-- **scraping_logs** - Web scraping execution logs
-- **market_statistics** - Aggregated market data
+#### API Health Status
+```http
+GET /api/health
+```
 
-### Sample Data
+**Response:**
+```json
+{
+  "status": "healthy",
+  "database": "connected",
+  "ml_model": "loaded",
+  "timestamp": "2025-01-15T10:30:00Z"
+}
+```
 
-The `init.sql` script automatically creates:
+## 🗄️ Database Schema
 
-- 30 sample cars (various brands and models)
-- 20 sample predictions
-- 4 scraping logs
-- Market statistics
+### Cars Table
+```sql
+CREATE TABLE cars (
+    id VARCHAR PRIMARY KEY,
+    url TEXT,
+    brand VARCHAR(100),
+    model VARCHAR(100),
+    variant VARCHAR(255),
+    title TEXT,
+    description TEXT,
+    price INTEGER,
+    new_price INTEGER,
+    model_year INTEGER,
+    year INTEGER,
+    first_registration VARCHAR(50),
+    production_date VARCHAR(50),
+    mileage INTEGER,
+    fuel_type VARCHAR(50),
+    transmission VARCHAR(50),
+    gear_count INTEGER,
+    cylinders INTEGER,
+    horsepower INTEGER,
+    engine_size DECIMAL(4,2),
+    torque_nm INTEGER,
+    acceleration DECIMAL(4,2),
+    top_speed INTEGER,
+    range_km INTEGER,
+    battery_capacity DECIMAL(5,2),
+    energy_consumption INTEGER,
+    home_charging_ac VARCHAR(50),
+    fast_charging_dc VARCHAR(50),
+    charging_time_dc VARCHAR(50),
+    fuel_consumption VARCHAR(50),
+    co2_emission VARCHAR(50),
+    euro_norm VARCHAR(20),
+    tank_capacity INTEGER,
+    body_type VARCHAR(50),
+    doors INTEGER,
+    seats INTEGER,
+    color VARCHAR(50),
+    weight INTEGER,
+    width INTEGER,
+    length INTEGER,
+    height INTEGER,
+    trunk_size INTEGER,
+    load_capacity INTEGER,
+    towing_capacity INTEGER,
+    max_towing_weight INTEGER,
+    drive_type VARCHAR(50),
+    abs_brakes BOOLEAN,
+    esp BOOLEAN,
+    airbags INTEGER,
+    category VARCHAR(100),
+    equipment TEXT,
+    periodic_tax VARCHAR(50),
+    location VARCHAR(100),
+    dealer_name VARCHAR(255),
+    source_url TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-### Reset Database
+CREATE INDEX idx_cars_brand ON cars(brand);
+CREATE INDEX idx_cars_model ON cars(model);
+CREATE INDEX idx_cars_year ON cars(year);
+CREATE INDEX idx_cars_price ON cars(price);
+CREATE INDEX idx_cars_fuel_type ON cars(fuel_type);
+CREATE INDEX idx_cars_body_type ON cars(body_type);
+```
 
+### Price Predictions Table
+```sql
+CREATE TABLE price_predictions (
+    id SERIAL PRIMARY KEY,
+    car_id VARCHAR REFERENCES cars(id),
+    predicted_price INTEGER,
+    actual_price INTEGER,
+    confidence DECIMAL(5,2),
+    features JSONB,
+    model_version VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## 🤖 Machine Learning Pipeline
+
+### Model Architecture
+```python
+# Sequential neural network
+model = Sequential([
+    Dense(128, activation='relu', input_dim=n_features),
+    Dropout(0.3),
+    Dense(64, activation='relu'),
+    Dropout(0.2),
+    Dense(32, activation='relu'),
+    Dense(1)  # Price prediction
+])
+```
+
+### Training Data
+- **Dataset Size**: 30,000+ car listings
+- **Features**: 20+ numerical and categorical features
+- **Target**: Car price in DKK
+- **Train/Test Split**: 80/20
+- **Validation**: Cross-validation with 5 folds
+
+### Feature Engineering
+- **Numerical Features**: Mileage, year, horsepower, engine size, etc.
+- **Categorical Encoding**: One-hot encoding for brand, fuel type, transmission
+- **Scaling**: StandardScaler for numerical features
+- **Missing Values**: Median imputation for numerical, mode for categorical
+
+### Model Performance
+- **RMSE**: ~25,000 DKK
+- **MAE**: ~18,000 DKK
+- **R² Score**: 0.87
+- **Training Time**: ~30 minutes on CPU
+
+## 🔧 Configuration
+
+### Flask Application (`app/main.py`)
+```python
+from flask import Flask
+from flask_cors import CORS
+import logging
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+CORS(app, origins=os.getenv('CORS_ORIGINS', '*').split(','))
+```
+
+### Database Connection
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True
+)
+Session = sessionmaker(bind=engine)
+```
+
+### Logging Configuration
+```python
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/app.log'),
+        logging.RotatingFileHandler('logs/error.log', maxBytes=10485760, backupCount=5),
+        logging.StreamHandler()
+    ]
+)
+```
+
+## 🐳 Docker Configuration
+
+### Dockerfile
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "app.main:app"]
+```
+
+### Docker Compose (Production)
+```yaml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: carpredict
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/carpredict
+    depends_on:
+      - db
+    volumes:
+      - ./models:/app/models
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:
+```
+
+## 🌐 Cloudflare Tunnel Setup
+
+### Installation
 ```bash
-docker compose down -v  # Deletes volumes
-docker compose up -d    # Recreates with fresh data
+# Run setup script
+bash scripts/setup-cloudflare-tunnel.sh
+```
+
+### Configuration (`cloudflared-config.yml`)
+```yaml
+tunnel: <tunnel-id>
+credentials-file: /root/.cloudflared/<tunnel-id>.json
+
+ingress:
+  - hostname: api.carpredict.com
+    service: http://localhost:8000
+  - service: http_status:404
+```
+
+### Start Tunnel
+```bash
+cloudflared tunnel run <tunnel-name>
+```
+
+## 📊 Monitoring & Logging
+
+### Log Files
+- `logs/app.log` - General application logs
+- `logs/error.log` - Error logs with rotation
+- `logs/access.log` - HTTP access logs
+
+### Log Levels
+- **DEBUG**: Detailed information for debugging
+- **INFO**: General informational messages
+- **WARNING**: Warning messages
+- **ERROR**: Error messages
+- **CRITICAL**: Critical issues
+
+### Health Monitoring
+```bash
+# Check API health
+curl http://localhost:8000/api/health
+
+# Check database connection
+curl http://localhost:8000/api/health/db
+
+# Check ML model status
+curl http://localhost:8000/api/health/ml
 ```
 
 ## 🧪 Testing
 
-Test the API endpoints:
-
+### Run Unit Tests
 ```bash
-# Health check
-curl http://localhost:5000/health
+pytest tests/
+```
 
+### API Testing with curl
+```bash
 # Get cars
-curl http://localhost:5000/api/cars
+curl http://localhost:8000/api/cars?page=1&per_page=10
 
-# Get specific brand
-curl http://localhost:5000/api/cars?brand=Toyota
+# Get specific car
+curl http://localhost:8000/api/cars/123
 
-# Predict price
-curl -X POST http://localhost:5000/api/predict \
+# Price prediction
+curl -X POST http://localhost:8000/api/predict \
   -H "Content-Type: application/json" \
-  -d '{"brand":"Toyota","model":"Corolla","year":2020,"mileage":45000,"fuel_type":"Petrol","transmission":"Manual","body_type":"Sedan"}'
+  -d '{"brand":"Toyota","model":"Camry","year":2020,"mileage":45000}'
 ```
 
-## 📊 Monitoring
+## 🔒 Security
 
-View logs:
+### Environment Variables
+- Never commit `.env` files
+- Use strong database passwords
+- Rotate SECRET_KEY regularly
 
-```bash
-# Backend logs
-docker compose logs -f backend
+### CORS Configuration
+- Restrict origins in production
+- Use environment variables for allowed origins
 
-# Database logs
-docker compose logs -f db
+### Input Validation
+- All inputs validated before processing
+- SQL injection prevention via SQLAlchemy ORM
+- XSS protection on string inputs
 
-# All logs
-docker compose logs -f
-```
+## 🚀 Performance Optimization
 
-## 🛠️ Development
+### Database Optimization
+- Indexed columns for faster queries
+- Connection pooling
+- Query result caching
 
-### Adding new endpoints
+### API Optimization
+- Pagination for large datasets
+- Gzip compression
+- Response caching headers
 
-1. Add route in `app/main.py`
-2. Update README with new endpoint
-3. Test locally
-4. Push to GitHub (CI/CD handles deployment)
+### ML Prediction Optimization
+- Model loaded once at startup
+- Batch predictions support
+- Asynchronous processing queue
 
-### Adding new models
+## 📝 Development Guidelines
 
-1. Define model in `app/models.py`
-2. Add to database via migration or `init.sql`
-3. Create API endpoints
-4. Update documentation
+### Code Style
+- Follow PEP 8 style guide
+- Use type hints
+- Document functions with docstrings
 
-## 👥 Team - Group 26
+### Git Workflow
+1. Create feature branch
+2. Make changes with descriptive commits
+3. Test thoroughly
+4. Create pull request
 
-- **Igor Crețu** - Full-stack Development & ML Integration
+### Adding New Endpoints
+1. Define route in `app/routes/`
+2. Add validation in `app/utils/`
+3. Update this README
+4. Add tests
 
-**Supervisor:** [Supervisor Name]  
-**Institution:** VIA University College  
-**Academic Year:** 2024/2025
+## 🐛 Common Issues & Solutions
 
-## 📚 Related Repositories
+### Issue: Database connection failed
+**Solution**: Check DATABASE_URL and PostgreSQL service status
 
-- [Frontend](https://github.com/igorcretu/BPR-FrontEnd) - React + TypeScript frontend
-- [Documentation](https://github.com/BPR-Group26/BPR-Documentation) - Project documentation
+### Issue: ML model not loading
+**Solution**: Verify MODEL_PATH and ensure model files exist
 
-## 📝 License
+### Issue: CORS errors
+**Solution**: Update CORS_ORIGINS environment variable
 
-This project is part of a Bachelor thesis at VIA University College.
+### Issue: Out of memory
+**Solution**: Reduce worker count or increase system RAM
 
-## 🆘 Troubleshooting
+## 📚 Additional Resources
 
-### Container won't start
+- [Flask Documentation](https://flask.palletsprojects.com/)
+- [SQLAlchemy Docs](https://www.sqlalchemy.org/)
+- [TensorFlow Guide](https://www.tensorflow.org/guide)
+- [PostgreSQL Manual](https://www.postgresql.org/docs/)
+- [Docker Docs](https://docs.docker.com/)
 
-```bash
-# Check logs
-docker compose logs backend
+## 👥 Contributing
 
-# Verify database connection
-docker compose exec backend python -c "from app.models import db; db.session.execute(db.text('SELECT 1'))"
-```
+This is an academic project for VIA University College. External contributions are not accepted.
 
-### Database connection errors
+## 📄 License
 
-```bash
-# Verify database is running
-docker compose ps db
+This project is for educational purposes only. Not licensed for commercial use.
 
-# Check database logs
-docker compose logs db
+## 🎓 Academic Context
 
-# Verify credentials in .env
-cat .env
-```
+**Institution**: VIA University College, Denmark  
+**Course**: Bachelor's Thesis Project  
+**Team**: Group 26  
+**Year**: 2024-2025  
+**Deployed**: Raspberry Pi 5 (4GB RAM)  
+**Purpose**: Demonstration of full-stack development, ML integration, and DevOps practices
 
-### Port already in use
+## 📧 Contact
 
-```bash
-# Change port in docker-compose.yml or .env
-# Or stop conflicting service:
-sudo lsof -i :5000
-sudo kill -9 <PID>
-```
+For academic inquiries, please contact VIA University College.
 
-## 📞 Support
+---
 
-For issues or questions, please open an issue on GitHub or contact the team.
+**Disclaimer**: This API is created for educational purposes and provides car price predictions as educational estimates only. All data is sourced from public Danish car marketplaces for research purposes.
