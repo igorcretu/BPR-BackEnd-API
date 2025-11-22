@@ -23,7 +23,7 @@ from app.services.prediction_queue import (
     QueueDecision,
     get_job,
 )
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, case
 from sqlalchemy.exc import SQLAlchemyError
 import os
 import logging
@@ -1086,7 +1086,7 @@ def get_market_statistics():
         # Price ranges distribution
         price_ranges = db.session.query(
             func.count(Car.id).label('count'),
-            func.case(
+            case(
                 (Car.price < 100000, 'Under 100k'),
                 (Car.price < 200000, '100k-200k'),
                 (Car.price < 300000, '200k-300k'),
@@ -1150,7 +1150,7 @@ def get_market_statistics():
         # Horsepower distribution
         hp_ranges = db.session.query(
             func.count(Car.id).label('count'),
-            func.case(
+            case(
                 (Car.horsepower < 100, 'Under 100 HP'),
                 (Car.horsepower < 150, '100-150 HP'),
                 (Car.horsepower < 200, '150-200 HP'),

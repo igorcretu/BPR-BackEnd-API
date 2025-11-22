@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+nosetests.xml
+
+# Local Database Files (SQLite for testing only)
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Logs
+*.log
+logs/*.log
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Local Development Scripts (not needed in production)
+run_server.py
+start_server.bat
+init_db.py
+add_sample_data.py
+test_market_stats.py
+
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+
+# Models (large files - deploy separately)
+models/*.pkl
+models/*.h5
+models/*.joblib
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
