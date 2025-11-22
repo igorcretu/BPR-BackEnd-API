@@ -313,12 +313,24 @@ def get_cars():
         'location': normalize_string(request.args.get('location'))
     }
     
+    # Search query parameter
+    search_query = normalize_string(request.args.get('q'))
+    
     # Sorting
     sort_by = request.args.get('sort_by', 'listing_date')
     sort_order = request.args.get('sort_order', 'desc')
     
     # Build query
     query = Car.query
+    
+    # Apply search filter if provided (searches brand, model, and title)
+    if search_query:
+        search_filter = db.or_(
+            Car.brand.ilike(f'%{search_query}%'),
+            Car.model.ilike(f'%{search_query}%'),
+            Car.title.ilike(f'%{search_query}%')
+        )
+        query = query.filter(search_filter)
     
     # Apply filters
     if filters['brand']:
