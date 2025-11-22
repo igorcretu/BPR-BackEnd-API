@@ -1007,6 +1007,227 @@ def search_cars():
     }), 200
 
 # ============================================
+# MARKET STATISTICS ENDPOINT
+# ============================================
+
+@app.route('/api/market/statistics', methods=['GET'])
+@handle_errors
+def get_market_statistics():
+    """Get comprehensive market statistics for data visualization"""
+    logger.info(f"[{g.request_id}] Fetching market statistics")
+    
+    # Price statistics by brand (top 15 brands by count)
+    brand_stats = db.session.query(
+        Car.brand,
+        func.count(Car.id).label('total_cars'),
+        func.avg(Car.price).label('avg_price'),
+        func.min(Car.price).label('min_price'),
+        func.max(Car.price).label('max_price')
+    ).filter(
+        Car.price.isnot(None)
+    ).group_by(Car.brand).order_by(desc('total_cars')).limit(15).all()
+    
+    # Fuel type distribution
+    fuel_type_dist = db.session.query(
+        Car.fuel_type,
+        func.count(Car.id).label('count'),
+        func.avg(Car.price).label('avg_price')
+    ).filter(
+        Car.fuel_type.isnot(None),
+        Car.price.isnot(None)
+    ).group_by(Car.fuel_type).all()
+    
+    # Body type distribution
+    body_type_dist = db.session.query(
+        Car.body_type,
+        func.count(Car.id).label('count'),
+        func.avg(Car.price).label('avg_price')
+    ).filter(
+        Car.body_type.isnot(None),
+        Car.price.isnot(None)
+    ).group_by(Car.body_type).order_by(desc('count')).all()
+    
+    # Transmission distribution
+    transmission_dist = db.session.query(
+        Car.transmission,
+        func.count(Car.id).label('count')
+    ).filter(
+        Car.transmission.isnot(None)
+    ).group_by(Car.transmission).all()
+    
+    # Year distribution (last 10 years)
+    current_year = datetime.now().year
+    year_dist = db.session.query(
+        Car.year,
+        func.count(Car.id).label('count'),
+        func.avg(Car.price).label('avg_price'),
+        func.avg(Car.mileage).label('avg_mileage')
+    ).filter(
+        Car.year.isnot(None),
+        Car.year >= current_year - 10,
+        Car.price.isnot(None)
+    ).group_by(Car.year).order_by(Car.year).all()
+    
+    # Price ranges distribution
+    price_ranges = db.session.query(
+        func.count(Car.id).label('count'),
+        func.case(
+            (Car.price < 100000, 'Under 100k'),
+            (Car.price < 200000, '100k-200k'),
+            (Car.price < 300000, '200k-300k'),
+            (Car.price < 500000, '300k-500k'),
+            (Car.price < 1000000, '500k-1M'),
+            else_='Over 1M'
+        ).label('range')
+    ).filter(
+        Car.price.isnot(None)
+    ).group_by('range').all()
+    
+    # Mileage statistics by year
+    mileage_by_year = db.session.query(
+        Car.year,
+        func.avg(Car.mileage).label('avg_mileage'),
+        func.min(Car.mileage).label('min_mileage'),
+        func.max(Car.mileage).label('max_mileage')
+    ).filter(
+        Car.year.isnot(None),
+        Car.mileage.isnot(None),
+        Car.year >= current_year - 10
+    ).group_by(Car.year).order_by(Car.year).all()
+    
+    # Top models by brand (top 5 brands)
+    top_brands = [b[0] for b in brand_stats[:5]]
+    models_by_brand = {}
+    for brand in top_brands:
+        models = db.session.query(
+            Car.model,
+            func.count(Car.id).label('count'),
+            func.avg(Car.price).label('avg_price')
+        ).filter(
+            Car.brand == brand,
+            Car.price.isnot(None)
+        ).group_by(Car.model).order_by(desc('count')).limit(5).all()
+        models_by_brand[brand] = [
+            {'model': m[0], 'count': m[1], 'avg_price': float(m[2])}
+            for m in models
+        ]
+    
+    # Overall statistics
+    overall_stats = db.session.query(
+        func.count(Car.id).label('total_cars'),
+        func.avg(Car.price).label('avg_price'),
+        func.min(Car.price).label('min_price'),
+        func.max(Car.price).label('max_price'),
+        func.avg(Car.mileage).label('avg_mileage'),
+        func.avg(Car.year).label('avg_year')
+    ).filter(Car.price.isnot(None)).first()
+    
+    # Price trend by listing date (last 30 days if available)
+    price_trend = db.session.query(
+        func.date(Car.listing_date).label('date'),
+        func.avg(Car.price).label('avg_price'),
+        func.count(Car.id).label('listings')
+    ).filter(
+        Car.listing_date.isnot(None),
+        Car.price.isnot(None)
+    ).group_by(func.date(Car.listing_date)).order_by(func.date(Car.listing_date).desc()).limit(30).all()
+    
+    # Horsepower distribution
+    hp_ranges = db.session.query(
+        func.count(Car.id).label('count'),
+        func.case(
+            (Car.horsepower < 100, 'Under 100 HP'),
+            (Car.horsepower < 150, '100-150 HP'),
+            (Car.horsepower < 200, '150-200 HP'),
+            (Car.horsepower < 300, '200-300 HP'),
+            else_='Over 300 HP'
+        ).label('range')
+    ).filter(
+        Car.horsepower.isnot(None)
+    ).group_by('range').all()
+    
+    logger.info(f"[{g.request_id}] Market statistics compiled successfully")
+    
+    return jsonify({
+        'success': True,
+        'statistics': {
+            'overall': {
+                'total_cars': overall_stats.total_cars,
+                'avg_price': float(overall_stats.avg_price) if overall_stats.avg_price else None,
+                'min_price': float(overall_stats.min_price) if overall_stats.min_price else None,
+                'max_price': float(overall_stats.max_price) if overall_stats.max_price else None,
+                'avg_mileage': float(overall_stats.avg_mileage) if overall_stats.avg_mileage else None,
+                'avg_year': float(overall_stats.avg_year) if overall_stats.avg_year else None
+            },
+            'brands': [
+                {
+                    'brand': b[0],
+                    'total_cars': b[1],
+                    'avg_price': float(b[2]) if b[2] else None,
+                    'min_price': float(b[3]) if b[3] else None,
+                    'max_price': float(b[4]) if b[4] else None
+                }
+                for b in brand_stats
+            ],
+            'fuel_types': [
+                {
+                    'type': f[0],
+                    'count': f[1],
+                    'avg_price': float(f[2]) if f[2] else None
+                }
+                for f in fuel_type_dist
+            ],
+            'body_types': [
+                {
+                    'type': b[0],
+                    'count': b[1],
+                    'avg_price': float(b[2]) if b[2] else None
+                }
+                for b in body_type_dist
+            ],
+            'transmissions': [
+                {'type': t[0], 'count': t[1]}
+                for t in transmission_dist
+            ],
+            'years': [
+                {
+                    'year': y[0],
+                    'count': y[1],
+                    'avg_price': float(y[2]) if y[2] else None,
+                    'avg_mileage': float(y[3]) if y[3] else None
+                }
+                for y in year_dist
+            ],
+            'price_ranges': [
+                {'range': p[1], 'count': p[0]}
+                for p in price_ranges
+            ],
+            'mileage_by_year': [
+                {
+                    'year': m[0],
+                    'avg_mileage': float(m[1]) if m[1] else None,
+                    'min_mileage': float(m[2]) if m[2] else None,
+                    'max_mileage': float(m[3]) if m[3] else None
+                }
+                for m in mileage_by_year
+            ],
+            'models_by_brand': models_by_brand,
+            'price_trend': [
+                {
+                    'date': str(t[0]),
+                    'avg_price': float(t[1]) if t[1] else None,
+                    'listings': t[2]
+                }
+                for t in reversed(list(price_trend))
+            ],
+            'horsepower_ranges': [
+                {'range': h[1], 'count': h[0]}
+                for h in hp_ranges
+            ]
+        }
+    }), 200
+
+# ============================================
 # ERROR HANDLERS
 # ============================================
 
