@@ -29,5 +29,7 @@ README.md
 docker-compose.yml
 docker-compose.prod.yml
 .github/
+# Only exclude very large model files (h5 format)
+# .pkl files MUST be included for ML model to work
 models/*.h5
 logs/*.log

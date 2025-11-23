@@ -29,7 +29,9 @@ COPY . .
 
 # Create directories for models and logs
 RUN mkdir -p /app/models /app/logs && \
-    chmod -R 777 /app/logs
+    chmod -R 777 /app/logs && \
+    echo "Checking model files:" && \
+    ls -lh /app/models/ || echo "Models directory is empty"
 
 # Expose port
 EXPOSE 5000

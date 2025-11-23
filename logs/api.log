@@ -10234,3 +10234,7 @@ TypeError: Function.__init__() got an unexpected keyword argument 'else_'
 2025-11-23 00:54:10 [INFO] [app.ml.predictor] [Worker-32160] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../../models\best_model_catboost.pkl
 2025-11-23 00:54:10 [INFO] [app.ml.predictor] [Worker-32160] Model ready: v1.0.0-catboost
 2025-11-23 00:54:10 [INFO] [prediction_worker] [Worker-32160] Completed job 8575b952-1649-4cdb-b5bc-04bd8099497a
+2025-11-23 01:48:03 [INFO] [app.main] [Worker-35176] [1763858883716] GET /health from 127.0.0.1 User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) W
+2025-11-23 01:48:03 [INFO] [app.main] [Worker-35176] [1763858883716] Response: 200 Duration: 0.004s Size: 380 bytes
+2025-11-23 01:49:17 [INFO] [app.main] [Worker-35176] [1763858957523] GET /health from 127.0.0.1 User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) W
+2025-11-23 01:49:17 [INFO] [app.main] [Worker-35176] [1763858957523] Response: 200 Duration: 0.001s Size: 380 bytes
