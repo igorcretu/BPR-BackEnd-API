@@ -27,11 +27,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create directories for models and logs
-RUN mkdir -p /app/models /app/logs && \
+# Create logs directory and verify models
+RUN mkdir -p /app/logs && \
     chmod -R 777 /app/logs && \
-    echo "Checking model files:" && \
-    ls -lh /app/models/ || echo "Models directory is empty"
+    echo "Checking model files in app/models:" && \
+    ls -lh /app/app/models/ || echo "Models directory is empty"
 
 # Expose port
 EXPOSE 5000
