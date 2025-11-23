@@ -1213,10 +1213,17 @@ def get_market_statistics():
                 }
                 for y in year_dist
             ],
-            'price_ranges': [
+            'price_ranges': sorted([
                 {'range': p[1], 'count': p[0]}
                 for p in price_ranges
-            ],
+            ], key=lambda x: {
+                'Under 100k': 0,
+                '100k-200k': 1,
+                '200k-300k': 2,
+                '300k-500k': 3,
+                '500k-1M': 4,
+                'Over 1M': 5
+            }.get(x['range'], 999)),
             'mileage_by_year': [
                 {
                     'year': m[0],
@@ -1235,10 +1242,16 @@ def get_market_statistics():
                 }
                 for t in reversed(list(price_trend))
             ],
-            'horsepower_ranges': [
+            'horsepower_ranges': sorted([
                 {'range': h[1], 'count': h[0]}
                 for h in hp_ranges
-            ]
+            ], key=lambda x: {
+                'Under 100 HP': 0,
+                '100-150 HP': 1,
+                '150-200 HP': 2,
+                '200-300 HP': 3,
+                'Over 300 HP': 4
+            }.get(x['range'], 999))
             }
         }), 200
     
