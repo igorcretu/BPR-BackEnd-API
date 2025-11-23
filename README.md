@@ -13,30 +13,38 @@ A powerful Flask-based REST API providing car listings, advanced filtering, and 
 
 ### Core API Functionality
 - **RESTful API**: Well-structured endpoints following REST principles
-- **Car Listings**: Comprehensive database of 30,000+ Danish car listings
-- **Advanced Filtering**: Multi-parameter filtering (brand, fuel type, price, year, etc.)
-- **Full-Text Search**: Search across brand, model, variant, and title fields
-- **Pagination**: Efficient data retrieval with customizable page sizes
-- **ML Price Predictions**: TensorFlow-powered price estimation
+- **Car Listings**: Comprehensive database of 28,384 Danish car listings from bilbasen.dk
+- **Advanced Filtering**: Multi-parameter filtering (brand, fuel type, transmission, body type, price, year, mileage, etc.)
+- **Full-Text Search**: Search across brand, model, variant, and title fields with PostgreSQL full-text search
+- **Pagination**: Efficient data retrieval with customizable page sizes (default: 30 items/page)
+- **Market Statistics**: Aggregate statistics for price distribution, brand popularity, fuel types, body types
+- **ML Price Predictions**: XGBoost/CatBoost-powered price estimation with 85-90% R² score
 
 ### Database Management
-- **PostgreSQL 16**: Robust relational database with JSONB support
-- **SQLAlchemy ORM**: Type-safe database operations
-- **Connection Pooling**: Optimized database connections
-- **Migrations**: Structured schema management
+- **PostgreSQL 16**: Robust relational database with full-text search and UUID support
+- **Standardized Data**: 7 fuel types, 9 body types, 3 transmissions, 4 drive types
+- **Direct SQL Operations**: psycopg2 for high-performance queries and bulk operations
+- **Connection Pooling**: Optimized database connections with retry logic
+- **Data Quality**: Clean, validated data with comprehensive field coverage (50+ attributes per car)
 
 ### Machine Learning
-- **TensorFlow/Keras Models**: Trained on historical Danish car market data
-- **Asynchronous Predictions**: Queue-based processing for scalability
-- **Confidence Intervals**: Statistical confidence ranges for predictions
-- **Feature Engineering**: Smart handling of categorical and numerical features
+- **Multiple Models**: XGBoost, CatBoost, LightGBM, Random Forest trained on 28,000+ cars
+- **High Accuracy**: 85-90% R² score, MAE ~30,000-40,000 DKK
+- **Feature Engineering**: 25+ features including age, mileage_per_year, power_to_weight ratio
+- **Categorical Encoding**: Label encoding for brands, fuel types, transmissions, body types, drive types
+- **Confidence Scores**: Predictions include confidence percentage (70-95%) and price ranges
+- **Smart Defaults**: Handles missing data (new cars with 0 mileage, electric cars with automatic transmission)
+- **Fallback Heuristics**: Rule-based predictions when ML model unavailable
 
 ### DevOps & Deployment
-- **Docker Support**: Containerized deployment
-- **Docker Compose**: Multi-container orchestration
-- **Cloudflare Tunnels**: Secure public access without port forwarding
-- **Health Checks**: API health monitoring endpoints
-- **Comprehensive Logging**: Rotating file logs with different severity levels
+- **Docker Support**: Containerized deployment with multi-stage builds
+- **Docker Compose**: Production and development configurations
+- **Cloudflare Tunnels**: Secure public HTTPS access (https://test.bachelorproject26.site)
+- **GitHub Actions**: CI/CD pipeline for automated deployment to Raspberry Pi
+- **Health Checks**: API health monitoring at `/api/health` endpoint
+- **Comprehensive Logging**: Rotating file logs with request ID tracking
+- **Error Handling**: Consistent error responses with detailed messages
+- **CORS**: Configured for frontend domain access
 
 ## 🛠️ Technology Stack
 
@@ -714,27 +722,82 @@ curl -X POST http://localhost:8000/api/predict \
 3. Update this README
 4. Add tests
 
+## 📊 Data Standardization
+
+### Categorical Values
+The database uses standardized English labels for consistent filtering and predictions:
+
+**Fuel Types (7 categories):**
+- Electricity (11,301 cars)
+- Petrol (11,004 cars)
+- Diesel (3,900 cars)
+- Plug-in Hybrid - Petrol (1,588 cars)
+- Hybrid - Petrol (449 cars)
+- Plug-in Hybrid - Diesel (141 cars)
+- Hybrid - Diesel (1 car)
+
+**Body Types (9 categories):**
+- Hatchback (10,366 cars)
+- SUV (10,297 cars)
+- Station Wagon (3,381 cars)
+- Sedan (1,514 cars)
+- Van (1,406 cars)
+- Cabriolet (855 cars)
+- Coupe (448 cars)
+- Pickup (4 cars)
+
+**Transmissions (3 categories):**
+- Automatic
+- Manual
+- Semi-Automatic
+
+**Drive Types (4 categories):**
+- Front-Wheel Drive
+- Rear-Wheel Drive
+- All-Wheel Drive
+- 4WD
+
+### Data Quality Rules
+1. **Electric Cars**: All electric vehicles (fuel_type='Electricity') have transmission='Automatic'
+2. **New Cars**: Cars with null mileage are set to 0 for prediction
+3. **Missing Values**: Smart defaults applied for optional fields (horsepower, doors, etc.)
+4. **Mapping**: Predictor.py maps database values to ML model format (e.g., 'Electricity' → 'Electric')
+
 ## 🐛 Common Issues & Solutions
 
+### Issue: 400 Bad Request on /api/predict
+**Solution**: Check predictor.py mappings match database standardized values
+
+### Issue: Database shows wrong fuel type count
+**Solution**: Run data cleanup script to fix variant values (Electric → Electricity)
+
+### Issue: Prediction fails for new cars
+**Solution**: Mileage=0 logic implemented in main.py for null mileage values
+
 ### Issue: Database connection failed
-**Solution**: Check DATABASE_URL and PostgreSQL service status
+**Solution**: Check DATABASE_URL, PostgreSQL service, and SSH tunnel (port 5432)
 
 ### Issue: ML model not loading
-**Solution**: Verify MODEL_PATH and ensure model files exist
+**Solution**: Verify models/ directory contains .pkl files and model_metadata.json
 
 ### Issue: CORS errors
-**Solution**: Update CORS_ORIGINS environment variable
+**Solution**: Update CORS_ORIGINS environment variable with frontend domain
 
-### Issue: Out of memory
-**Solution**: Reduce worker count or increase system RAM
+### Issue: Out of memory on Raspberry Pi
+**Solution**: Reduce worker count or upgrade to 8GB RAM model
+
+## 🔗 Related Repositories
+
+- **Frontend**: [BPR-FrontEnd](https://github.com/igorcretu/BPR-FrontEnd) - React TypeScript web application
+- **ML Model**: [BPR-BackEnd-ML-Model](https://github.com/igorcretu/BPR-BackEnd-ML-Model) - Data scraping, cleaning, and model training
 
 ## 📚 Additional Resources
 
 - [Flask Documentation](https://flask.palletsprojects.com/)
-- [SQLAlchemy Docs](https://www.sqlalchemy.org/)
-- [TensorFlow Guide](https://www.tensorflow.org/guide)
 - [PostgreSQL Manual](https://www.postgresql.org/docs/)
+- [XGBoost Documentation](https://xgboost.readthedocs.io/)
 - [Docker Docs](https://docs.docker.com/)
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
 
 ## 👥 Contributing
 
