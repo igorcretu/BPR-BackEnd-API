@@ -1110,8 +1110,8 @@ def get_market_statistics():
             Car.year >= current_year - 10
         ).group_by(Car.year).order_by(Car.year).all()
         
-        # Top models by brand (top 5 brands)
-        top_brands = [b[0] for b in brand_stats[:5]]
+        # Top models by brand (top 6 brands)
+        top_brands = [b[0] for b in brand_stats[:6]]
         models_by_brand = {}
         for brand in top_brands:
             models = db.session.query(
