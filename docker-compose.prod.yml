@@ -46,7 +46,6 @@ services:
     networks:
       - bpr-network
     volumes:
-      - ./models:/app/models
       - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
