@@ -177,7 +177,8 @@ class CarPricePredictor:
         age = current_year - year
         features['age'] = max(0, age)
         
-        mileage = int(car_features.get('mileage', 50000))
+        # Use 0 for new cars or null mileage
+        mileage = int(car_features.get('mileage', 0))
         features['mileage_numeric'] = mileage
         features['horsepower'] = car_features.get('horsepower') or 150
         features['torque_nm'] = car_features.get('torque_nm') or 200

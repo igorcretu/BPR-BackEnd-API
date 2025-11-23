@@ -513,8 +513,13 @@ def predict_price():
         raise ValueError('Year must be an integer')
     validate_year(data['year'])
     
+    # Handle mileage - set to 0 for new cars or null values
     try:
-        data['mileage'] = int(data['mileage'])
+        mileage_value = data.get('mileage')
+        if mileage_value is None or mileage_value == '' or mileage_value == 'N/A':
+            data['mileage'] = 0
+        else:
+            data['mileage'] = int(mileage_value)
     except (TypeError, ValueError):
         raise ValueError('Mileage must be an integer')
     validate_non_negative_number('mileage', data['mileage'])
