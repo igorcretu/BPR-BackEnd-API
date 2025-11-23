@@ -30,26 +30,46 @@ class CarPricePredictor:
         self.model_loaded = False
         self.model_dir = os.path.join(os.path.dirname(__file__), '../models')
         
+        # Updated mappings to match standardized database values
         self.fuel_type_mapping = {
+            # Old Danish values
             'El': 'Electric', 'Benzin': 'Petrol', 'Diesel': 'Diesel',
             'Plug-in hybrid Benzin': 'Plugin-Hybrid', 'Plug-in hybrid Diesel': 'Plugin-Hybrid',
             'Hybrid Benzin': 'Hybrid', 'Hybrid Diesel': 'Hybrid',
-            'Electric': 'Electric', 'Petrol': 'Petrol', 'Plugin-Hybrid': 'Plugin-Hybrid',
-            'Hybrid': 'Hybrid'
+            # New standardized values (exact match)
+            'Electricity': 'Electric',
+            'Petrol': 'Petrol',
+            'Diesel': 'Diesel',
+            'Hybrid - Petrol': 'Hybrid',
+            'Hybrid - Diesel': 'Hybrid',
+            'Plug-in Hybrid - Petrol': 'Plugin-Hybrid',
+            'Plug-in Hybrid - Diesel': 'Plugin-Hybrid',
+            # Fallback values
+            'Electric': 'Electric', 'Plugin-Hybrid': 'Plugin-Hybrid', 'Hybrid': 'Hybrid'
         }
         self.transmission_mapping = {
             'Automatisk': 'Automatic', 'Manuel': 'Manual', 'Automatgear': 'Automatic',
             'Automatic': 'Automatic', 'Manual': 'Manual', 'Semi-Automatic': 'Semi-Automatic'
         }
         self.body_type_mapping = {
+            # Standardized values
             'SUV': 'SUV', 'CUV': 'SUV', 'Mikro': 'Hatchback', 'Halvkombi': 'Hatchback',
             'St.car': 'Wagon', 'Sedan': 'Sedan', 'Coupe': 'Coupe', 'MPV': 'Van',
             'Van': 'Van', 'Cabriolet': 'Convertible', 'Personbil': 'Sedan',
-            'Hatchback': 'Hatchback', 'Wagon': 'Wagon', 'Convertible': 'Convertible',
+            'Hatchback': 'Hatchback', 
+            'Station Wagon': 'Wagon',  # Added for new standardized value
+            'Wagon': 'Wagon', 
+            'Convertible': 'Convertible',
             'Pickup': 'Pickup'
         }
         self.drive_type_mapping = {
+            # Old Danish values
             'Forhjulstræk': 'FWD', 'Baghjulstræk': 'RWD', 'Firehjulstræk': 'AWD',
+            # Standardized English values
+            'Front-Wheel Drive': 'FWD',
+            'Rear-Wheel Drive': 'RWD',
+            'All-Wheel Drive': 'AWD',
+            # Fallback abbreviations
             '4WD': 'AWD', 'FWD': 'FWD', 'RWD': 'RWD', 'AWD': 'AWD'
         }
         self.premium_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Porsche', 
