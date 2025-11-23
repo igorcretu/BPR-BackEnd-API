@@ -28,7 +28,7 @@ class CarPricePredictor:
         self.label_encoders = {}
         self.metadata = {}
         self.model_loaded = False
-        self.model_dir = os.path.join(os.path.dirname(__file__), '../../models')
+        self.model_dir = os.path.join(os.path.dirname(__file__), '../models')
         
         self.fuel_type_mapping = {
             'El': 'Electric', 'Benzin': 'Petrol', 'Diesel': 'Diesel',
