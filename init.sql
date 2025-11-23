@@ -9,63 +9,90 @@ CREATE TYPE transmission_enum AS ENUM ('Manual', 'Automatic', 'Semi-Automatic');
 CREATE TYPE body_type_enum AS ENUM ('Sedan', 'Hatchback', 'SUV', 'Coupe', 'Wagon', 'Van', 'Convertible', 'Pickup', 'MPV');
 CREATE TYPE drive_type_enum AS ENUM ('FWD', 'RWD', 'AWD');
 
--- Main cars table
+-- Main cars table (all columns from book1.csv)
 CREATE TABLE IF NOT EXISTS cars (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    -- Core identification
     url TEXT,
     brand VARCHAR(100) NOT NULL,
     model VARCHAR(100) NOT NULL,
     variant VARCHAR(200),
     title VARCHAR(300),
     description TEXT,
+    
+    -- Pricing
     price DECIMAL(12,2) NOT NULL CHECK (price >= 0),
     new_price DECIMAL(12,2),
+    
+    -- Year/Date information
     model_year INTEGER CHECK (model_year >= 1900 AND model_year <= EXTRACT(YEAR FROM CURRENT_DATE) + 1),
     year INTEGER CHECK (year >= 1900 AND year <= EXTRACT(YEAR FROM CURRENT_DATE) + 1),
     first_registration VARCHAR(20),
     production_date VARCHAR(20),
+    
+    -- Basic specs
     mileage INTEGER CHECK (mileage >= 0),
     fuel_type VARCHAR(50),
     transmission VARCHAR(50),
     gear_count INTEGER,
     cylinders INTEGER,
+    
+    -- Power & Performance
     horsepower INTEGER,
     torque_nm INTEGER,
     acceleration DECIMAL(4,1),
     top_speed INTEGER,
+    
+    -- Electric/Hybrid specs
     range_km INTEGER,
     battery_capacity DECIMAL(5,1),
     energy_consumption INTEGER,
     home_charging_ac VARCHAR(50),
     fast_charging_dc VARCHAR(50),
     charging_time_dc VARCHAR(50),
+    
+    -- Fuel consumption & emissions
     fuel_consumption VARCHAR(50),
     co2_emission VARCHAR(50),
     euro_norm VARCHAR(10),
     tank_capacity INTEGER,
+    
+    -- Physical dimensions
     body_type VARCHAR(50),
     weight INTEGER,
     width INTEGER,
     length INTEGER,
     height INTEGER,
     trunk_size INTEGER,
+    
+    -- Capacity & towing
     load_capacity INTEGER,
     towing_capacity INTEGER,
     max_towing_weight INTEGER,
+    
+    -- Drivetrain & Safety
     drive_type VARCHAR(50),
     abs_brakes BOOLEAN DEFAULT true,
     esp BOOLEAN DEFAULT true,
     airbags INTEGER,
+    
+    -- Configuration
     doors INTEGER CHECK (doors >= 2 AND doors <= 5),
     seats INTEGER CHECK (seats >= 2 AND seats <= 9),
+    
+    -- Appearance & Features
     color VARCHAR(100),
     category VARCHAR(50),
     equipment TEXT,
     periodic_tax VARCHAR(50),
+    
+    -- Additional
     engine_size DECIMAL(3,1),
     source_url TEXT,
     location VARCHAR(200),
     dealer_name VARCHAR(300),
+    
+    -- Timestamps
     listing_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
