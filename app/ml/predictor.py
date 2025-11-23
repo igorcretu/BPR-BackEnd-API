@@ -146,8 +146,31 @@ class CarPricePredictor:
             predicted_price = float(self.model.predict(feature_vector_scaled)[0])
             predicted_price = max(10000, min(predicted_price, 5000000))
             
+            # Calculate dynamic confidence based on car characteristics
             base_r2 = self.metadata.get('test_r2', 0.8)
-            confidence = min(95, max(70, base_r2 * 100 + 5))
+            base_confidence = min(95, max(70, base_r2 * 100 + 5))
+            
+            # Adjust confidence based on car age and features
+            year = int(car_features.get('year', datetime.now().year))
+            current_year = datetime.now().year
+            age = current_year - year
+            
+            # Reduce confidence for classic/vintage cars (pre-2000)
+            if year < 2000:
+                age_penalty = min(40, (2000 - year) * 2)  # Up to 40% penalty
+                confidence = max(30, base_confidence - age_penalty)
+                warning = "⚠️ Classic/vintage car: Prediction may not reflect collector value"
+            elif year < 2010:
+                confidence = base_confidence - 10  # Slight reduction for older cars
+                warning = None
+            else:
+                confidence = base_confidence
+                # Further adjust based on data completeness
+                mileage = car_features.get('mileage')
+                horsepower = car_features.get('horsepower')
+                if not mileage or not horsepower:
+                    confidence = max(70, confidence - 5)
+                warning = None
             
             mae = self.metadata.get('test_mae', predicted_price * 0.1)
             price_range = {
@@ -157,13 +180,18 @@ class CarPricePredictor:
             
             similar_count = self._estimate_similar_cars(car_features)
             
-            return {
+            result = {
                 'predicted_price': round(predicted_price, 2),
                 'confidence': round(confidence, 2),
                 'price_range': price_range,
                 'model_version': self.model_version,
                 'similar_cars_count': similar_count
             }
+            
+            if warning:
+                result['warning'] = warning
+            
+            return result
         except Exception as e:
             logger.error(f"Model prediction failed: {e}, falling back to heuristic")
             return self._predict_heuristic(car_features)
