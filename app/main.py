@@ -750,14 +750,20 @@ def get_car_image(car_id):
     # Extract just the filename from the path (e.g., "images/6660295.jpg" -> "6660295.jpg")
     filename = os.path.basename(car.image_path)
     
+    # Get the current file location and navigate to the images
+    # Structure: BPR-BackEnd-API/app/main.py -> ../../BPR-BackEnd-ML-Model/bilbasen_scrape/images/
+    current_dir = os.path.dirname(__file__)  # BPR-BackEnd-API/app/
+    api_root = os.path.dirname(current_dir)  # BPR-BackEnd-API/
+    project_root = os.path.dirname(api_root)  # parent directory (contains both BPR-BackEnd-API and BPR-BackEnd-ML-Model)
+    
     possible_paths = [
-        # Raspberry Pi production: /home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/
+        # From project root to ML-Model images
+        os.path.join(project_root, 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
+        # Absolute path on Raspberry Pi
         f'/home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/{filename}',
-        # Relative path from API folder
-        os.path.join(os.path.dirname(__file__), '..', '..', 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
-        # Original location (API/images/)
-        os.path.join(os.path.dirname(__file__), '..', car.image_path),
-        os.path.join(os.path.dirname(__file__), '..', 'images', filename),
+        # Legacy paths
+        os.path.join(current_dir, '..', car.image_path),
+        os.path.join(current_dir, '..', 'images', filename),
     ]
     
     image_full_path = None
