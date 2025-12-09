@@ -28,6 +28,9 @@ from sqlalchemy.exc import SQLAlchemyError
 import os
 import logging
 import sys
+import subprocess
+import threading
+import json
 from datetime import datetime
 import time
 import traceback
@@ -268,8 +271,6 @@ def handle_errors(f):
 def health_check():
     """Health check endpoint with detailed status"""
     from app.models import MLModel, ScrapingLog, ModelTrainingRun
-    import subprocess
-    import json
     
     logger.debug(f"[{g.request_id}] Health check requested")
     
