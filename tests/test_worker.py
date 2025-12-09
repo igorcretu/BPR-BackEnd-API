@@ -119,6 +119,83 @@ class TestWorkerFunctions:
             # Error should be truncated to 4000 characters
             assert len(job.error_message) <= 4000
             assert job.status == 'failed'
+    
+    def test_process_job_with_predictor_failure(self, app):
+        """Test processing job when predictor fails."""
+        from app.worker import _process_job
+        from app.models import db
+        from unittest.mock import patch
+        
+        with app.app_context():
+            job = PredictionJob(
+                payload={
+                    'brand': 'Toyota',
+                    'model': 'Corolla',
+                    'year': 2020,
+                    'mileage': 45000,
+                    'fuel_type': 'Benzin',
+                    'transmission': 'Automatisk',
+                    'body_type': 'Sedan'
+                },
+                priority=100,
+                status='pending',
+                attempts=0
+            )
+            db.session.add(job)
+            db.session.commit()
+            job_id = job.id
+            
+            # Mock predictor to raise an exception
+            with patch('app.worker._ensure_predictor') as mock_predictor:
+                mock_instance = Mock()
+                mock_instance.predict.side_effect = RuntimeError("Prediction failed")
+                mock_predictor.return_value = mock_instance
+                
+                _process_job(job)
+                
+                # Job should be marked as pending for retry (first attempt)
+                processed_job = db.session.get(PredictionJob, job_id)
+                assert processed_job.status == 'pending'
+                assert processed_job.attempts == 1
+                assert processed_job.error_message is not None
+    
+    def test_process_job_max_attempts_exceeded(self, app):
+        """Test processing job when max attempts exceeded."""
+        from app.worker import _process_job, MAX_ATTEMPTS
+        from app.models import db
+        from unittest.mock import patch
+        
+        with app.app_context():
+            job = PredictionJob(
+                payload={
+                    'brand': 'Toyota',
+                    'model': 'Corolla',
+                    'year': 2020,
+                    'mileage': 45000,
+                    'fuel_type': 'Benzin',
+                    'transmission': 'Automatisk',
+                    'body_type': 'Sedan'
+                },
+                priority=100,
+                status='pending',
+                attempts=MAX_ATTEMPTS - 1  # Set to one less than max
+            )
+            db.session.add(job)
+            db.session.commit()
+            job_id = job.id
+            
+            # Mock predictor to raise an exception
+            with patch('app.worker._ensure_predictor') as mock_predictor:
+                mock_instance = Mock()
+                mock_instance.predict.side_effect = RuntimeError("Prediction failed")
+                mock_predictor.return_value = mock_instance
+                
+                _process_job(job)
+                
+                # Job should be marked as failed after max attempts
+                processed_job = db.session.get(PredictionJob, job_id)
+                assert processed_job.status == 'failed'
+                assert processed_job.attempts == MAX_ATTEMPTS
 
 
 class TestPredictionQueueService:

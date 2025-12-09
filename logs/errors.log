@@ -11244,3 +11244,503 @@ TypeError: Function.__init__() got an unexpected keyword argument 'else_'
 2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827024] Response: 200 Duration: 0.017s Size: 544 bytes
 2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827042] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
 2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827042] Response: 200 Duration: 0.017s Size: 544 bytes
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] ================================================================================
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] INITIALIZING BPR BACKEND API
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] ================================================================================
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] Database URL configured: localhost
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] Database initialized with connection pooling
+2025-12-09 16:08:46 [INFO] [app.main] [Worker-15028] Initializing ML predictor...
+2025-12-09 16:08:46 [INFO] [app.ml.predictor] [Worker-15028] Loaded metadata: CatBoost
+2025-12-09 16:08:50 [INFO] [app.ml.predictor] [Worker-15028] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:08:50 [INFO] [app.ml.predictor] [Worker-15028] Model ready: v1.0.0-catboost
+2025-12-09 16:08:50 [INFO] [app.main] [Worker-15028] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-09 16:08:50 [INFO] [app.main] [Worker-15028] Application loaded by WSGI server
+2025-12-09 16:08:50 [INFO] [app.main] [Worker-15028] Configuration: {}
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] ================================================================================
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] INITIALIZING BPR BACKEND API
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] ================================================================================
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] Database URL configured: localhost
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] Database initialized with connection pooling
+2025-12-09 16:10:51 [INFO] [app.main] [Worker-35376] Initializing ML predictor...
+2025-12-09 16:10:51 [INFO] [app.ml.predictor] [Worker-35376] Loaded metadata: CatBoost
+2025-12-09 16:10:55 [INFO] [app.ml.predictor] [Worker-35376] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:10:55 [INFO] [app.ml.predictor] [Worker-35376] Model ready: v1.0.0-catboost
+2025-12-09 16:10:55 [INFO] [app.main] [Worker-35376] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-09 16:10:55 [INFO] [app.main] [Worker-35376] Application loaded by WSGI server
+2025-12-09 16:10:55 [INFO] [app.main] [Worker-35376] Configuration: {}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056200] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056200] Request body: {'body_type': 'Sedan', 'brand': 'BMW', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': '320d', 'price': 250000.0, 'transmission': 'Automatic', 'year': 2020}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056200] Creating new car: BMW 320d
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056200] Successfully created car with ID: 8880f38c-9970-492f-b4a6-e8afde459e77
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056200] Response: 201 Duration: 0.071s Size: 1261 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056308] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056308] Request body: {'brand': 'BMW', 'model': '320d'}
+2025-12-09 16:10:56 [WARNING] [app.main] [Worker-35376] [1765293056308] Validation error in create_car: Missing required fields: year, mileage, fuel_type, transmission, body_type, price
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056308] Response: 400 Duration: 0.002s Size: 110 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056345] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056345] Request body: {'body_type': 'Sedan', 'brand': 'BMW', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': '320d', 'price': 250000.0, 'transmission': 'Automatic', 'year': 'not_a_year'}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056345] Creating new car: BMW 320d
+2025-12-09 16:10:56 [WARNING] [app.main] [Worker-35376] [1765293056345] Validation error in create_car: Year must be an integer
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056345] Response: 400 Duration: 0.001s Size: 52 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056386] GET /api/cars/test-car-123 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056386] Fetching car with ID: test-car-123
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056386] Successfully retrieved car test-car-123
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056386] Response: 200 Duration: 0.007s Size: 1211 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056424] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056424] Request body: {'body_type': 'Sedan', 'brand': 'Audi', 'fuel_type': 'Diesel', 'mileage': 60000, 'model': 'A4', 'transmission': 'Automatic', 'year': 2019}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056424] Price prediction requested for: Audi A4 2019
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056424] Prediction completed in 0.006s: 299500.94 DKK (confidence: 84.66%)
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056424] Response: 200 Duration: 0.012s Size: 331 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056466] GET /api/queue/job/nonexistent-id from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [WARNING] [app.main] [Worker-35376] [1765293056466] 404 error: /api/queue/job/nonexistent-id
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056466] Response: 404 Duration: 0.002s Size: 86 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056499] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056499] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('fuel_type', 'Diesel'), ('min_year', '2018')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056499] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056499] Response: 200 Duration: 0.028s Size: 127 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056559] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056559] Fetching cars with filters: ImmutableMultiDict([('search', 'Toyota')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056559] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056559] Response: 200 Duration: 0.027s Size: 1314 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056623] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056623] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'price'), ('sort_order', 'desc')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056623] Found 3 cars, returning page 1/1 with 3 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056623] Response: 200 Duration: 0.011s Size: 3762 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056664] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056664] Fetching brands
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056664] Found 1 brands
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056664] Response: 200 Duration: 0.004s Size: 56 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056698] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056698] Request body: {'body_type': 'Sedan', 'brand': 'Mercedes', 'doors': 4, 'engine_size': 2.0, 'fuel_type': 'Diesel', 'horsepower': 200, 'mileage': 30000, 'model': 'C-Class', 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056698] Price prediction requested for: Mercedes C-Class 2021
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056698] Prediction completed in 0.003s: 440601.22 DKK (confidence: 89.66%)
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056698] Response: 200 Duration: 0.008s Size: 394 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056734] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056734] Request body: {'body_type': 'Sedan', 'brand': 'Mercedes', 'fuel_type': 'Diesel', 'mileage': 30000, 'model': 'C-Class', 'transmission': 'Automatic', 'year': 'invalid'}
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056734] Price prediction requested for: Mercedes C-Class invalid
+2025-12-09 16:10:56 [WARNING] [app.main] [Worker-35376] [1765293056734] Validation error in predict_price: Year must be an integer
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056734] Response: 400 Duration: 0.002s Size: 52 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056764] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056764] Fetching cars with filters: ImmutableMultiDict([('page', '999999')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056764] Found 0 cars, returning page 999999/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056764] Response: 200 Duration: 0.004s Size: 131 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056800] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056800] Fetching cars with filters: ImmutableMultiDict([('per_page', '2')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056800] Found 5 cars, returning page 1/3 with 2 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056800] Response: 200 Duration: 0.005s Size: 2548 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056835] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056835] Fetching market statistics
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056835] Statistics: 1 total cars
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056835] Response: 200 Duration: 0.008s Size: 217 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056874] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056874] Fetching cars with filters: ImmutableMultiDict([])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056874] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056874] Response: 200 Duration: 0.004s Size: 127 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056908] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056908] Fetching cars with filters: ImmutableMultiDict([])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056908] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056908] Response: 200 Duration: 0.005s Size: 127 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056946] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056946] Fetching cars with filters: ImmutableMultiDict([('page', '1'), ('per_page', '10')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056946] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056946] Response: 200 Duration: 0.005s Size: 127 bytes
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056981] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056981] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('fuel_type', 'Benzin')])
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056981] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:56 [INFO] [app.main] [Worker-35376] [1765293056981] Response: 200 Duration: 0.007s Size: 127 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057026] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057026] Fetching cars with filters: ImmutableMultiDict([('q', 'Toyota')])
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057026] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057026] Response: 200 Duration: 0.033s Size: 127 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057090] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057090] Fetching cars with filters: ImmutableMultiDict([('price_min', '100000'), ('price_max', '500000')])
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057090] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057090] Response: 200 Duration: 0.031s Size: 127 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057155] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057155] Fetching cars with filters: ImmutableMultiDict([('year_min', '2018'), ('year_max', '2022')])
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057155] Found 0 cars, returning page 1/0 with 0 items
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057155] Response: 200 Duration: 0.028s Size: 127 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057214] GET /api/cars/invalid-id-999999 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057214] Fetching car with ID: invalid-id-999999
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057214] 404 error: /api/cars/invalid-id-999999
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057214] Response: 404 Duration: 0.007s Size: 84 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057249] GET /api/cars/test-id from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057249] Fetching car with ID: test-id
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057249] 404 error: /api/cars/test-id
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057249] Response: 404 Duration: 0.003s Size: 74 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057288] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057288] Fetching brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057288] Found 0 brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057288] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057323] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057323] Fetching brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057323] Found 0 brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057323] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057354] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057354] Fetching brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057354] Found 0 brands
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057354] Response: 200 Duration: 0.002s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057384] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057384] Fetching filter options
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057384] Retrieved all filter options successfully
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057384] Response: 200 Duration: 0.015s Size: 210 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057428] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057428] Fetching filter options
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057428] Retrieved all filter options successfully
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057428] Response: 200 Duration: 0.006s Size: 210 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057461] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057461] Fetching filter options
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057461] Retrieved all filter options successfully
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057461] Response: 200 Duration: 0.008s Size: 210 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057501] GET /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057501] 405 error: GET /api/predict
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057501] Response: 405 Duration: 0.001s Size: 84 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057531] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057531] Request body: {'brand': 'Toyota', 'model': 'Camry', 'year': 2020, 'mileage': 50000, 'fuel_type': 'Benzin', 'transmission': 'Automatisk', 'body_type': 'Sedan', 'horsepower': 200, 'engine_size': 2.5, 'doors': 4, 'color': 'Black'}
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057531] Price prediction requested for: Toyota Camry 2020
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057531] Prediction completed in 0.005s: 323902.38 DKK (confidence: 89.66%)
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057531] Response: 200 Duration: 0.008s Size: 398 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057569] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057569] Validation error in predict_price: Request body must be valid JSON
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057569] Response: 400 Duration: 0.001s Size: 60 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057599] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057599] Validation error in predict_price: Missing required fields: brand, model, year, mileage, fuel_type, transmission, body_type
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057599] Response: 400 Duration: 0.001s Size: 117 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057635] GET /api/health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057635] 404 error: /api/health
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057635] Response: 404 Duration: 0.001s Size: 68 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057665] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057665] Fetching ML models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057665] Found 0 models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057665] Response: 200 Duration: 0.008s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057702] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057702] Fetching ML models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057702] Found 0 models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057702] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057733] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057733] Fetching ML models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057733] Found 0 models
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057733] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057767] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057767] Fetching market statistics
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057767] Statistics: 0 total cars
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057767] Response: 200 Duration: 0.005s Size: 136 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057801] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057801] Fetching market statistics
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057801] Statistics: 0 total cars
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057801] Response: 200 Duration: 0.006s Size: 136 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057836] GET /api/queue/status from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057836] 404 error: /api/queue/status
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057836] Response: 404 Duration: 0.001s Size: 74 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057866] GET /api/queue/job/test-job-123 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057866] 404 error: /api/queue/job/test-job-123
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057866] Response: 404 Duration: 0.001s Size: 84 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057898] GET /api/nonexistent-endpoint from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057898] 404 error: /api/nonexistent-endpoint
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057898] Response: 404 Duration: 0.002s Size: 82 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057929] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057929] Validation error in predict_price: Request body must be valid JSON
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057929] Response: 400 Duration: 0.001s Size: 60 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057959] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057959] Validation error in predict_price: Request body must be valid JSON
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057959] Response: 400 Duration: 0.001s Size: 60 bytes
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057996] PUT /api/cars/4c077040-32e2-4123-b3f6-9d53f353e7ec from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057996] Request body: {'mileage': 60000, 'price': 300000.0}
+2025-12-09 16:10:57 [WARNING] [app.main] [Worker-35376] [1765293057996] 405 error: PUT /api/cars/4c077040-32e2-4123-b3f6-9d53f353e7ec
+2025-12-09 16:10:57 [INFO] [app.main] [Worker-35376] [1765293057996] Response: 405 Duration: 0.002s Size: 118 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058037] DELETE /api/cars/b9ee7db0-7fe7-4347-a5f4-1ef1d64f54e5 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058037] 405 error: DELETE /api/cars/b9ee7db0-7fe7-4347-a5f4-1ef1d64f54e5
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058037] Response: 405 Duration: 0.001s Size: 121 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058065] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058065] Request body: {'body_type': 'Hatchback', 'brand': 'Volkswagen', 'engine_size': 1.4, 'fuel_type': 'Benzin', 'horsepower': 150, 'mileage': 40000, 'model': 'Golf', 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058065] Price prediction requested for: Volkswagen Golf 2019
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058065] Prediction completed in 0.004s: 153758.24 DKK (confidence: 89.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058065] Response: 200 Duration: 0.007s Size: 374 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058102] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058102] Request body: {'body_type': 'Stationcar', 'brand': 'Ford', 'doors': 5, 'fuel_type': 'Diesel', 'horsepower': 120, 'mileage': 70000, 'model': 'Focus', 'seats': 5, 'transmission': 'Automatic', 'year': 2018}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058102] Price prediction requested for: Ford Focus 2018
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058102] Prediction completed in 0.004s: 240418.08 DKK (confidence: 89.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058102] Response: 200 Duration: 0.007s Size: 375 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058138] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058138] Request body: {'body_type': 'Hatchback', 'brand': 'Audi', 'engine_size': 'not_a_number', 'fuel_type': 'Diesel', 'mileage': 30000, 'model': 'A3', 'transmission': 'Automatic', 'year': 2020}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058138] Price prediction requested for: Audi A3 2020
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058138] Validation error in predict_price: engine_size must be numeric
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058138] Response: 400 Duration: 0.003s Size: 56 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058170] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058170] Request body: {'body_type': 'Hatchback', 'brand': 'Seat', 'fuel_type': 'Benzin', 'horsepower': 'invalid', 'mileage': 50000, 'model': 'Leon', 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058170] Price prediction requested for: Seat Leon 2019
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058170] Validation error in predict_price: horsepower must be an integer
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058170] Response: 400 Duration: 0.001s Size: 58 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058200] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058200] Request body: {'body_type': 'Sedan', 'brand': 'Skoda', 'fuel_type': 'Diesel', 'mileage': 20000, 'model': 'Octavia', 'transmission': 'Automatic', 'year': 2020}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058200] Price prediction requested for: Skoda Octavia 2020
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058200] Prediction completed in 0.004s: 360454.75 DKK (confidence: 84.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058200] Response: 200 Duration: 0.008s Size: 336 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058236] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058236] Request body: {'body_type': 'Hatchback', 'brand': 'Renault', 'fuel_type': 'Benzin', 'mileage': 45000, 'model': 'Clio', 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058236] Price prediction requested for: Renault Clio 2019
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058236] Queued prediction job 522c3840-eed7-4c00-80c4-d5c2669c64e7 (mode=client_force_queue, priority=100, position=0)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058236] Response: 202 Duration: 0.013s Size: 403 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058281] GET /api/cars/nonexistent-id-12345 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058281] Fetching car with ID: nonexistent-id-12345
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058281] 404 error: /api/cars/nonexistent-id-12345
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058281] Response: 404 Duration: 0.003s Size: 87 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058320] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058320] Request body: {'body_type': 'Hatchback', 'brand': 'Peugeot', 'color': 'Blue', 'dealer_name': 'Test Dealer', 'doors': 5, 'engine_size': 1.2, 'fuel_type': 'Benzin', 'horsepower': 100, 'location': 'Aarhus', 'mileage': 15000, 'model': '208', 'price': 180000.0, 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058320] Creating new car: Peugeot 208
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058320] Successfully created car with ID: 34c18230-d69a-403c-80f6-11cdb67f7bc3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058320] Response: 201 Duration: 0.007s Size: 1275 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058359] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058359] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('model', 'Camry'), ('fuel_type', 'Benzin'), ('transmission', 'Automatisk'), ('body_type', 'Sedan'), ('min_year', '2015'), ('max_year', '2025'), ('min_price', '100000'), ('max_price', '500000'), ('min_mileage', '0'), ('max_mileage', '100000'), ('page', '1'), ('per_page', '10'), ('sort_by', 'price'), ('sort_order', 'asc')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058359] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058359] Response: 200 Duration: 0.028s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058416] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058416] Request body: {'body_type': 'Hatchback', 'brand': 'Citroen', 'fuel_type': 'Diesel', 'mileage': 'lots', 'model': 'C3', 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058416] Price prediction requested for: Citroen C3 2019
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058416] Validation error in predict_price: Mileage must be an integer
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058416] Response: 400 Duration: 0.002s Size: 55 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058450] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058450] Fetching brands
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058450] Found 1 brands
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058450] Response: 200 Duration: 0.002s Size: 56 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058485] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058485] Fetching ML models
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058485] Found 0 models
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058485] Response: 200 Duration: 0.002s Size: 29 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058519] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058519] Fetching filter options
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058519] Retrieved all filter options successfully
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058519] Response: 200 Duration: 0.006s Size: 339 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058560] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058560] Fetching cars with filters: ImmutableMultiDict([('search', 'Toy')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058560] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058560] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058594] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058594] Request body: {'body_type': 'SUV', 'brand': 'Mazda', 'color': 'Red', 'doors': 5, 'engine_size': 2.0, 'fuel_type': 'Benzin', 'horsepower': 165, 'mileage': 25000, 'model': 'CX-5', 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058594] Price prediction requested for: Mazda CX-5 2021
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058594] Prediction completed in 0.004s: 272287.46 DKK (confidence: 89.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058594] Response: 200 Duration: 0.007s Size: 400 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058632] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058632] Request body: {'body_type': 'Hatchback', 'brand': 'Hyundai', 'fuel_type': 'Diesel', 'mileage': 60000, 'model': 'i30', 'price': 140000.0, 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058632] Creating new car: Hyundai i30
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058632] Successfully created car with ID: bc047c5f-b150-45e0-8517-35b2070a1522
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058632] Response: 201 Duration: 0.007s Size: 1265 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058672] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058672] Fetching cars with filters: ImmutableMultiDict([('min_price', '100000')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058672] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058672] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058677] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058677] Fetching cars with filters: ImmutableMultiDict([('max_price', '500000')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058677] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058677] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058714] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058714] Fetching cars with filters: ImmutableMultiDict([('min_year', '2015')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058714] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058714] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058719] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058719] Fetching cars with filters: ImmutableMultiDict([('max_year', '2025')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058719] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058719] Response: 200 Duration: 0.003s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058750] GET /api/health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [WARNING] [app.main] [Worker-35376] [1765293058750] 404 error: /api/health
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058750] Response: 404 Duration: 0.002s Size: 68 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058784] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058784] Fetching cars with filters: ImmutableMultiDict([('min_mileage', '10000'), ('max_mileage', '100000')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058784] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058784] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058822] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058822] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'price'), ('sort_order', 'asc')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058822] Found 3 cars, returning page 1/1 with 3 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058822] Response: 200 Duration: 0.008s Size: 3762 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058858] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058858] Request body: {'body_type': 'Hatchback', 'brand': 'Kia', 'fuel_type': 'Diesel', 'mileage': 35000, 'model': 'Ceed', 'transmission': 'Manual', 'year': 2020}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058858] Price prediction requested for: Kia Ceed 2020
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058858] Prediction completed in 0.004s: 221838.22 DKK (confidence: 84.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058858] Response: 200 Duration: 0.008s Size: 333 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058894] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058894] Request body: {'body_type': 'SUV', 'brand': 'Nissan', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': 'Qashqai', 'transmission': 'Automatic', 'year': 2019}
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058894] Price prediction requested for: Nissan Qashqai 2019
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058894] Prediction completed in 0.004s: 279529.41 DKK (confidence: 84.66%)
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058894] Response: 200 Duration: 0.008s Size: 334 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058937] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058937] Fetching cars with filters: ImmutableMultiDict([('model', 'Camry')])
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058937] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058937] Response: 200 Duration: 0.026s Size: 1338 bytes
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058998] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:58 [INFO] [app.main] [Worker-35376] [1765293058998] Fetching cars with filters: ImmutableMultiDict([('location', 'Copenhagen')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293058998] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293058998] Response: 200 Duration: 0.024s Size: 1338 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059056] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059056] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'year'), ('sort_order', 'desc')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059056] Found 3 cars, returning page 1/1 with 3 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059056] Response: 200 Duration: 0.008s Size: 3762 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059098] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059098] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'mileage'), ('sort_order', 'asc')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059098] Found 3 cars, returning page 1/1 with 3 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059098] Response: 200 Duration: 0.009s Size: 3762 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059139] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059139] Fetching cars with filters: ImmutableMultiDict([('max_mileage', '100000')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059139] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059139] Response: 200 Duration: 0.005s Size: 1338 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059175] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059175] Fetching cars with filters: ImmutableMultiDict([('min_mileage', '10000')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059175] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059175] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059209] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059209] Request body: {'body_type': 'Sedan', 'brand': 'Honda', 'fuel_type': 'Benzin', 'mileage': 40000, 'model': 'Civic', 'transmission': 'Manual', 'year': 2020}
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059209] Price prediction requested for: Honda Civic 2020
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059209] Prediction completed in 0.004s: 192843.88 DKK (confidence: 84.66%)
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059209] Response: 200 Duration: 0.008s Size: 330 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059249] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059249] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('model', 'Camry'), ('fuel_type', 'Benzin'), ('transmission', 'Automatisk'), ('body_type', 'Sedan'), ('location', 'Aarhus'), ('min_year', '2015'), ('max_year', '2025')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059249] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059249] Response: 200 Duration: 0.027s Size: 1334 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059307] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059307] Request body: {'body_type': 'Sedan', 'brand': 'Subaru', 'fuel_type': 'Benzin', 'mileage': 55000, 'model': 'Impreza', 'price': 'expensive', 'transmission': 'Manual', 'year': 2019}
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059307] Creating new car: Subaru Impreza
+2025-12-09 16:10:59 [WARNING] [app.main] [Worker-35376] [1765293059307] Validation error in create_car: Price must be a number
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059307] Response: 400 Duration: 0.001s Size: 51 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059343] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059343] Request body: {'body_type': 'SUV', 'brand': 'Mitsubishi', 'fuel_type': 'Diesel', 'mileage': -1000, 'model': 'Outlander', 'price': 280000.0, 'transmission': 'Automatic', 'year': 2020}
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059343] Creating new car: Mitsubishi Outlander
+2025-12-09 16:10:59 [WARNING] [app.main] [Worker-35376] [1765293059343] Validation error in create_car: mileage cannot be negative
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059343] Response: 400 Duration: 0.001s Size: 55 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059375] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059375] Request body: {'body_type': 'Sedan', 'brand': 'Lexus', 'doors': 'many', 'fuel_type': 'Benzin', 'mileage': 35000, 'model': 'IS', 'transmission': 'Automatic', 'year': 2019}
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059375] Price prediction requested for: Lexus IS 2019
+2025-12-09 16:10:59 [WARNING] [app.main] [Worker-35376] [1765293059375] Validation error in predict_price: doors must be an integer
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059375] Response: 400 Duration: 0.002s Size: 53 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059406] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059406] Request body: {'body_type': 'SUV', 'brand': 'Jeep', 'fuel_type': 'Benzin', 'mileage': 28000, 'model': 'Cherokee', 'seats': 'lots', 'transmission': 'Automatic', 'year': 2020}
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059406] Price prediction requested for: Jeep Cherokee 2020
+2025-12-09 16:10:59 [WARNING] [app.main] [Worker-35376] [1765293059406] Validation error in predict_price: seats must be an integer
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059406] Response: 400 Duration: 0.002s Size: 53 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059541] GET /api/cars/cd07a73f-5d87-4f61-990d-f4470ef521b3 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059541] Fetching car with ID: cd07a73f-5d87-4f61-990d-f4470ef521b3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059541] Successfully retrieved car cd07a73f-5d87-4f61-990d-f4470ef521b3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059541] Response: 200 Duration: 0.003s Size: 1235 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059575] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059575] Fetching cars with filters: ImmutableMultiDict([('min_price', '100000'), ('max_price', '400000'), ('min_year', '2015'), ('max_year', '2023')])
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059575] Found 1 cars, returning page 1/1 with 1 items
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059575] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059612] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059612] Response: 200 Duration: 0.145s Size: 521 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059792] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:10:59 [ERROR] [app.main] [Worker-35376] [1765293059792] Database connection: FAILED - (builtins.Exception) Database connection refused
+[SQL: connection failed]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059792] Response: 503 Duration: 0.099s Size: 778 bytes
+2025-12-09 16:10:59 [INFO] [app.main] [Worker-35376] [1765293059920] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293059920] Response: 200 Duration: 0.104s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060055] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060055] Response: 200 Duration: 0.097s Size: 397 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060181] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060181] Response: 200 Duration: 0.100s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060309] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060309] Response: 200 Duration: 0.102s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060446] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060446] Response: 200 Duration: 0.110s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060593] POST /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [WARNING] [app.main] [Worker-35376] [1765293060593] 405 error: POST /health
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060593] Response: 405 Duration: 0.001s Size: 80 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060595] PUT /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [WARNING] [app.main] [Worker-35376] [1765293060595] 405 error: PUT /health
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060595] Response: 405 Duration: 0.001s Size: 79 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060597] DELETE /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [WARNING] [app.main] [Worker-35376] [1765293060597] 405 error: DELETE /health
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060597] Response: 405 Duration: 0.001s Size: 82 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060631] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060631] Response: 200 Duration: 0.114s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060777] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060777] Response: 200 Duration: 0.100s Size: 521 bytes
+2025-12-09 16:11:00 [INFO] [app.main] [Worker-35376] [1765293060907] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293060907] Response: 200 Duration: 0.106s Size: 521 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061049] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061049] Response: 200 Duration: 0.112s Size: 521 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061164] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061164] Response: 200 Duration: 0.104s Size: 521 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061271] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061271] Response: 200 Duration: 0.132s Size: 521 bytes
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded metadata: CatBoost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Model ready: v1.0.0-catboost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded metadata: CatBoost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Model ready: v1.0.0-catboost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded metadata: CatBoost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Model ready: v1.0.0-catboost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded metadata: CatBoost
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 16:11:01 [INFO] [app.ml.predictor] [Worker-35376] Model ready: v1.0.0-catboost
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061769] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061769] Request body: {'mode': 'incremental'}
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061769] Scraping trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061769] Response: 202 Duration: 0.003s Size: 147 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061807] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061807] Request body: {'mode': 'incremental'}
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061807] Scraping trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061807] Response: 400 Duration: 0.003s Size: 72 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061842] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061842] Request body: {'mode': 'full'}
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061842] Scraping trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061842] Response: 202 Duration: 0.003s Size: 133 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061874] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061874] Scraping trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061874] Response: 202 Duration: 0.002s Size: 147 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061905] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061905] Request body: {'mode': 'incremental'}
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061905] Scraping trigger requested
+2025-12-09 16:11:01 [WARNING] [app.main] [Worker-35376] [1765293061905] Could not check scraper status: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061905] Response: 202 Duration: 0.004s Size: 147 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061939] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061939] Training trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061939] Response: 202 Duration: 0.002s Size: 115 bytes
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061971] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061971] Training trigger requested
+2025-12-09 16:11:01 [INFO] [app.main] [Worker-35376] [1765293061971] Response: 400 Duration: 0.002s Size: 73 bytes
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062007] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062007] Training trigger requested
+2025-12-09 16:11:02 [WARNING] [app.main] [Worker-35376] [1765293062007] Could not check training status: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062007] Response: 202 Duration: 0.003s Size: 115 bytes
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062044] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062044] Response: 200 Duration: 0.005s Size: 559 bytes
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062086] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:02 [WARNING] [app.main] [Worker-35376] [1765293062086] Could not check scraper process: Exception: Process check failed
+2025-12-09 16:11:02 [WARNING] [app.main] [Worker-35376] [1765293062086] Could not check training process: Exception: Process check failed
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062086] Response: 200 Duration: 0.005s Size: 561 bytes
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062128] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062128] Response: 200 Duration: 0.004s Size: 553 bytes
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062167] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 16:11:02 [INFO] [app.main] [Worker-35376] [1765293062167] Response: 200 Duration: 0.004s Size: 521 bytes
+2025-12-09 16:11:02 [INFO] [prediction_worker] [Worker-35376] Completed job a6a4eb81-c354-49fc-9dfd-2a25d93ee043
+2025-12-09 16:11:02 [ERROR] [prediction_worker] [Worker-35376] Job 50d0b87a-5469-4fab-a273-95a12fb3d42b failed
+Traceback (most recent call last):
+  File "C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\worker.py", line 62, in _process_job
+    result = predictor_instance.predict(job.payload)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: Prediction failed
+2025-12-09 16:11:02 [ERROR] [prediction_worker] [Worker-35376] Job 0959f613-3d2a-4d33-a4bb-1291c07c9a2b failed
+Traceback (most recent call last):
+  File "C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\worker.py", line 62, in _process_job
+    result = predictor_instance.predict(job.payload)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: Prediction failed
