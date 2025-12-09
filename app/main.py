@@ -434,6 +434,7 @@ def health_check():
         'status': 'healthy' if db_status == 'connected' else 'degraded',
         'service': 'BPR Backend API',
         'version': '1.0.0',
+        'git_commit': '6e8cea7',  # Latest commit with improved process detection
         'timestamp': datetime.utcnow().isoformat(),
         'message': 'API is operational',
         'database': {
