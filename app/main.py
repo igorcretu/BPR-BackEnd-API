@@ -267,6 +267,8 @@ def handle_errors(f):
 @handle_errors
 def health_check():
     """Health check endpoint with detailed status"""
+    from app.models import MLModel, ScrapingLog, ModelTrainingRun
+    
     logger.debug(f"[{g.request_id}] Health check requested")
     
     # Check database connection
@@ -279,8 +281,66 @@ def health_check():
         db_status = f'error: {str(e)}'
         logger.error(f"[{g.request_id}] Database connection: FAILED - {str(e)}")
     
-    # Get ML model info
+    # Get ML model info from predictor
     ml_info = predictor.get_model_info() if predictor else {'error': 'Predictor not initialized'}
+    
+    # Get all registered ML models status
+    ml_models_status = []
+    try:
+        all_models = MLModel.query.order_by(desc(MLModel.r2_score)).all()
+        for model in all_models:
+            ml_models_status.append({
+                'id': model.id,
+                'name': model.name,
+                'algorithm': model.algorithm,
+                'is_active': model.is_active,
+                'r2_score': float(model.r2_score) if model.r2_score else None,
+                'mae': float(model.mae) if model.mae else None,
+                'version': model.version,
+                'created_at': model.created_at.isoformat() if model.created_at else None
+            })
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Failed to fetch ML models: {str(e)}")
+        ml_models_status = {'error': str(e)}
+    
+    # Get latest scraping status
+    scraping_status = None
+    try:
+        latest_scrape = ScrapingLog.query.order_by(desc(ScrapingLog.created_at)).first()
+        if latest_scrape:
+            scraping_status = {
+                'last_run': latest_scrape.started_at.isoformat() if latest_scrape.started_at else None,
+                'completed_at': latest_scrape.completed_at.isoformat() if latest_scrape.completed_at else None,
+                'success': latest_scrape.success,
+                'cars_scraped': latest_scrape.cars_scraped,
+                'cars_new': latest_scrape.cars_new,
+                'cars_updated': latest_scrape.cars_updated,
+                'images_downloaded': latest_scrape.images_downloaded,
+                'error_message': latest_scrape.error_message,
+                'source': latest_scrape.source_name
+            }
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Failed to fetch scraping status: {str(e)}")
+        scraping_status = {'error': str(e)}
+    
+    # Get latest training status
+    training_status = None
+    try:
+        latest_training = ModelTrainingRun.query.order_by(desc(ModelTrainingRun.run_date)).first()
+        if latest_training:
+            training_status = {
+                'last_run': latest_training.run_date.isoformat() if latest_training.run_date else None,
+                'status': latest_training.status,
+                'dataset_size': latest_training.dataset_size,
+                'train_size': latest_training.train_size,
+                'test_size': latest_training.test_size,
+                'duration_seconds': float(latest_training.training_duration_seconds) if latest_training.training_duration_seconds else None,
+                'models_trained': latest_training.models_trained,
+                'best_model_id': latest_training.best_model_id
+            }
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Failed to fetch training status: {str(e)}")
+        training_status = {'error': str(e)}
     
     response = {
         'status': 'healthy' if db_status == 'connected' else 'degraded',
@@ -292,7 +352,10 @@ def health_check():
             'status': db_status,
             'message': 'Database is connected' if db_status == 'connected' else db_status
         },
-        'ml_model': ml_info
+        'ml_model': ml_info,
+        'ml_models': ml_models_status,
+        'scraping': scraping_status,
+        'training': training_status
     }
     
     status_code = 200 if db_status == 'connected' else 503
