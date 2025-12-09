@@ -746,14 +746,25 @@ def get_car_image(car_id):
         logger.warning(f"[{g.request_id}] No image available for car {car_id}")
         abort(404, description="Image not available")
     
-    # Construct full path
-    image_full_path = os.path.join(os.path.dirname(__file__), '..', car.image_path)
+    # Try multiple possible locations for the image
+    possible_paths = [
+        # Original location (API/images/)
+        os.path.join(os.path.dirname(__file__), '..', car.image_path),
+        # Scraped images location (../BPR-BackEnd-ML-Model/bilbasen_scrape/images/)
+        os.path.join(os.path.dirname(__file__), '..', '..', 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', car.image_path),
+    ]
     
-    if not os.path.exists(image_full_path):
-        logger.warning(f"[{g.request_id}] Image file not found: {image_full_path}")
+    image_full_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            image_full_path = path
+            break
+    
+    if not image_full_path:
+        logger.warning(f"[{g.request_id}] Image file not found in any location for car {car_id}")
         abort(404, description="Image file not found")
     
-    logger.info(f"[{g.request_id}] Serving image for car {car_id}")
+    logger.info(f"[{g.request_id}] Serving image for car {car_id} from {image_full_path}")
     return send_file(image_full_path, mimetype='image/jpeg')
 
 @app.route('/api/images/<external_id>', methods=['GET'])
