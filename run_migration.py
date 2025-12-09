@@ -64,24 +64,36 @@ def run_migration():
                 print('✅ Skipping migration')
                 return 0
         
-        # Execute migration in a new connection with transaction
+        # Execute migration - handle each statement separately for better error messages
+        # Split by semicolon and execute each statement
+        statements = [s.strip() for s in migration_sql.split(';') if s.strip() and not s.strip().startswith('--')]
+        
+        failed_statements = []
         with engine.begin() as conn:
-            try:
-                # Split by semicolon and execute each statement
-                statements = [s.strip() for s in migration_sql.split(';') if s.strip() and not s.strip().startswith('--')]
-                
-                for idx, statement in enumerate(statements, 1):
-                    if statement:
-                        print(f'  Executing statement {idx}/{len(statements)}...')
+            for idx, statement in enumerate(statements, 1):
+                if statement:
+                    try:
+                        print(f'  [{idx}/{len(statements)}] Executing...')
                         conn.execute(text(statement))
-                
-                print('✅ Database migration completed successfully!')
-                return 0
-                
-            except Exception as e:
-                print(f'❌ Migration error: {e}')
-                print('⚠️  Rolling back changes...')
-                return 1
+                    except Exception as e:
+                        # Check if it's a benign error (column/table already exists, etc.)
+                        error_str = str(e).lower()
+                        if 'already exists' in error_str or 'does not exist' in error_str:
+                            print(f'    ⚠️  Skipped (already applied or not applicable)')
+                        else:
+                            print(f'    ❌ Error: {e}')
+                            failed_statements.append((idx, statement, e))
+                            # Rollback and exit on serious errors
+                            raise
+        
+        if failed_statements:
+            print(f'\n❌ Migration failed with {len(failed_statements)} errors')
+            for idx, stmt, err in failed_statements:
+                print(f'  Statement {idx}: {err}')
+            return 1
+        
+        print('✅ Database migration completed successfully!')
+        return 0
                 
     except Exception as e:
         print(f'❌ Migration failed: {e}')

@@ -5,9 +5,23 @@
 -- 1. Add external_id and image fields to cars table
 -- ============================================================================
 
-ALTER TABLE cars ADD COLUMN IF NOT EXISTS external_id VARCHAR(50) UNIQUE;
+-- Add external_id column without UNIQUE constraint first
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS external_id VARCHAR(50);
+
+-- Add unique constraint separately (will fail silently if already exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'cars_external_id_unique'
+    ) THEN
+        ALTER TABLE cars ADD CONSTRAINT cars_external_id_unique UNIQUE (external_id);
+    END IF;
+END $$;
+
+-- Create index
 CREATE INDEX IF NOT EXISTS idx_cars_external_id ON cars(external_id);
 
+-- Add other columns
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS image_path VARCHAR(500);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS image_downloaded BOOLEAN DEFAULT FALSE;
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS tax DECIMAL(10,2);
