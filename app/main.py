@@ -348,20 +348,36 @@ def health_check():
     # Check if scraper is currently running
     scraper_process = None
     try:
-        result = subprocess.run(
-            ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
-        if result.returncode == 0:
+        # Try pgrep first (Linux/Unix)
+        try:
+            result = subprocess.run(
+                ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+        except FileNotFoundError:
+            # Fallback to ps if pgrep not available
+            result = subprocess.run(
+                ['ps', 'aux'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            # Parse ps output for scraper processes
+            running = any('bilbasen_scraper' in line or 'auto_scraper' in line 
+                         for line in result.stdout.split('\n'))
+            scraper_process = {'running': running}
+            result = None
+        
+        if result and result.returncode == 0:
             pids = result.stdout.strip().split('\n')
             scraper_process = {
                 'running': True,
                 'process_count': len([p for p in pids if p]),
                 'pids': [int(p) for p in pids if p]
             }
-        else:
+        elif result:
             scraper_process = {'running': False}
     except Exception as e:
         logger.debug(f"[{g.request_id}] Could not check scraper process: {str(e)}")
@@ -370,20 +386,35 @@ def health_check():
     # Check if training is currently running
     training_process = None
     try:
-        result = subprocess.run(
-            ['pgrep', '-f', 'train_models'],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
-        if result.returncode == 0:
+        # Try pgrep first (Linux/Unix)
+        try:
+            result = subprocess.run(
+                ['pgrep', '-f', 'train_models'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+        except FileNotFoundError:
+            # Fallback to ps if pgrep not available
+            result = subprocess.run(
+                ['ps', 'aux'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            # Parse ps output for training process
+            running = any('train_models' in line for line in result.stdout.split('\n'))
+            training_process = {'running': running}
+            result = None
+        
+        if result and result.returncode == 0:
             pids = result.stdout.strip().split('\n')
             training_process = {
                 'running': True,
                 'process_count': len([p for p in pids if p]),
                 'pids': [int(p) for p in pids if p]
             }
-        else:
+        elif result:
             training_process = {'running': False}
     except Exception as e:
         logger.debug(f"[{g.request_id}] Could not check training process: {str(e)}")
@@ -555,13 +586,25 @@ def trigger_scraping():
     
     # Check if already running
     try:
-        result = subprocess.run(
-            ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
-        if result.returncode == 0:
+        try:
+            result = subprocess.run(
+                ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+        except FileNotFoundError:
+            # Fallback to ps
+            result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=2)
+            if any('bilbasen_scraper' in line or 'auto_scraper' in line for line in result.stdout.split('\n')):
+                return jsonify({
+                    'success': False,
+                    'message': 'Scraper is already running',
+                    'running': True
+                }), 400
+            result = None
+        
+        if result and result.returncode == 0:
             return jsonify({
                 'success': False,
                 'message': 'Scraper is already running',
@@ -608,13 +651,25 @@ def trigger_training():
     
     # Check if already running
     try:
-        result = subprocess.run(
-            ['pgrep', '-f', 'train_models'],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
-        if result.returncode == 0:
+        try:
+            result = subprocess.run(
+                ['pgrep', '-f', 'train_models'],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+        except FileNotFoundError:
+            # Fallback to ps
+            result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=2)
+            if any('train_models' in line for line in result.stdout.split('\n')):
+                return jsonify({
+                    'success': False,
+                    'message': 'Training is already running',
+                    'running': True
+                }), 400
+            result = None
+        
+        if result and result.returncode == 0:
             return jsonify({
                 'success': False,
                 'message': 'Training is already running',

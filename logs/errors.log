@@ -11159,3 +11159,88 @@ TypeError: Function.__init__() got an unexpected keyword argument 'else_'
 2025-12-09 13:46:19 [INFO] [app.main] [Worker-34456] [1765284379434] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
 2025-12-09 13:46:19 [INFO] [app.main] [Worker-34456] [1765284379434] Response: 200 Duration: 0.004s Size: 544 bytes
 2025-12-09 13:46:19 [INFO] [prediction_worker] [Worker-34456] Completed job bf80f4f5-07d9-4507-bc22-432d9793c9aa
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] ================================================================================
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] INITIALIZING BPR BACKEND API
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] ================================================================================
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] Database URL configured: localhost
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] Database initialized with connection pooling
+2025-12-09 13:53:41 [INFO] [app.main] [Worker-1304] Initializing ML predictor...
+2025-12-09 13:53:41 [INFO] [app.ml.predictor] [Worker-1304] Loaded metadata: CatBoost
+2025-12-09 13:53:45 [INFO] [app.ml.predictor] [Worker-1304] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-09 13:53:45 [INFO] [app.ml.predictor] [Worker-1304] Model ready: v1.0.0-catboost
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] Application loaded by WSGI server
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] Configuration: {}
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] [1765284825927] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] [1765284825927] Request body: {'mode': 'incremental'}
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] [1765284825927] Scraping trigger requested
+2025-12-09 13:53:45 [INFO] [app.main] [Worker-1304] [1765284825927] Response: 202 Duration: 0.003s Size: 147 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826066] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826066] Request body: {'mode': 'incremental'}
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826066] Scraping trigger requested
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826066] Response: 400 Duration: 0.002s Size: 72 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826120] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826120] Request body: {'mode': 'full'}
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826120] Scraping trigger requested
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826120] Response: 202 Duration: 0.003s Size: 133 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826161] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826161] Scraping trigger requested
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826161] Response: 202 Duration: 0.003s Size: 147 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826201] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826201] Request body: {'mode': 'incremental'}
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826201] Scraping trigger requested
+2025-12-09 13:53:46 [WARNING] [app.main] [Worker-1304] [1765284826201] Could not check scraper status: Command 'pgrep' timed out after 2 seconds
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826201] Response: 202 Duration: 0.002s Size: 147 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826232] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826232] Training trigger requested
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826232] Response: 202 Duration: 0.002s Size: 115 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826264] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826264] Training trigger requested
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826264] Response: 400 Duration: 0.001s Size: 73 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826294] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826294] Training trigger requested
+2025-12-09 13:53:46 [WARNING] [app.main] [Worker-1304] [1765284826294] Could not check training status: Command 'pgrep' timed out after 2 seconds
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826294] Response: 202 Duration: 0.002s Size: 115 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826324] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826324] Response: 200 Duration: 0.065s Size: 536 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826419] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826419] Response: 200 Duration: 0.004s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826454] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826454] Response: 200 Duration: 0.017s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826502] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [ERROR] [app.main] [Worker-1304] [1765284826502] Database connection: FAILED - (builtins.Exception) Database connection refused
+[SQL: connection failed]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826502] Response: 503 Duration: 0.018s Size: 801 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826549] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826549] Response: 200 Duration: 0.018s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826595] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826595] Response: 200 Duration: 0.017s Size: 420 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826642] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826642] Response: 200 Duration: 0.018s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826690] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826690] Response: 200 Duration: 0.018s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826742] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826742] Response: 200 Duration: 0.020s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826798] POST /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [WARNING] [app.main] [Worker-1304] [1765284826798] 405 error: POST /health
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826798] Response: 405 Duration: 0.001s Size: 80 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826802] PUT /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [WARNING] [app.main] [Worker-1304] [1765284826802] 405 error: PUT /health
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826802] Response: 405 Duration: 0.002s Size: 79 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826805] DELETE /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [WARNING] [app.main] [Worker-1304] [1765284826805] 405 error: DELETE /health
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826805] Response: 405 Duration: 0.001s Size: 82 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826846] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826846] Response: 200 Duration: 0.022s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826904] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826904] Response: 200 Duration: 0.022s Size: 544 bytes
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826958] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:46 [INFO] [app.main] [Worker-1304] [1765284826958] Response: 200 Duration: 0.017s Size: 544 bytes
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827006] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827006] Response: 200 Duration: 0.017s Size: 544 bytes
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827024] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827024] Response: 200 Duration: 0.017s Size: 544 bytes
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827042] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-09 13:53:47 [INFO] [app.main] [Worker-1304] [1765284827042] Response: 200 Duration: 0.017s Size: 544 bytes
