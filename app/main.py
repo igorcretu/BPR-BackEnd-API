@@ -747,21 +747,30 @@ def get_car_image(car_id):
         abort(404, description="Image not available")
     
     # Try multiple possible locations for the image
+    # Extract just the filename from the path (e.g., "images/6660295.jpg" -> "6660295.jpg")
+    filename = os.path.basename(car.image_path)
+    
     possible_paths = [
+        # Raspberry Pi production: /home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/
+        f'/home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/{filename}',
+        # Relative path from API folder
+        os.path.join(os.path.dirname(__file__), '..', '..', 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
         # Original location (API/images/)
         os.path.join(os.path.dirname(__file__), '..', car.image_path),
-        # Scraped images location (../BPR-BackEnd-ML-Model/bilbasen_scrape/images/)
-        os.path.join(os.path.dirname(__file__), '..', '..', 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', car.image_path),
+        os.path.join(os.path.dirname(__file__), '..', 'images', filename),
     ]
     
     image_full_path = None
     for path in possible_paths:
+        logger.debug(f"[{g.request_id}] Checking path: {path}")
         if os.path.exists(path):
             image_full_path = path
+            logger.info(f"[{g.request_id}] Found image at: {path}")
             break
     
     if not image_full_path:
-        logger.warning(f"[{g.request_id}] Image file not found in any location for car {car_id}")
+        checked_paths = '\n  '.join(possible_paths)
+        logger.error(f"[{g.request_id}] Image file not found. Checked paths:\n  {checked_paths}")
         abort(404, description="Image file not found")
     
     logger.info(f"[{g.request_id}] Serving image for car {car_id} from {image_full_path}")
