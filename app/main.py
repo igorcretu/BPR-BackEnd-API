@@ -348,7 +348,7 @@ def health_check():
     scraper_process = None
     try:
         result = subprocess.run(
-            ['pgrep', '-f', 'bilbasen_scraper|auto_scraper'],
+            ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
             capture_output=True,
             text=True,
             timeout=2
@@ -543,6 +543,107 @@ def get_car(car_id):
         'success': True,
         'car': car_data
     }), 200
+
+@app.route('/api/trigger-scraping', methods=['POST'])
+@handle_errors
+def trigger_scraping():
+    """Trigger scraping process in the background"""
+    import threading
+    
+    logger.info(f"[{g.request_id}] Scraping trigger requested")
+    
+    # Check if already running
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Scraper is already running',
+                'running': True
+            }), 400
+    except Exception as e:
+        logger.warning(f"[{g.request_id}] Could not check scraper status: {e}")
+    
+    # Parse request for scraping mode
+    data = request.get_json() or {}
+    mode = data.get('mode', 'incremental')  # 'incremental' or 'full'
+    
+    def run_scraper():
+        """Background thread to run scraper"""
+        try:
+            script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+            subprocess.Popen(
+                ['python3', script_path, '--mode', mode],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+            logger.info(f"Scraper started in {mode} mode")
+        except Exception as e:
+            logger.error(f"Failed to start scraper: {e}")
+    
+    thread = threading.Thread(target=run_scraper, daemon=True)
+    thread.start()
+    
+    return jsonify({
+        'success': True,
+        'message': f'Scraping started in {mode} mode',
+        'mode': mode,
+        'estimated_duration': 'Several hours depending on data size'
+    }), 202
+
+@app.route('/api/trigger-training', methods=['POST'])
+@handle_errors
+def trigger_training():
+    """Trigger model training process in the background"""
+    import threading
+    
+    logger.info(f"[{g.request_id}] Training trigger requested")
+    
+    # Check if already running
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'train_models'],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            return jsonify({
+                'success': False,
+                'message': 'Training is already running',
+                'running': True
+            }), 400
+    except Exception as e:
+        logger.warning(f"[{g.request_id}] Could not check training status: {e}")
+    
+    def run_training():
+        """Background thread to run training"""
+        try:
+            script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
+            subprocess.Popen(
+                ['python3', script_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+            logger.info("Model training started")
+        except Exception as e:
+            logger.error(f"Failed to start training: {e}")
+    
+    thread = threading.Thread(target=run_training, daemon=True)
+    thread.start()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Model training started',
+        'estimated_duration': 'Several hours depending on dataset size'
+    }), 202
 
 @app.route('/api/cars/<car_id>/image', methods=['GET'])
 @handle_errors
