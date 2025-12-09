@@ -156,3 +156,52 @@ def test_health_check_process_check_error(client):
         # Should still return health data even if process check fails
         assert 'database' in data
         assert 'ml_model' in data
+
+
+def test_health_check_with_psutil_fallback(client):
+    """Test health endpoint uses psutil when pgrep not available"""
+    with patch('app.main.subprocess.run') as mock_run, \
+         patch('psutil.process_iter') as mock_process_iter:
+        # Simulate pgrep not found
+        mock_run.side_effect = FileNotFoundError("pgrep not found")
+        
+        # Mock psutil to return a scraper process
+        mock_proc = MagicMock()
+        mock_proc.info = {
+            'pid': 12345,
+            'name': 'python3',
+            'cmdline': ['python3', 'bilbasen_scraper_pi.py']
+        }
+        mock_process_iter.return_value = [mock_proc]
+        
+        response = client.get('/health')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'processes' in data
+        assert data['processes']['scraper']['running'] is True
+        assert 12345 in data['processes']['scraper']['pids']
+
+
+def test_health_check_psutil_no_processes(client):
+    """Test health endpoint with psutil when no processes running"""
+    with patch('app.main.subprocess.run') as mock_run, \
+         patch('psutil.process_iter') as mock_process_iter:
+        # Simulate pgrep not found
+        mock_run.side_effect = FileNotFoundError("pgrep not found")
+        
+        # Mock psutil to return no matching processes
+        mock_proc = MagicMock()
+        mock_proc.info = {
+            'pid': 99999,
+            'name': 'python3',
+            'cmdline': ['python3', 'some_other_script.py']
+        }
+        mock_process_iter.return_value = [mock_proc]
+        
+        response = client.get('/health')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'processes' in data
+        assert data['processes']['scraper']['running'] is False
