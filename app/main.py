@@ -431,6 +431,52 @@ def get_car(car_id):
         'car': car_data
     }), 200
 
+@app.route('/api/cars/<car_id>/image', methods=['GET'])
+@handle_errors
+def get_car_image(car_id):
+    """Get car image by car ID"""
+    from flask import send_file
+    logger.info(f"[{g.request_id}] Fetching image for car ID: {car_id}")
+    
+    car = Car.query.get_or_404(car_id)
+    
+    if not car.image_path or not car.image_downloaded:
+        logger.warning(f"[{g.request_id}] No image available for car {car_id}")
+        abort(404, description="Image not available")
+    
+    # Construct full path
+    image_full_path = os.path.join(os.path.dirname(__file__), '..', car.image_path)
+    
+    if not os.path.exists(image_full_path):
+        logger.warning(f"[{g.request_id}] Image file not found: {image_full_path}")
+        abort(404, description="Image file not found")
+    
+    logger.info(f"[{g.request_id}] Serving image for car {car_id}")
+    return send_file(image_full_path, mimetype='image/jpeg')
+
+@app.route('/api/images/<external_id>', methods=['GET'])
+@handle_errors
+def get_image_by_external_id(external_id):
+    """Get car image by external_id (Bilbasen listing ID)"""
+    from flask import send_file
+    logger.info(f"[{g.request_id}] Fetching image for external_id: {external_id}")
+    
+    car = Car.query.filter_by(external_id=external_id).first_or_404()
+    
+    if not car.image_path or not car.image_downloaded:
+        logger.warning(f"[{g.request_id}] No image available for external_id {external_id}")
+        abort(404, description="Image not available")
+    
+    # Construct full path
+    image_full_path = os.path.join(os.path.dirname(__file__), '..', car.image_path)
+    
+    if not os.path.exists(image_full_path):
+        logger.warning(f"[{g.request_id}] Image file not found: {image_full_path}")
+        abort(404, description="Image file not found")
+    
+    logger.info(f"[{g.request_id}] Serving image for external_id {external_id}")
+    return send_file(image_full_path, mimetype='image/jpeg')
+
 @app.route('/api/cars', methods=['POST'])
 @handle_errors
 def create_car():
@@ -616,6 +662,179 @@ def get_predictions():
     return jsonify({
         'success': True,
         'predictions': [p.to_dict() for p in pagination.items],
+        'pagination': {
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'per_page': pagination.per_page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    }), 200
+
+
+@app.route('/api/predictions/multi/<car_id>', methods=['GET'])
+@handle_errors
+def get_multi_model_predictions(car_id):
+    """Get predictions from all models for a specific car"""
+    from app.models import MLModel
+    
+    logger.info(f"[{g.request_id}] Fetching multi-model predictions for car {car_id}")
+    
+    # Get all predictions for this car
+    predictions = PricePrediction.query.filter_by(car_id=car_id).all()
+    
+    if not predictions:
+        logger.warning(f"[{g.request_id}] No predictions found for car {car_id}")
+        return jsonify({
+            'success': True,
+            'predictions': [],
+            'message': 'No predictions available for this car'
+        }), 200
+    
+    # Group by model
+    predictions_by_model = {}
+    for pred in predictions:
+        model_info = MLModel.query.get(pred.model_id) if pred.model_id else None
+        model_name = model_info.name if model_info else 'Unknown'
+        
+        pred_dict = pred.to_dict()
+        if model_info:
+            pred_dict['model_name'] = model_name
+            pred_dict['model_type'] = model_info.model_type
+            pred_dict['model_algorithm'] = model_info.algorithm
+        
+        predictions_by_model[model_name] = pred_dict
+    
+    logger.info(f"[{g.request_id}] Found {len(predictions_by_model)} model predictions")
+    
+    return jsonify({
+        'success': True,
+        'car_id': car_id,
+        'predictions': predictions_by_model
+    }), 200
+
+
+@app.route('/api/models', methods=['GET'])
+@handle_errors
+def get_ml_models():
+    """Get all registered ML models"""
+    from app.models import MLModel
+    
+    logger.info(f"[{g.request_id}] Fetching ML models")
+    
+    # Get filter parameters
+    active_only = request.args.get('active', 'true').lower() == 'true'
+    model_type = request.args.get('type')
+    
+    query = MLModel.query
+    
+    if active_only:
+        query = query.filter_by(is_active=True)
+    
+    if model_type:
+        query = query.filter_by(model_type=model_type)
+    
+    models = query.order_by(desc(MLModel.r2_score)).all()
+    
+    logger.info(f"[{g.request_id}] Found {len(models)} models")
+    
+    return jsonify({
+        'success': True,
+        'models': [m.to_dict() for m in models]
+    }), 200
+
+
+@app.route('/api/models/<model_id>', methods=['GET'])
+@handle_errors
+def get_ml_model(model_id):
+    """Get specific ML model details"""
+    from app.models import MLModel, ModelComparisonMetrics
+    
+    logger.info(f"[{g.request_id}] Fetching model {model_id}")
+    
+    model = MLModel.query.get_or_404(model_id)
+    model_dict = model.to_dict()
+    
+    # Include latest comparison metrics
+    latest_metrics = ModelComparisonMetrics.query.filter_by(
+        model_id=model_id
+    ).order_by(desc(ModelComparisonMetrics.created_at)).first()
+    
+    if latest_metrics:
+        model_dict['comparison_metrics'] = latest_metrics.to_dict()
+    
+    logger.info(f"[{g.request_id}] Retrieved model {model.name}")
+    
+    return jsonify({
+        'success': True,
+        'model': model_dict
+    }), 200
+
+
+@app.route('/api/models/comparison', methods=['GET'])
+@handle_errors
+def get_model_comparison():
+    """Get comprehensive model comparison data"""
+    from app.models import MLModel, ModelComparisonMetrics, ModelTrainingRun
+    
+    logger.info(f"[{g.request_id}] Fetching model comparison data")
+    
+    # Get all active models with their latest metrics
+    models = MLModel.query.filter_by(is_active=True).all()
+    
+    comparison_data = []
+    for model in models:
+        model_dict = model.to_dict()
+        
+        # Get latest metrics
+        latest_metrics = ModelComparisonMetrics.query.filter_by(
+            model_id=model.id
+        ).order_by(desc(ModelComparisonMetrics.created_at)).first()
+        
+        if latest_metrics:
+            model_dict['comparison_metrics'] = latest_metrics.to_dict()
+        
+        comparison_data.append(model_dict)
+    
+    # Get latest training run info
+    latest_training_run = ModelTrainingRun.query.order_by(
+        desc(ModelTrainingRun.run_date)
+    ).first()
+    
+    training_run_info = latest_training_run.to_dict() if latest_training_run else None
+    
+    logger.info(f"[{g.request_id}] Compiled comparison data for {len(comparison_data)} models")
+    
+    return jsonify({
+        'success': True,
+        'models': comparison_data,
+        'latest_training_run': training_run_info,
+        'total_models': len(comparison_data)
+    }), 200
+
+
+@app.route('/api/training/runs', methods=['GET'])
+@handle_errors
+def get_training_runs():
+    """Get training run history"""
+    from app.models import ModelTrainingRun
+    
+    pagination_params = get_pagination_params(request.args)
+    
+    logger.info(f"[{g.request_id}] Fetching training runs page {pagination_params.page}")
+    
+    pagination = ModelTrainingRun.query.order_by(
+        desc(ModelTrainingRun.run_date)
+    ).paginate(
+        page=pagination_params.page,
+        per_page=pagination_params.per_page,
+        error_out=False
+    )
+    
+    return jsonify({
+        'success': True,
+        'training_runs': [run.to_dict() for run in pagination.items],
         'pagination': {
             'total': pagination.total,
             'pages': pagination.pages,

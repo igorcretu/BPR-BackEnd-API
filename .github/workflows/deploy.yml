@@ -111,10 +111,28 @@ jobs:
               -o ProxyCommand="cloudflared access tcp --hostname ssh.bachelorproject26.site" \
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
             cd ~/BachelorApi/BPR-BackEnd-API
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
             git pull origin main
+            
+            # Pull latest Docker image
+            echo "🐳 Pulling latest Docker image..."
             docker compose -f docker-compose.prod.yml pull backend
+            
+            # Start services
+            echo "🚀 Starting services..."
             docker compose -f docker-compose.prod.yml up -d --no-build
             sleep 20
+            
+            # Run database migration
+            echo "🗄️  Running database migration..."
+            docker exec bpr-flask python run_migration.py || echo "⚠️  Migration may have already been applied"
+            
+            # Check ML model status
+            echo "🤖 Checking ML model status..."
+            docker exec bpr-flask python check_models.py || true
+            
             docker compose -f docker-compose.prod.yml ps
           EOF
 
