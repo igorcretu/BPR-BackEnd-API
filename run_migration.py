@@ -19,7 +19,8 @@ def run_migration():
     if not db_url:
         user = os.getenv('POSTGRES_USER', 'bpr_user')
         password = os.getenv('POSTGRES_PASSWORD', 'postgres')
-        host = os.getenv('POSTGRES_HOST', 'db')
+        # Use 'db' if running in Docker, 'localhost' otherwise
+        host = os.getenv('POSTGRES_HOST', 'localhost')
         port = os.getenv('POSTGRES_PORT', '5432')
         database = os.getenv('POSTGRES_DB', 'car_prediction')
         db_url = f'postgresql://{user}:{password}@{host}:{port}/{database}'
