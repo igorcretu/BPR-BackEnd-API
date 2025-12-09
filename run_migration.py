@@ -64,35 +64,51 @@ def run_migration():
                 print('✅ Skipping migration')
                 return 0
         
-        # Execute migration - handle each statement separately for better error messages
+        # Execute migration - each statement in its own transaction to avoid abort cascade
         # Split by semicolon and execute each statement
         statements = [s.strip() for s in migration_sql.split(';') if s.strip() and not s.strip().startswith('--')]
         
         failed_statements = []
-        with engine.begin() as conn:
-            for idx, statement in enumerate(statements, 1):
-                if statement:
-                    try:
-                        print(f'  [{idx}/{len(statements)}] Executing...')
-                        conn.execute(text(statement))
-                    except Exception as e:
-                        # Check if it's a benign error (column/table already exists, etc.)
-                        error_str = str(e).lower()
-                        if 'already exists' in error_str or 'does not exist' in error_str:
-                            print(f'    ⚠️  Skipped (already applied or not applicable)')
-                        else:
-                            print(f'    ❌ Error: {e}')
-                            failed_statements.append((idx, statement, e))
-                            # Rollback and exit on serious errors
-                            raise
+        succeeded = 0
+        skipped = 0
+        
+        for idx, statement in enumerate(statements, 1):
+            if not statement:
+                continue
+                
+            try:
+                print(f'  [{idx}/{len(statements)}] Executing...')
+                # Each statement in its own transaction
+                with engine.begin() as conn:
+                    conn.execute(text(statement))
+                succeeded += 1
+                    
+            except Exception as e:
+                # Check if it's a benign error (column/table already exists, etc.)
+                error_str = str(e).lower()
+                if 'already exists' in error_str or 'duplicate' in error_str:
+                    print(f'    ⚠️  Skipped (already exists)')
+                    skipped += 1
+                elif 'does not exist' in error_str and 'drop' in statement.lower():
+                    print(f'    ⚠️  Skipped (does not exist)')
+                    skipped += 1
+                else:
+                    print(f'    ❌ Error: {e}')
+                    failed_statements.append((idx, statement[:100], e))
+        
+        print(f'\n📊 Migration Summary:')
+        print(f'   ✅ Succeeded: {succeeded}')
+        print(f'   ⚠️  Skipped: {skipped}')
+        print(f'   ❌ Failed: {len(failed_statements)}')
         
         if failed_statements:
-            print(f'\n❌ Migration failed with {len(failed_statements)} errors')
+            print(f'\n❌ Failed statements:')
             for idx, stmt, err in failed_statements:
-                print(f'  Statement {idx}: {err}')
+                print(f'  [{idx}] {stmt}...')
+                print(f'      Error: {str(err)[:100]}')
             return 1
         
-        print('✅ Database migration completed successfully!')
+        print('\n✅ Database migration completed successfully!')
         return 0
                 
     except Exception as e:
