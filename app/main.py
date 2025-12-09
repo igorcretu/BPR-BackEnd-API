@@ -356,30 +356,39 @@ def health_check():
                 text=True,
                 timeout=2
             )
-        except (FileNotFoundError, OSError, PermissionError) as e:
-            # Fallback to ps if pgrep not available
-            logger.debug(f"[{g.request_id}] pgrep not available ({type(e).__name__}), using ps fallback")
-            result = subprocess.run(
-                ['ps', 'aux'],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
-            # Parse ps output for scraper processes
-            running = any('bilbasen_scraper' in line or 'auto_scraper' in line 
-                         for line in result.stdout.split('\n'))
-            scraper_process = {'running': running}
-            result = None
-        
-        if result and result.returncode == 0:
-            pids = result.stdout.strip().split('\n')
-            scraper_process = {
-                'running': True,
-                'process_count': len([p for p in pids if p]),
-                'pids': [int(p) for p in pids if p]
-            }
-        elif result:
-            scraper_process = {'running': False}
+            if result.returncode == 0:
+                pids = result.stdout.strip().split('\n')
+                scraper_process = {
+                    'running': True,
+                    'process_count': len([p for p in pids if p]),
+                    'pids': [int(p) for p in pids if p]
+                }
+            else:
+                scraper_process = {'running': False}
+        except (FileNotFoundError, OSError, PermissionError):
+            # Fallback to psutil (cross-platform)
+            try:
+                import psutil
+                running_pids = []
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    try:
+                        cmdline = ' '.join(proc.info['cmdline'] or [])
+                        if 'bilbasen_scraper' in cmdline or 'auto_scraper' in cmdline:
+                            running_pids.append(proc.info['pid'])
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                
+                if running_pids:
+                    scraper_process = {
+                        'running': True,
+                        'process_count': len(running_pids),
+                        'pids': running_pids
+                    }
+                else:
+                    scraper_process = {'running': False}
+            except Exception as e:
+                logger.debug(f"[{g.request_id}] psutil also failed: {type(e).__name__}")
+                scraper_process = {'running': False, 'error': f'{type(e).__name__}'}
         
         if scraper_process is None:
             scraper_process = {'running': False}
@@ -399,29 +408,39 @@ def health_check():
                 text=True,
                 timeout=2
             )
-        except (FileNotFoundError, OSError, PermissionError) as e:
-            # Fallback to ps if pgrep not available
-            logger.debug(f"[{g.request_id}] pgrep not available ({type(e).__name__}), using ps fallback")
-            result = subprocess.run(
-                ['ps', 'aux'],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
-            # Parse ps output for training process
-            running = any('train_models' in line for line in result.stdout.split('\n'))
-            training_process = {'running': running}
-            result = None
-        
-        if result and result.returncode == 0:
-            pids = result.stdout.strip().split('\n')
-            training_process = {
-                'running': True,
-                'process_count': len([p for p in pids if p]),
-                'pids': [int(p) for p in pids if p]
-            }
-        elif result:
-            training_process = {'running': False}
+            if result.returncode == 0:
+                pids = result.stdout.strip().split('\n')
+                training_process = {
+                    'running': True,
+                    'process_count': len([p for p in pids if p]),
+                    'pids': [int(p) for p in pids if p]
+                }
+            else:
+                training_process = {'running': False}
+        except (FileNotFoundError, OSError, PermissionError):
+            # Fallback to psutil (cross-platform)
+            try:
+                import psutil
+                running_pids = []
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    try:
+                        cmdline = ' '.join(proc.info['cmdline'] or [])
+                        if 'train_models' in cmdline:
+                            running_pids.append(proc.info['pid'])
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                
+                if running_pids:
+                    training_process = {
+                        'running': True,
+                        'process_count': len(running_pids),
+                        'pids': running_pids
+                    }
+                else:
+                    training_process = {'running': False}
+            except Exception as e:
+                logger.debug(f"[{g.request_id}] psutil also failed: {type(e).__name__}")
+                training_process = {'running': False, 'error': f'{type(e).__name__}'}
         
         if training_process is None:
             training_process = {'running': False}
