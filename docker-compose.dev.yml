@@ -53,6 +53,8 @@ services:
       - ./models:/app/models
       - ./logs:/app/logs
       - ./app:/app/app  # Hot reload for development
+            # Mount images directory from ML-Model project
+      - ../BPR-BackEnd-ML-Model/bilbasen_scrape/images:/app/images
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s

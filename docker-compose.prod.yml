@@ -47,6 +47,8 @@ services:
       - bpr-network
     volumes:
       - ./logs:/app/logs
+            # Mount images directory from ML-Model project
+      - ../BPR-BackEnd-ML-Model/bilbasen_scrape/images:/app/images
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
