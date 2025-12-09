@@ -757,9 +757,11 @@ def get_car_image(car_id):
     project_root = os.path.dirname(api_root)  # parent directory (contains both BPR-BackEnd-API and BPR-BackEnd-ML-Model)
     
     possible_paths = [
-        # From project root to ML-Model images
+        # Docker volume mount
+        f'/app/images/{filename}',
+        # From project root to ML-Model images (non-Docker)
         os.path.join(project_root, 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
-        # Absolute path on Raspberry Pi
+        # Absolute path on Raspberry Pi (non-Docker)
         f'/home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/{filename}',
         # Legacy paths
         os.path.join(current_dir, '..', car.image_path),

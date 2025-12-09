@@ -50,6 +50,8 @@ services:
       - ./logs:/app/logs
       # For development: mount source code
       - ./app:/app/app
+      # Mount images directory from ML-Model project
+      - ../BPR-BackEnd-ML-Model/bilbasen_scrape/images:/app/images
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
