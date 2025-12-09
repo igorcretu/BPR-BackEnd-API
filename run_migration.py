@@ -47,8 +47,9 @@ def run_migration():
             migration_sql = f.read()
         
         print('🗄️  Applying database migration...')
+        
+        # Check if migration was already applied first
         with engine.connect() as conn:
-            # Check if migration was already applied
             check_query = text("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
@@ -62,9 +63,9 @@ def run_migration():
                 print('ℹ️  Migration appears to have been applied already (ml_models table exists)')
                 print('✅ Skipping migration')
                 return 0
-            
-            # Execute migration
-            trans = conn.begin()
+        
+        # Execute migration in a new connection with transaction
+        with engine.begin() as conn:
             try:
                 # Split by semicolon and execute each statement
                 statements = [s.strip() for s in migration_sql.split(';') if s.strip() and not s.strip().startswith('--')]
@@ -74,12 +75,10 @@ def run_migration():
                         print(f'  Executing statement {idx}/{len(statements)}...')
                         conn.execute(text(statement))
                 
-                trans.commit()
                 print('✅ Database migration completed successfully!')
                 return 0
                 
             except Exception as e:
-                trans.rollback()
                 print(f'❌ Migration error: {e}')
                 print('⚠️  Rolling back changes...')
                 return 1
