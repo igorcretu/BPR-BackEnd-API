@@ -268,6 +268,8 @@ def handle_errors(f):
 def health_check():
     """Health check endpoint with detailed status"""
     from app.models import MLModel, ScrapingLog, ModelTrainingRun
+    import subprocess
+    import json
     
     logger.debug(f"[{g.request_id}] Health check requested")
     
@@ -342,6 +344,50 @@ def health_check():
         logger.error(f"[{g.request_id}] Failed to fetch training status: {str(e)}")
         training_status = {'error': str(e)}
     
+    # Check if scraper is currently running
+    scraper_process = None
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'bilbasen_scraper|auto_scraper'],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            pids = result.stdout.strip().split('\n')
+            scraper_process = {
+                'running': True,
+                'process_count': len([p for p in pids if p]),
+                'pids': [int(p) for p in pids if p]
+            }
+        else:
+            scraper_process = {'running': False}
+    except Exception as e:
+        logger.debug(f"[{g.request_id}] Could not check scraper process: {str(e)}")
+        scraper_process = {'running': False, 'error': 'check_failed'}
+    
+    # Check if training is currently running
+    training_process = None
+    try:
+        result = subprocess.run(
+            ['pgrep', '-f', 'train_models'],
+            capture_output=True,
+            text=True,
+            timeout=2
+        )
+        if result.returncode == 0:
+            pids = result.stdout.strip().split('\n')
+            training_process = {
+                'running': True,
+                'process_count': len([p for p in pids if p]),
+                'pids': [int(p) for p in pids if p]
+            }
+        else:
+            training_process = {'running': False}
+    except Exception as e:
+        logger.debug(f"[{g.request_id}] Could not check training process: {str(e)}")
+        training_process = {'running': False, 'error': 'check_failed'}
+    
     response = {
         'status': 'healthy' if db_status == 'connected' else 'degraded',
         'service': 'BPR Backend API',
@@ -355,7 +401,11 @@ def health_check():
         'ml_model': ml_info,
         'ml_models': ml_models_status,
         'scraping': scraping_status,
-        'training': training_status
+        'training': training_status,
+        'processes': {
+            'scraper': scraper_process,
+            'training': training_process
+        }
     }
     
     status_code = 200 if db_status == 'connected' else 503
