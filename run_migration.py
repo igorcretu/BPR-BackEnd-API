@@ -6,10 +6,24 @@ Applies the multi-model schema migration to the database.
 import os
 import sys
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+
+# Load .env file if it exists
+load_dotenv()
 
 def run_migration():
     """Run database migration from SQL file."""
     db_url = os.getenv('DATABASE_URL')
+    
+    # Fallback: construct from individual variables if DATABASE_URL not set
+    if not db_url:
+        user = os.getenv('POSTGRES_USER', 'bpr_user')
+        password = os.getenv('POSTGRES_PASSWORD', 'postgres')
+        host = os.getenv('POSTGRES_HOST', 'db')
+        port = os.getenv('POSTGRES_PORT', '5432')
+        database = os.getenv('POSTGRES_DB', 'car_prediction')
+        db_url = f'postgresql://{user}:{password}@{host}:{port}/{database}'
+    
     if not db_url:
         print('❌ DATABASE_URL environment variable not set')
         return 1
