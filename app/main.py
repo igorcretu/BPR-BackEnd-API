@@ -356,8 +356,9 @@ def health_check():
                 text=True,
                 timeout=2
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError, PermissionError) as e:
             # Fallback to ps if pgrep not available
+            logger.debug(f"[{g.request_id}] pgrep not available ({type(e).__name__}), using ps fallback")
             result = subprocess.run(
                 ['ps', 'aux'],
                 capture_output=True,
@@ -379,9 +380,13 @@ def health_check():
             }
         elif result:
             scraper_process = {'running': False}
+        
+        if scraper_process is None:
+            scraper_process = {'running': False}
+            
     except Exception as e:
-        logger.debug(f"[{g.request_id}] Could not check scraper process: {str(e)}")
-        scraper_process = {'running': False, 'error': 'check_failed'}
+        logger.warning(f"[{g.request_id}] Could not check scraper process: {type(e).__name__}: {str(e)}")
+        scraper_process = {'running': False, 'error': f'{type(e).__name__}'}
     
     # Check if training is currently running
     training_process = None
@@ -394,8 +399,9 @@ def health_check():
                 text=True,
                 timeout=2
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError, PermissionError) as e:
             # Fallback to ps if pgrep not available
+            logger.debug(f"[{g.request_id}] pgrep not available ({type(e).__name__}), using ps fallback")
             result = subprocess.run(
                 ['ps', 'aux'],
                 capture_output=True,
@@ -416,9 +422,13 @@ def health_check():
             }
         elif result:
             training_process = {'running': False}
+        
+        if training_process is None:
+            training_process = {'running': False}
+            
     except Exception as e:
-        logger.debug(f"[{g.request_id}] Could not check training process: {str(e)}")
-        training_process = {'running': False, 'error': 'check_failed'}
+        logger.warning(f"[{g.request_id}] Could not check training process: {type(e).__name__}: {str(e)}")
+        training_process = {'running': False, 'error': f'{type(e).__name__}'}
     
     response = {
         'status': 'healthy' if db_status == 'connected' else 'degraded',
@@ -593,8 +603,9 @@ def trigger_scraping():
                 text=True,
                 timeout=2
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError, PermissionError) as e:
             # Fallback to ps
+            logger.debug(f"[{g.request_id}] pgrep not available for trigger check, using ps fallback")
             result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=2)
             if any('bilbasen_scraper' in line or 'auto_scraper' in line for line in result.stdout.split('\n')):
                 return jsonify({
@@ -611,7 +622,7 @@ def trigger_scraping():
                 'running': True
             }), 400
     except Exception as e:
-        logger.warning(f"[{g.request_id}] Could not check scraper status: {e}")
+        logger.warning(f"[{g.request_id}] Could not check scraper status: {type(e).__name__}: {e}")
     
     # Parse request for scraping mode
     data = request.get_json() or {}
@@ -658,8 +669,9 @@ def trigger_training():
                 text=True,
                 timeout=2
             )
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError, PermissionError) as e:
             # Fallback to ps
+            logger.debug(f"[{g.request_id}] pgrep not available for trigger check, using ps fallback")
             result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=2)
             if any('train_models' in line for line in result.stdout.split('\n')):
                 return jsonify({
@@ -676,7 +688,7 @@ def trigger_training():
                 'running': True
             }), 400
     except Exception as e:
-        logger.warning(f"[{g.request_id}] Could not check training status: {e}")
+        logger.warning(f"[{g.request_id}] Could not check training status: {type(e).__name__}: {e}")
     
     def run_training():
         """Background thread to run training"""
