@@ -321,9 +321,11 @@ def test_trigger_scraping_env_vars_mapping(client, app):
     import time
     
     with patch('app.main.subprocess.run') as mock_run, \
-         patch('app.main.subprocess.Popen') as mock_popen:
+         patch('app.main.subprocess.Popen') as mock_popen, \
+         patch('app.main.os.path.exists') as mock_exists:
         
         mock_run.return_value = MagicMock(returncode=1)
+        mock_exists.return_value = True  # Script exists
         mock_popen_instance = MagicMock(pid=12345)
         mock_popen_instance.poll.return_value = None  # Process still running
         mock_popen.return_value = mock_popen_instance
@@ -332,11 +334,11 @@ def test_trigger_scraping_env_vars_mapping(client, app):
         
         assert response.status_code == 202
         
-        # Give thread time to start
-        time.sleep(0.1)
+        # Give thread time to start and execute
+        time.sleep(0.5)
         
         # Verify Popen was called with environment variables
-        assert mock_popen.called
+        assert mock_popen.called, "Popen was not called"
         call_kwargs = mock_popen.call_args[1]
         assert 'env' in call_kwargs
         env = call_kwargs['env']
@@ -344,3 +346,81 @@ def test_trigger_scraping_env_vars_mapping(client, app):
         assert env.get('POSTGRES_DB') == 'car_prediction'  # from test config
         assert env.get('POSTGRES_USER') == 'bpr_user'
         assert env.get('POSTGRES_HOST') == 'db'
+
+
+def test_scraper_logs_not_found(client):
+    """Test scraper logs endpoint when log file doesn't exist"""
+    with patch('app.main.os.path.exists') as mock_exists:
+        mock_exists.return_value = False
+        
+        response = client.get('/api/scraper-logs')
+        
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data['success'] is False
+        assert 'No log file found' in data['message']
+
+
+def test_scraper_logs_with_lines_param(client):
+    """Test scraper logs endpoint with lines parameter"""
+    import tempfile
+    import os
+    from datetime import datetime
+    
+    # Create a temporary log file
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        for i in range(100):
+            f.write(f"Log line {i}\n")
+        temp_log = f.name
+    
+    try:
+        # Mock the log file path to point to our temp file
+        today = datetime.now().strftime('%Y%m%d')
+        
+        with patch('app.main.os.path.join') as mock_join, \
+             patch('app.main.os.path.exists') as mock_exists:
+            mock_join.return_value = temp_log
+            mock_exists.return_value = True
+            
+            # Test with valid lines parameter
+            response = client.get('/api/scraper-logs?lines=10')
+            
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['success'] is True
+            assert data['returned_lines'] == 10
+            assert data['total_lines'] == 100
+    finally:
+        os.unlink(temp_log)
+
+
+def test_scraper_logs_invalid_lines_param(client):
+    """Test scraper logs endpoint with invalid lines parameter"""
+    import tempfile
+    import os
+    from datetime import datetime
+    
+    # Create a temporary log file
+    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        for i in range(50):
+            f.write(f"Log line {i}\n")
+        temp_log = f.name
+    
+    try:
+        today = datetime.now().strftime('%Y%m%d')
+        
+        with patch('app.main.os.path.join') as mock_join, \
+             patch('app.main.os.path.exists') as mock_exists:
+            mock_join.return_value = temp_log
+            mock_exists.return_value = True
+            
+            # Test with invalid string parameter
+            response = client.get('/api/scraper-logs?lines=invalid')
+            
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['success'] is True
+            # Should default to 50 lines
+            assert data['returned_lines'] == 50
+    finally:
+        os.unlink(temp_log)
