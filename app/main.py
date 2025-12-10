@@ -758,17 +758,31 @@ def trigger_scraping():
             # Prepare environment variables for the scraper script
             env = os.environ.copy()
             
-            # Map Docker env vars to what the scraper script expects
-            if 'POSTGRES_DB' in env and 'DB_NAME' not in env:
-                env['DB_NAME'] = env.get('POSTGRES_DB', 'car_prediction')
-            if 'POSTGRES_USER' in env and 'DB_USER' not in env:
-                env['DB_USER'] = env.get('POSTGRES_USER', 'bpr_user')
-            if 'POSTGRES_PASSWORD' in env and 'DB_PASS' not in env:
-                env['DB_PASS'] = env.get('POSTGRES_PASSWORD', 'bpr_password')
+            # Get database credentials from Flask's DATABASE_URL or set defaults
+            database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
             
-            # Set database connection for scraper
+            # Parse database URL to extract credentials
+            # Format: postgresql://user:password@host:port/dbname
+            if database_url and 'postgresql://' in database_url:
+                import re
+                match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
+                if match:
+                    db_user, db_pass, db_host, db_port, db_name = match.groups()
+                    env['DB_USER'] = db_user
+                    env['DB_PASS'] = db_pass
+                    env['DB_HOST'] = db_host
+                    env['DB_PORT'] = db_port
+                    env['DB_NAME'] = db_name
+            
+            # Fallback to defaults if not parsed
+            if 'DB_NAME' not in env:
+                env['DB_NAME'] = 'car_prediction'
+            if 'DB_USER' not in env:
+                env['DB_USER'] = 'bpr_user'
+            if 'DB_PASS' not in env:
+                env['DB_PASS'] = 'your_secure_password'
             if 'DB_HOST' not in env:
-                env['DB_HOST'] = 'db'  # Docker service name
+                env['DB_HOST'] = 'db'
             if 'DB_PORT' not in env:
                 env['DB_PORT'] = '5432'
             
@@ -887,20 +901,33 @@ def trigger_training():
             
             # Prepare environment variables for the training script
             # The script expects: DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
-            # Docker provides: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, etc.
             env = os.environ.copy()
             
-            # Map Docker env vars to what the training script expects
-            if 'POSTGRES_DB' in env and 'DB_NAME' not in env:
-                env['DB_NAME'] = env.get('POSTGRES_DB', 'car_prediction')
-            if 'POSTGRES_USER' in env and 'DB_USER' not in env:
-                env['DB_USER'] = env.get('POSTGRES_USER', 'bpr_user')
-            if 'POSTGRES_PASSWORD' in env and 'DB_PASS' not in env:
-                env['DB_PASS'] = env.get('POSTGRES_PASSWORD', 'bpr_password')
+            # Get database credentials from Flask's DATABASE_URL or set defaults
+            database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
             
-            # Set database connection for training script
+            # Parse database URL to extract credentials
+            # Format: postgresql://user:password@host:port/dbname
+            if database_url and 'postgresql://' in database_url:
+                import re
+                match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
+                if match:
+                    db_user, db_pass, db_host, db_port, db_name = match.groups()
+                    env['DB_USER'] = db_user
+                    env['DB_PASS'] = db_pass
+                    env['DB_HOST'] = db_host
+                    env['DB_PORT'] = db_port
+                    env['DB_NAME'] = db_name
+            
+            # Fallback to defaults if not parsed
+            if 'DB_NAME' not in env:
+                env['DB_NAME'] = 'car_prediction'
+            if 'DB_USER' not in env:
+                env['DB_USER'] = 'bpr_user'
+            if 'DB_PASS' not in env:
+                env['DB_PASS'] = 'your_secure_password'
             if 'DB_HOST' not in env:
-                env['DB_HOST'] = 'db'  # Docker service name
+                env['DB_HOST'] = 'db'
             if 'DB_PORT' not in env:
                 env['DB_PORT'] = '5432'
             
