@@ -473,6 +473,75 @@ def health_check():
     status_code = 200 if db_status == 'connected' else 503
     return jsonify(response), status_code
 
+@app.route('/api/debug/script-paths', methods=['GET'])
+@handle_errors
+def debug_script_paths():
+    """Debug endpoint to verify script paths are accessible"""
+    logger.info(f"[{g.request_id}] Script paths debug requested")
+    
+    # Check training script
+    training_script_docker = '/app/ML_Model/train_models.py'
+    training_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
+    
+    # Check scraper script
+    scraper_script_docker = '/app/ML_Model/auto_scraper.py'
+    scraper_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+    
+    # Check Python availability
+    python3_available = False
+    python_available = False
+    try:
+        subprocess.run(['which', 'python3'], capture_output=True, check=True)
+        python3_available = True
+    except:
+        pass
+    
+    try:
+        subprocess.run(['which', 'python'], capture_output=True, check=True)
+        python_available = True
+    except:
+        pass
+    
+    # List ML_Model directory if it exists
+    ml_model_dir_contents = []
+    ml_model_dir = '/app/ML_Model'
+    if os.path.exists(ml_model_dir) and os.path.isdir(ml_model_dir):
+        try:
+            ml_model_dir_contents = os.listdir(ml_model_dir)
+        except Exception as e:
+            ml_model_dir_contents = [f"Error: {str(e)}"]
+    
+    return jsonify({
+        'training_script': {
+            'docker_path': training_script_docker,
+            'docker_exists': os.path.exists(training_script_docker),
+            'docker_readable': os.access(training_script_docker, os.R_OK) if os.path.exists(training_script_docker) else False,
+            'local_path': training_script_local,
+            'local_exists': os.path.exists(training_script_local),
+            'local_readable': os.access(training_script_local, os.R_OK) if os.path.exists(training_script_local) else False
+        },
+        'scraper_script': {
+            'docker_path': scraper_script_docker,
+            'docker_exists': os.path.exists(scraper_script_docker),
+            'docker_readable': os.access(scraper_script_docker, os.R_OK) if os.path.exists(scraper_script_docker) else False,
+            'local_path': scraper_script_local,
+            'local_exists': os.path.exists(scraper_script_local),
+            'local_readable': os.access(scraper_script_local, os.R_OK) if os.path.exists(scraper_script_local) else False
+        },
+        'python': {
+            'python3_available': python3_available,
+            'python_available': python_available
+        },
+        'ml_model_directory': {
+            'path': ml_model_dir,
+            'exists': os.path.exists(ml_model_dir),
+            'is_directory': os.path.isdir(ml_model_dir) if os.path.exists(ml_model_dir) else False,
+            'contents': ml_model_dir_contents
+        },
+        'current_working_directory': os.getcwd(),
+        'app_file_location': __file__
+    }), 200
+
 # ============================================
 # CAR ENDPOINTS
 # ============================================
@@ -651,16 +720,53 @@ def trigger_scraping():
     def run_scraper():
         """Background thread to run scraper"""
         try:
-            script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
-            subprocess.Popen(
-                ['python3', script_path, '--mode', mode],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+            # Use absolute path - ML_Model is mounted at /app/ML_Model in Docker
+            script_path = '/app/ML_Model/auto_scraper.py'
+            
+            # Check if script exists
+            if not os.path.exists(script_path):
+                # Fallback to relative path for local development
+                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+                logger.warning(f"Using fallback script path: {script_path}")
+            
+            logger.info(f"Starting scraper with script: {script_path}, mode: {mode}")
+            
+            # Use python3 or python depending on availability
+            python_cmd = 'python3'
+            try:
+                subprocess.run(['which', 'python3'], capture_output=True, check=True)
+            except:
+                python_cmd = 'python'
+            
+            # Prepare environment variables for the scraper script
+            env = os.environ.copy()
+            
+            # Map Docker env vars to what the scraper script expects
+            if 'POSTGRES_DB' in env and 'DB_NAME' not in env:
+                env['DB_NAME'] = env.get('POSTGRES_DB', 'car_prediction')
+            if 'POSTGRES_USER' in env and 'DB_USER' not in env:
+                env['DB_USER'] = env.get('POSTGRES_USER', 'bpr_user')
+            if 'POSTGRES_PASSWORD' in env and 'DB_PASS' not in env:
+                env['DB_PASS'] = env.get('POSTGRES_PASSWORD', 'bpr_password')
+            
+            # Set database connection for scraper
+            if 'DB_HOST' not in env:
+                env['DB_HOST'] = 'db'  # Docker service name
+            if 'DB_PORT' not in env:
+                env['DB_PORT'] = '5432'
+            
+            logger.info(f"Scraper env: DB_NAME={env.get('DB_NAME')}, DB_USER={env.get('DB_USER')}, DB_HOST={env.get('DB_HOST')}")
+            
+            process = subprocess.Popen(
+                [python_cmd, script_path, '--mode', mode],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
                 start_new_session=True
             )
-            logger.info(f"Scraper started in {mode} mode")
+            logger.info(f"Scraper started in {mode} mode with PID: {process.pid}")
         except Exception as e:
-            logger.error(f"Failed to start scraper: {e}")
+            logger.error(f"Failed to start scraper: {e}", exc_info=True)
     
     thread = threading.Thread(target=run_scraper, daemon=True)
     thread.start()
@@ -677,10 +783,27 @@ def trigger_scraping():
 def trigger_training():
     """Trigger model training process in the background"""
     import threading
+    from app.models import ModelTrainingRun
     
     logger.info(f"[{g.request_id}] Training trigger requested")
     
-    # Check if already running
+    # Check if there's already a pending or running training
+    try:
+        existing_training = ModelTrainingRun.query.filter(
+            ModelTrainingRun.status.in_(['pending', 'running'])
+        ).first()
+        
+        if existing_training:
+            return jsonify({
+                'success': False,
+                'message': 'Training is already in progress',
+                'running': True,
+                'training_id': existing_training.id
+            }), 400
+    except Exception as e:
+        logger.warning(f"[{g.request_id}] Could not check existing training: {e}")
+    
+    # Check if process is actually running
     try:
         try:
             result = subprocess.run(
@@ -696,7 +819,7 @@ def trigger_training():
             if any('train_models' in line for line in result.stdout.split('\n')):
                 return jsonify({
                     'success': False,
-                    'message': 'Training is already running',
+                    'message': 'Training process is already running',
                     'running': True
                 }), 400
             result = None
@@ -704,25 +827,86 @@ def trigger_training():
         if result and result.returncode == 0:
             return jsonify({
                 'success': False,
-                'message': 'Training is already running',
+                'message': 'Training process is already running',
                 'running': True
             }), 400
     except Exception as e:
-        logger.warning(f"[{g.request_id}] Could not check training status: {type(e).__name__}: {e}")
+        logger.warning(f"[{g.request_id}] Could not check training process: {type(e).__name__}: {e}")
+    
+    # Create a database entry immediately to track the training
+    training_run = None
+    try:
+        training_run = ModelTrainingRun(
+            status='pending',
+            notes='Training initiated via API'
+        )
+        db.session.add(training_run)
+        db.session.commit()
+        logger.info(f"[{g.request_id}] Created training run record: {training_run.id}")
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Failed to create training run record: {e}")
+        db.session.rollback()
     
     def run_training():
         """Background thread to run training"""
         try:
-            script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
-            subprocess.Popen(
-                ['python3', script_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+            # Use absolute path - ML_Model is mounted at /app/ML_Model in Docker
+            script_path = '/app/ML_Model/train_models.py'
+            
+            # Check if script exists
+            if not os.path.exists(script_path):
+                # Fallback to relative path for local development
+                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
+                logger.warning(f"Using fallback script path: {script_path}")
+            
+            logger.info(f"Starting training with script: {script_path}")
+            
+            # Use python3 or python depending on availability
+            python_cmd = 'python3'
+            try:
+                subprocess.run(['which', 'python3'], capture_output=True, check=True)
+            except:
+                python_cmd = 'python'
+            
+            # Prepare environment variables for the training script
+            # The script expects: DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
+            # Docker provides: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, etc.
+            env = os.environ.copy()
+            
+            # Map Docker env vars to what the training script expects
+            if 'POSTGRES_DB' in env and 'DB_NAME' not in env:
+                env['DB_NAME'] = env.get('POSTGRES_DB', 'car_prediction')
+            if 'POSTGRES_USER' in env and 'DB_USER' not in env:
+                env['DB_USER'] = env.get('POSTGRES_USER', 'bpr_user')
+            if 'POSTGRES_PASSWORD' in env and 'DB_PASS' not in env:
+                env['DB_PASS'] = env.get('POSTGRES_PASSWORD', 'bpr_password')
+            
+            # Set database connection for training script
+            if 'DB_HOST' not in env:
+                env['DB_HOST'] = 'db'  # Docker service name
+            if 'DB_PORT' not in env:
+                env['DB_PORT'] = '5432'
+            
+            logger.info(f"Training env: DB_NAME={env.get('DB_NAME')}, DB_USER={env.get('DB_USER')}, DB_HOST={env.get('DB_HOST')}")
+            
+            process = subprocess.Popen(
+                [python_cmd, script_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
                 start_new_session=True
             )
-            logger.info("Model training started")
+            logger.info(f"Model training started with PID: {process.pid}")
         except Exception as e:
-            logger.error(f"Failed to start training: {e}")
+            logger.error(f"Failed to start training: {e}", exc_info=True)
+            # Update training run status to failed if we created one
+            if training_run:
+                try:
+                    training_run.status = 'failed'
+                    training_run.notes = f'Failed to start: {str(e)}'
+                    db.session.commit()
+                except:
+                    db.session.rollback()
     
     thread = threading.Thread(target=run_training, daemon=True)
     thread.start()
@@ -730,6 +914,7 @@ def trigger_training():
     return jsonify({
         'success': True,
         'message': 'Model training started',
+        'training_id': training_run.id if training_run else None,
         'estimated_duration': 'Several hours depending on dataset size'
     }), 202
 
