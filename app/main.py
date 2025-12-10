@@ -828,8 +828,9 @@ def get_scraper_logs():
         log_file = os.path.join(log_dir, f'incremental_{today}.log')
         
         if not os.path.exists(log_file):
-            # Try fallback location
+            # Try fallback location for local development
             log_file = os.path.join(os.path.dirname(__file__), '../../ML_Model/logs', f'incremental_{today}.log')
+            log_file = os.path.abspath(log_file)
         
         if not os.path.exists(log_file):
             return jsonify({

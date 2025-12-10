@@ -13652,3 +13652,34 @@ Traceback (most recent call last):
   File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
     raise effect
 RuntimeError: Prediction failed
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] ================================================================================
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] INITIALIZING BPR BACKEND API
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] ================================================================================
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] Database URL configured: localhost
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] Database initialized with connection pooling
+2025-12-10 17:55:09 [INFO] [app.main] [Worker-22028] Initializing ML predictor...
+2025-12-10 17:55:09 [INFO] [app.ml.predictor] [Worker-22028] Loaded metadata: CatBoost
+2025-12-10 17:55:11 [INFO] [app.ml.predictor] [Worker-22028] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 17:55:11 [INFO] [app.ml.predictor] [Worker-22028] Model ready: v1.0.0-catboost
+2025-12-10 17:55:11 [INFO] [app.main] [Worker-22028] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 17:55:12 [INFO] [app.main] [Worker-22028] Application loaded by WSGI server
+2025-12-10 17:55:12 [INFO] [app.main] [Worker-22028] Configuration: {}
+2025-12-10 17:55:12 [INFO] [waitress] [Worker-22028] Serving on http://127.0.0.1:5000
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] ================================================================================
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] INITIALIZING BPR BACKEND API
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] ================================================================================
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] Database URL configured: localhost
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] Database initialized with connection pooling
+2025-12-10 17:57:01 [INFO] [app.main] [Worker-25612] Initializing ML predictor...
+2025-12-10 17:57:01 [INFO] [app.ml.predictor] [Worker-25612] Loaded metadata: CatBoost
+2025-12-10 17:57:07 [INFO] [app.ml.predictor] [Worker-25612] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 17:57:07 [INFO] [app.ml.predictor] [Worker-25612] Model ready: v1.0.0-catboost
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] Application loaded by WSGI server
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] Configuration: {}
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Request body: {'mode': 'incremental'}
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Scraping trigger requested
+2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Response: 202 Duration: 0.003s Size: 219 bytes
