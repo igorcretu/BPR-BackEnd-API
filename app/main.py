@@ -701,38 +701,47 @@ def trigger_scraping():
     """Trigger scraping process in the background"""
     import threading
     
+    logger.info(f"[{g.request_id}] ========== SCRAPER TRIGGER START ==========")
     logger.info(f"[{g.request_id}] Scraping trigger requested")
     
     # Check if already running
     try:
+        logger.info(f"[{g.request_id}] Step 1: Checking for running scraper processes...")
         # Check for any scraper process (new incremental scraper or legacy ones)
         patterns_to_check = ['bilbasen_incremental', 'auto_scraper', 'bilbasen_scraper']
         found_running = False
         
         for pattern in patterns_to_check:
+            logger.info(f"[{g.request_id}] Checking for pattern: {pattern}")
             result = subprocess.run(
                 ['pgrep', '-f', pattern],
                 capture_output=True,
                 text=True,
                 timeout=2
             )
+            logger.info(f"[{g.request_id}] pgrep result for {pattern}: returncode={result.returncode}, stdout={result.stdout.strip()}")
             if result.returncode == 0:
                 found_running = True
-                logger.info(f"[{g.request_id}] Found running scraper: {pattern}")
+                logger.warning(f"[{g.request_id}] Found running scraper: {pattern} (PID: {result.stdout.strip()})")
                 break
         
         if found_running:
+            logger.info(f"[{g.request_id}] Scraper already running - rejecting request")
             return jsonify({
                 'success': False,
                 'message': 'Scraper is already running',
                 'running': True
             }), 400
+        
+        logger.info(f"[{g.request_id}] No running scraper found - proceeding")
     except Exception as e:
         logger.warning(f"[{g.request_id}] Could not check scraper status: {type(e).__name__}: {e}")
+        logger.warning(f"[{g.request_id}] Continuing anyway...")
     
     # Parse request for scraping mode
     data = request.get_json() or {}
     mode = data.get('mode', 'incremental')  # 'incremental' or 'full'
+    logger.info(f"[{g.request_id}] Step 2: Parsed scraping mode: {mode}")
     
     # Capture request_id before thread context
     request_id = g.request_id
@@ -741,29 +750,49 @@ def trigger_scraping():
         """Background thread to run scraper"""
         thread_id = threading.current_thread().name
         try:
+            logger.info(f"[{request_id}][{thread_id}] ===== BACKGROUND THREAD STARTED =====")
             # Use the new incremental scraper that works with AWS WAF
             script_path = '/app/ML_Model/bilbasen_incremental.py'
+            logger.info(f"[{request_id}][{thread_id}] Step 3a: Checking Docker script path: {script_path}")
             
             # Check if script exists
             if not os.path.exists(script_path):
+                logger.warning(f"[{request_id}][{thread_id}] Docker path not found, trying local development path...")
                 # Fallback to relative path for local development
                 script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
-                logger.warning(f"Using fallback script path: {script_path}")
+                logger.info(f"[{request_id}][{thread_id}] Step 3b: Using fallback script path: {script_path}")
             
-            if not os.path.exists(script_path):
-                raise FileNotFoundError(f"Scraper script not found at: {script_path}")
+            script_exists = os.path.exists(script_path)
+            script_readable = os.access(script_path, os.R_OK) if script_exists else False
+            script_executable = os.access(script_path, os.X_OK) if script_exists else False
             
-            logger.info(f"Starting incremental scraper: {script_path}")
+            logger.info(f"[{request_id}][{thread_id}] Script validation: exists={script_exists}, readable={script_readable}, executable={script_executable}")
+            
+            if not script_exists:
+                error_msg = f"Scraper script not found at: {script_path}"
+                logger.error(f"[{request_id}][{thread_id}] {error_msg}")
+                raise FileNotFoundError(error_msg)
+            
+            logger.info(f"[{request_id}][{thread_id}] Step 4: Script validated, preparing to start: {script_path}")
             
             # Use python3 on Linux
             python_cmd = 'python3'
-            logger.info(f"Using Python: {python_cmd}")
+            logger.info(f"[{request_id}][{thread_id}] Step 5: Using Python command: {python_cmd}")
+            
+            # Verify python3 exists
+            try:
+                python_check = subprocess.run(['which', python_cmd], capture_output=True, text=True, timeout=2)
+                logger.info(f"[{request_id}][{thread_id}] Python location: {python_check.stdout.strip()}")
+            except Exception as e:
+                logger.warning(f"[{request_id}][{thread_id}] Could not verify python location: {e}")
             
             # Prepare environment variables for the scraper script
+            logger.info(f"[{request_id}][{thread_id}] Step 6: Preparing environment variables...")
             env = os.environ.copy()
             
             # Get database credentials from Flask's DATABASE_URL
             database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            logger.info(f"[{request_id}][{thread_id}] Database URL present: {bool(database_url)}")
             
             # Parse database URL to extract credentials
             # Format: postgresql://user:password@host:port/dbname
@@ -777,29 +806,41 @@ def trigger_scraping():
                     env['POSTGRES_HOST'] = db_host
                     env['POSTGRES_PORT'] = db_port
                     env['POSTGRES_DB'] = db_name
+                    logger.info(f"[{request_id}][{thread_id}] Parsed DB credentials from URI")
+                else:
+                    logger.warning(f"[{request_id}][{thread_id}] Could not parse database URL")
             
             # Fallback to defaults if not parsed
             if 'POSTGRES_DB' not in env:
                 env['POSTGRES_DB'] = 'car_prediction'
+                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_DB")
             if 'POSTGRES_USER' not in env:
                 env['POSTGRES_USER'] = 'bpr_user'
+                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_USER")
             if 'POSTGRES_PASSWORD' not in env:
                 env['POSTGRES_PASSWORD'] = 'your_secure_password'
+                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PASSWORD")
             if 'POSTGRES_HOST' not in env:
                 env['POSTGRES_HOST'] = 'db'
+                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_HOST")
             if 'POSTGRES_PORT' not in env:
                 env['POSTGRES_PORT'] = '5432'
+                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PORT")
             
-            logger.info(f"Scraper env: DB={env.get('POSTGRES_DB')}, USER={env.get('POSTGRES_USER')}, HOST={env.get('POSTGRES_HOST')}")
+            logger.info(f"[{request_id}][{thread_id}] Final env vars: DB={env.get('POSTGRES_DB')}, USER={env.get('POSTGRES_USER')}, HOST={env.get('POSTGRES_HOST')}, PORT={env.get('POSTGRES_PORT')}")
             
             # Build command - mode ignored for incremental scraper (always incremental)
+            logger.info(f"[{request_id}][{thread_id}] Step 7: Building command...")
             cmd = [python_cmd, script_path]
             if mode == 'test':
                 cmd.append('--test')  # Only 10 listings for testing
+                logger.info(f"[{request_id}][{thread_id}] Test mode enabled - will scrape only 10 listings")
             
-            logger.info(f"Executing command: {' '.join(cmd)}")
-            logger.info(f"Environment: POSTGRES_HOST={env.get('POSTGRES_HOST')}, POSTGRES_DB={env.get('POSTGRES_DB')}")
+            logger.info(f"[{request_id}][{thread_id}] Step 8: Executing command: {' '.join(cmd)}")
+            logger.info(f"[{request_id}][{thread_id}] Working directory: {os.getcwd()}")
+            logger.info(f"[{request_id}][{thread_id}] Environment summary: POSTGRES_HOST={env.get('POSTGRES_HOST')}, POSTGRES_DB={env.get('POSTGRES_DB')}")
             
+            logger.info(f"[{request_id}][{thread_id}] Step 9: Starting subprocess.Popen...")
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -807,21 +848,50 @@ def trigger_scraping():
                 env=env,
                 start_new_session=True
             )
-            logger.info(f"[SUCCESS] Incremental scraper started successfully with PID: {process.pid}")
+            logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process spawned with PID: {process.pid}")
             
             # Wait a moment and check if process is still alive
             import time
+            logger.info(f"[{request_id}][{thread_id}] Step 10: Waiting 0.5s to check process health...")
             time.sleep(0.5)
-            if process.poll() is not None:
-                stdout, stderr = process.communicate()
-                logger.error(f"[FAILED] Scraper died immediately! Exit code: {process.returncode}")
-                logger.error(f"STDOUT: {stdout.decode('utf-8', errors='ignore')}")
-                logger.error(f"STDERR: {stderr.decode('utf-8', errors='ignore')}")
+            
+            poll_result = process.poll()
+            logger.info(f"[{request_id}][{thread_id}] Process poll result: {poll_result} (None=still running)")
+            
+            if poll_result is not None:
+                stdout, stderr = process.communicate(timeout=5)
+                stdout_text = stdout.decode('utf-8', errors='ignore')
+                stderr_text = stderr.decode('utf-8', errors='ignore')
+                
+                logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died immediately!")
+                logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                logger.error(f"[{request_id}][{thread_id}] STDOUT ({len(stdout_text)} chars): {stdout_text[:500]}")
+                logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
+                
+                # Try to determine the error type
+                if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Missing Python dependency")
+                elif 'SyntaxError' in stderr_text:
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Python syntax error in script")
+                elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Permission denied")
+                elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection failed")
+                else:
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Unknown error")
+            else:
+                logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
+                logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
+                
         except Exception as e:
-            logger.error(f"[FAILED] Failed to start scraper: {e}", exc_info=True)
+            logger.error(f"[{request_id}][{thread_id}] [EXCEPTION] Failed to start scraper: {type(e).__name__}: {e}", exc_info=True)
     
-    thread = threading.Thread(target=run_scraper, daemon=True)
+    logger.info(f"[{g.request_id}] Step 11: Creating background thread...")
+    thread = threading.Thread(target=run_scraper, daemon=True, name=f"ScraperThread-{g.request_id[:8]}")
+    logger.info(f"[{g.request_id}] Step 12: Starting background thread...")
     thread.start()
+    logger.info(f"[{g.request_id}] Background thread started: {thread.name}")
+    logger.info(f"[{g.request_id}] ========== RETURNING 202 RESPONSE ==========")
     
     return jsonify({
         'success': True,
