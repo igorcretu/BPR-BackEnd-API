@@ -881,7 +881,36 @@ def trigger_scraping():
                     logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Unknown error")
             else:
                 logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
-                logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
+                
+                # Monitor for another 5 seconds to catch early crashes
+                logger.info(f"[{request_id}][{thread_id}] Step 10b: Monitoring process for 5 more seconds...")
+                for i in range(1, 6):
+                    time.sleep(1)
+                    poll_result = process.poll()
+                    if poll_result is not None:
+                        stdout, stderr = process.communicate(timeout=5)
+                        stdout_text = stdout.decode('utf-8', errors='ignore')
+                        stderr_text = stderr.decode('utf-8', errors='ignore')
+                        
+                        logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died after {i} seconds!")
+                        logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                        logger.error(f"[{request_id}][{thread_id}] STDOUT: {stdout_text}")
+                        logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
+                        
+                        # Error classification
+                        if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Missing Python dependency")
+                        elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection/library issue")
+                        elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection refused")
+                        else:
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Script execution error")
+                        break
+                    logger.info(f"[{request_id}][{thread_id}] Still running after {i} seconds...")
+                else:
+                    logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process survived 5.5 seconds - scraper is running")
+                    logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
                 
         except Exception as e:
             logger.error(f"[{request_id}][{thread_id}] [EXCEPTION] Failed to start scraper: {type(e).__name__}: {e}", exc_info=True)
