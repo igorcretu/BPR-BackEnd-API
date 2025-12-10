@@ -335,7 +335,7 @@ def test_trigger_scraping_env_vars_mapping(client, app):
         call_kwargs = mock_popen.call_args[1]
         assert 'env' in call_kwargs
         env = call_kwargs['env']
-        # The env vars should be parsed from SQLALCHEMY_DATABASE_URI (test db config)
-        assert env.get('DB_NAME') == 'car_prediction'  # from test config
-        assert env.get('DB_USER') == 'bpr_user'
-        assert env.get('DB_HOST') == 'db'
+        # The env vars should be POSTGRES_* (for bilbasen_incremental.py)
+        assert env.get('POSTGRES_DB') == 'car_prediction'  # from test config
+        assert env.get('POSTGRES_USER') == 'bpr_user'
+        assert env.get('POSTGRES_HOST') == 'db'

@@ -345,13 +345,13 @@ def health_check():
         logger.error(f"[{g.request_id}] Failed to fetch training status: {str(e)}")
         training_status = {'error': str(e)}
     
-    # Check if scraper is currently running
+    # Check if scraper is currently running (new incremental scraper or legacy ones)
     scraper_process = None
     try:
         # Try pgrep first (Linux/Unix) - check multiple patterns
         try:
-            # Check for any scraper process
-            patterns_to_check = ['auto_scraper', 'bilbasen_scraper']
+            # Check for any scraper process (prioritize new incremental scraper)
+            patterns_to_check = ['bilbasen_incremental', 'auto_scraper', 'bilbasen_scraper']
             all_pids = []
             
             for pattern in patterns_to_check:
@@ -381,7 +381,7 @@ def health_check():
                 for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
                     try:
                         cmdline = ' '.join(proc.info['cmdline'] or [])
-                        if 'bilbasen_scraper' in cmdline or 'auto_scraper' in cmdline:
+                        if 'bilbasen_incremental' in cmdline or 'bilbasen_scraper' in cmdline or 'auto_scraper' in cmdline:
                             running_pids.append(proc.info['pid'])
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         continue
@@ -694,8 +694,8 @@ def trigger_scraping():
     # Check if already running
     try:
         try:
-            # Check for any scraper process
-            patterns_to_check = ['auto_scraper', 'bilbasen_scraper']
+            # Check for any scraper process (new incremental scraper or legacy ones)
+            patterns_to_check = ['bilbasen_incremental', 'auto_scraper', 'bilbasen_scraper']
             found_running = False
             
             for pattern in patterns_to_check:
@@ -737,16 +737,16 @@ def trigger_scraping():
     def run_scraper():
         """Background thread to run scraper"""
         try:
-            # Use absolute path - ML_Model is mounted at /app/ML_Model in Docker
-            script_path = '/app/ML_Model/auto_scraper.py'
+            # Use the new incremental scraper that works with AWS WAF
+            script_path = '/app/ML_Model/bilbasen_incremental.py'
             
             # Check if script exists
             if not os.path.exists(script_path):
                 # Fallback to relative path for local development
-                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
                 logger.warning(f"Using fallback script path: {script_path}")
             
-            logger.info(f"Starting scraper with script: {script_path}, mode: {mode}")
+            logger.info(f"Starting incremental scraper: {script_path}")
             
             # Use python3 or python depending on availability
             python_cmd = 'python3'
@@ -758,7 +758,7 @@ def trigger_scraping():
             # Prepare environment variables for the scraper script
             env = os.environ.copy()
             
-            # Get database credentials from Flask's DATABASE_URL or set defaults
+            # Get database credentials from Flask's DATABASE_URL
             database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
             
             # Parse database URL to extract credentials
@@ -768,34 +768,39 @@ def trigger_scraping():
                 match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
                 if match:
                     db_user, db_pass, db_host, db_port, db_name = match.groups()
-                    env['DB_USER'] = db_user
-                    env['DB_PASS'] = db_pass
-                    env['DB_HOST'] = db_host
-                    env['DB_PORT'] = db_port
-                    env['DB_NAME'] = db_name
+                    env['POSTGRES_USER'] = db_user
+                    env['POSTGRES_PASSWORD'] = db_pass
+                    env['POSTGRES_HOST'] = db_host
+                    env['POSTGRES_PORT'] = db_port
+                    env['POSTGRES_DB'] = db_name
             
             # Fallback to defaults if not parsed
-            if 'DB_NAME' not in env:
-                env['DB_NAME'] = 'car_prediction'
-            if 'DB_USER' not in env:
-                env['DB_USER'] = 'bpr_user'
-            if 'DB_PASS' not in env:
-                env['DB_PASS'] = 'your_secure_password'
-            if 'DB_HOST' not in env:
-                env['DB_HOST'] = 'db'
-            if 'DB_PORT' not in env:
-                env['DB_PORT'] = '5432'
+            if 'POSTGRES_DB' not in env:
+                env['POSTGRES_DB'] = 'car_prediction'
+            if 'POSTGRES_USER' not in env:
+                env['POSTGRES_USER'] = 'bpr_user'
+            if 'POSTGRES_PASSWORD' not in env:
+                env['POSTGRES_PASSWORD'] = 'your_secure_password'
+            if 'POSTGRES_HOST' not in env:
+                env['POSTGRES_HOST'] = 'db'
+            if 'POSTGRES_PORT' not in env:
+                env['POSTGRES_PORT'] = '5432'
             
-            logger.info(f"Scraper env: DB_NAME={env.get('DB_NAME')}, DB_USER={env.get('DB_USER')}, DB_HOST={env.get('DB_HOST')}")
+            logger.info(f"Scraper env: DB={env.get('POSTGRES_DB')}, USER={env.get('POSTGRES_USER')}, HOST={env.get('POSTGRES_HOST')}")
+            
+            # Build command - mode ignored for incremental scraper (always incremental)
+            cmd = [python_cmd, script_path]
+            if mode == 'test':
+                cmd.append('--test')  # Only 10 listings for testing
             
             process = subprocess.Popen(
-                [python_cmd, script_path, '--mode', mode],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
                 start_new_session=True
             )
-            logger.info(f"Scraper started in {mode} mode with PID: {process.pid}")
+            logger.info(f"Incremental scraper started with PID: {process.pid}")
         except Exception as e:
             logger.error(f"Failed to start scraper: {e}", exc_info=True)
     
@@ -804,10 +809,58 @@ def trigger_scraping():
     
     return jsonify({
         'success': True,
-        'message': f'Scraping started in {mode} mode',
+        'message': 'Incremental scraper started - will fetch new listings and add to database',
+        'scraper_type': 'incremental',
         'mode': mode,
-        'estimated_duration': 'Several hours depending on data size'
+        'estimated_duration': 'Minutes to hours depending on new listings'
     }), 202
+
+@app.route('/api/scraper-logs', methods=['GET'])
+@handle_errors
+def get_scraper_logs():
+    """Get recent scraper logs for monitoring"""
+    logger.info(f"[{g.request_id}] Scraper logs requested")
+    
+    try:
+        # Path to incremental scraper log
+        log_dir = '/app/ML_Model/logs'
+        today = datetime.now().strftime('%Y%m%d')
+        log_file = os.path.join(log_dir, f'incremental_{today}.log')
+        
+        if not os.path.exists(log_file):
+            # Try fallback location
+            log_file = os.path.join(os.path.dirname(__file__), '../../ML_Model/logs', f'incremental_{today}.log')
+        
+        if not os.path.exists(log_file):
+            return jsonify({
+                'success': False,
+                'message': 'No log file found for today',
+                'logs': []
+            }), 404
+        
+        # Get last N lines
+        lines_to_read = int(request.args.get('lines', 50))
+        
+        with open(log_file, 'r', encoding='utf-8') as f:
+            # Read all lines and get last N
+            all_lines = f.readlines()
+            recent_lines = all_lines[-lines_to_read:] if len(all_lines) > lines_to_read else all_lines
+        
+        return jsonify({
+            'success': True,
+            'log_file': os.path.basename(log_file),
+            'total_lines': len(all_lines),
+            'returned_lines': len(recent_lines),
+            'logs': recent_lines
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Failed to read logs: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Failed to read logs: {str(e)}',
+            'logs': []
+        }), 500
 
 @app.route('/api/trigger-training', methods=['POST'])
 @handle_errors
