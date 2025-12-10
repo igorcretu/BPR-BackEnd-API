@@ -734,8 +734,12 @@ def trigger_scraping():
     data = request.get_json() or {}
     mode = data.get('mode', 'incremental')  # 'incremental' or 'full'
     
+    # Capture request_id before thread context
+    request_id = g.request_id
+    
     def run_scraper():
         """Background thread to run scraper"""
+        thread_id = threading.current_thread().name
         try:
             # Use the new incremental scraper that works with AWS WAF
             script_path = '/app/ML_Model/bilbasen_incremental.py'
