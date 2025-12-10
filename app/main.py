@@ -348,20 +348,28 @@ def health_check():
     # Check if scraper is currently running
     scraper_process = None
     try:
-        # Try pgrep first (Linux/Unix)
+        # Try pgrep first (Linux/Unix) - check multiple patterns
         try:
-            result = subprocess.run(
-                ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
-            if result.returncode == 0:
-                pids = result.stdout.strip().split('\n')
+            # Check for any scraper process
+            patterns_to_check = ['auto_scraper', 'bilbasen_scraper']
+            all_pids = []
+            
+            for pattern in patterns_to_check:
+                result = subprocess.run(
+                    ['pgrep', '-f', pattern],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0:
+                    pids = result.stdout.strip().split('\n')
+                    all_pids.extend([int(p) for p in pids if p])
+            
+            if all_pids:
                 scraper_process = {
                     'running': True,
-                    'process_count': len([p for p in pids if p]),
-                    'pids': [int(p) for p in pids if p]
+                    'process_count': len(all_pids),
+                    'pids': all_pids
                 }
             else:
                 scraper_process = {'running': False}
@@ -686,12 +694,28 @@ def trigger_scraping():
     # Check if already running
     try:
         try:
-            result = subprocess.run(
-                ['pgrep', '-f', 'bilbasen_scraper_pi|bilbasen_scraper|auto_scraper'],
-                capture_output=True,
-                text=True,
-                timeout=2
-            )
+            # Check for any scraper process
+            patterns_to_check = ['auto_scraper', 'bilbasen_scraper']
+            found_running = False
+            
+            for pattern in patterns_to_check:
+                result = subprocess.run(
+                    ['pgrep', '-f', pattern],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                if result.returncode == 0:
+                    found_running = True
+                    break
+            
+            if found_running:
+                return jsonify({
+                    'success': False,
+                    'message': 'Scraper is already running',
+                    'running': True
+                }), 400
+                
         except (FileNotFoundError, OSError, PermissionError) as e:
             # Fallback to ps
             logger.debug(f"[{g.request_id}] pgrep not available for trigger check, using ps fallback")
@@ -702,14 +726,7 @@ def trigger_scraping():
                     'message': 'Scraper is already running',
                     'running': True
                 }), 400
-            result = None
-        
-        if result and result.returncode == 0:
-            return jsonify({
-                'success': False,
-                'message': 'Scraper is already running',
-                'running': True
-            }), 400
+            
     except Exception as e:
         logger.warning(f"[{g.request_id}] Could not check scraper status: {type(e).__name__}: {e}")
     
