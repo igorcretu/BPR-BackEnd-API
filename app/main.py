@@ -982,11 +982,35 @@ def get_image_by_external_id(external_id):
         logger.warning(f"[{g.request_id}] No image available for external_id {external_id}")
         abort(404, description="Image not available")
     
-    # Construct full path
-    image_full_path = os.path.join(os.path.dirname(__file__), '..', car.image_path)
+    # Extract filename and use same path checking as get_car_image
+    filename = os.path.basename(car.image_path)
+    current_dir = os.path.dirname(__file__)
+    api_root = os.path.dirname(current_dir)
+    project_root = os.path.dirname(api_root)
     
-    if not os.path.exists(image_full_path):
-        logger.warning(f"[{g.request_id}] Image file not found: {image_full_path}")
+    possible_paths = [
+        # Docker volume mount
+        f'/app/images/{filename}',
+        # From project root to ML-Model images (non-Docker)
+        os.path.join(project_root, 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
+        # Absolute path on Raspberry Pi (non-Docker)
+        f'/home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images/{filename}',
+        # Legacy paths
+        os.path.join(current_dir, '..', car.image_path),
+        os.path.join(current_dir, '..', 'images', filename),
+    ]
+    
+    image_full_path = None
+    for path in possible_paths:
+        logger.debug(f"[{g.request_id}] Checking path: {path}")
+        if os.path.exists(path):
+            image_full_path = path
+            logger.info(f"[{g.request_id}] Found image at: {path}")
+            break
+    
+    if not image_full_path:
+        checked_paths = '\n  '.join(possible_paths)
+        logger.error(f"[{g.request_id}] Image file not found. Checked paths:\n  {checked_paths}")
         abort(404, description="Image file not found")
     
     logger.info(f"[{g.request_id}] Serving image for external_id {external_id}")
