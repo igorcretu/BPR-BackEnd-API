@@ -746,6 +746,19 @@ def trigger_scraping():
     # Capture request_id before thread context
     request_id = g.request_id
     
+    # Create initial scraping log entry in database
+    from app.models import ScrapingLog
+    scraping_log = ScrapingLog(
+        source_name='bilbasen',
+        scraping_mode=mode,
+        started_at=datetime.utcnow(),
+        success=False  # Will update to True if successful
+    )
+    db.session.add(scraping_log)
+    db.session.commit()
+    log_id = scraping_log.id
+    logger.info(f"[{g.request_id}] Created scraping log entry: {log_id}")
+    
     def run_scraper():
         """Background thread to run scraper"""
         thread_id = threading.current_thread().name
@@ -869,16 +882,34 @@ def trigger_scraping():
                 logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
                 
                 # Try to determine the error type
+                error_type = "Unknown error"
                 if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Missing Python dependency")
+                    error_type = "Missing Python dependency"
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                 elif 'SyntaxError' in stderr_text:
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Python syntax error in script")
+                    error_type = "Python syntax error in script"
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                 elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Permission denied")
+                    error_type = "Permission denied"
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                 elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection failed")
+                    error_type = "Database connection failed"
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                 else:
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Unknown error")
+                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                
+                # Update database log with immediate failure
+                try:
+                    from app.models import ScrapingLog
+                    log_entry = db.session.get(ScrapingLog, log_id)
+                    if log_entry:
+                        log_entry.success = False
+                        log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                        log_entry.completed_at = datetime.utcnow()
+                        db.session.commit()
+                        logger.info(f"[{request_id}][{thread_id}] Updated scraping log with immediate failure")
+                except Exception as db_error:
+                    logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
             else:
                 logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
                 
@@ -898,22 +929,63 @@ def trigger_scraping():
                         logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
                         
                         # Error classification
+                        error_type = "Script execution error"
                         if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Missing Python dependency")
+                            error_type = "Missing Python dependency"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                         elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection/library issue")
+                            error_type = "Database connection/library issue"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                         elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Database connection refused")
+                            error_type = "Database connection refused"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
                         else:
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: Script execution error")
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        
+                        # Update database log with failure
+                        try:
+                            from app.models import ScrapingLog
+                            log_entry = db.session.get(ScrapingLog, log_id)
+                            if log_entry:
+                                log_entry.success = False
+                                log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                                log_entry.completed_at = datetime.utcnow()
+                                db.session.commit()
+                                logger.info(f"[{request_id}][{thread_id}] Updated scraping log with failure after {i}s")
+                        except Exception as db_error:
+                            logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                         break
                     logger.info(f"[{request_id}][{thread_id}] Still running after {i} seconds...")
                 else:
                     logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process survived 5.5 seconds - scraper is running")
                     logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
+                    
+                    # Update database log - scraper started successfully
+                    # Note: Final stats will be updated by the scraper script itself when it completes
+                    try:
+                        from app.models import ScrapingLog
+                        log_entry = db.session.get(ScrapingLog, log_id)
+                        if log_entry:
+                            log_entry.success = True  # Started successfully
+                            # Don't set completed_at yet - scraper will update when done
+                            db.session.commit()
+                            logger.info(f"[{request_id}][{thread_id}] Updated scraping log - scraper running")
+                    except Exception as db_error:
+                        logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                 
         except Exception as e:
             logger.error(f"[{request_id}][{thread_id}] [EXCEPTION] Failed to start scraper: {type(e).__name__}: {e}", exc_info=True)
+            # Update database log with exception
+            try:
+                from app.models import ScrapingLog
+                log_entry = db.session.get(ScrapingLog, log_id)
+                if log_entry:
+                    log_entry.success = False
+                    log_entry.error_message = f"Exception: {type(e).__name__}: {str(e)}"
+                    log_entry.completed_at = datetime.utcnow()
+                    db.session.commit()
+            except Exception as db_error:
+                logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log with exception: {db_error}")
     
     logger.info(f"[{g.request_id}] Step 11: Creating background thread...")
     thread = threading.Thread(target=run_scraper, daemon=True, name=f"ScraperThread-{g.request_id[:8]}")
