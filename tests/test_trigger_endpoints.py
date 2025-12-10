@@ -285,13 +285,12 @@ def test_trigger_training_with_pending_training(client, app):
         db.session.commit()
 
 
-def test_trigger_training_env_vars_mapping(client):
+def test_trigger_training_env_vars_mapping(client, app):
     """Test that environment variables are correctly mapped for training script"""
     import time
     
     with patch('app.main.subprocess.run') as mock_run, \
-         patch('app.main.subprocess.Popen') as mock_popen, \
-         patch('os.environ', {'POSTGRES_DB': 'test_db', 'POSTGRES_USER': 'test_user', 'POSTGRES_PASSWORD': 'test_pass'}):
+         patch('app.main.subprocess.Popen') as mock_popen:
         
         mock_run.return_value = MagicMock(returncode=1)
         mock_popen.return_value = MagicMock(pid=12345)
@@ -308,19 +307,18 @@ def test_trigger_training_env_vars_mapping(client):
         call_kwargs = mock_popen.call_args[1]
         assert 'env' in call_kwargs
         env = call_kwargs['env']
-        assert env.get('DB_NAME') == 'test_db'
-        assert env.get('DB_USER') == 'test_user'
-        assert env.get('DB_PASS') == 'test_pass'
+        # The env vars should be parsed from SQLALCHEMY_DATABASE_URI (test db config)
+        assert env.get('DB_NAME') == 'car_prediction'  # from test config
+        assert env.get('DB_USER') == 'bpr_user'
         assert env.get('DB_HOST') == 'db'
 
 
-def test_trigger_scraping_env_vars_mapping(client):
+def test_trigger_scraping_env_vars_mapping(client, app):
     """Test that environment variables are correctly mapped for scraping script"""
     import time
     
     with patch('app.main.subprocess.run') as mock_run, \
-         patch('app.main.subprocess.Popen') as mock_popen, \
-         patch('os.environ', {'POSTGRES_DB': 'test_db', 'POSTGRES_USER': 'test_user', 'POSTGRES_PASSWORD': 'test_pass'}):
+         patch('app.main.subprocess.Popen') as mock_popen:
         
         mock_run.return_value = MagicMock(returncode=1)
         mock_popen.return_value = MagicMock(pid=12345)
@@ -337,6 +335,7 @@ def test_trigger_scraping_env_vars_mapping(client):
         call_kwargs = mock_popen.call_args[1]
         assert 'env' in call_kwargs
         env = call_kwargs['env']
-        assert env.get('DB_NAME') == 'test_db'
-        assert env.get('DB_USER') == 'test_user'
-        assert env.get('DB_PASS') == 'test_pass'
+        # The env vars should be parsed from SQLALCHEMY_DATABASE_URI (test db config)
+        assert env.get('DB_NAME') == 'car_prediction'  # from test config
+        assert env.get('DB_USER') == 'bpr_user'
+        assert env.get('DB_HOST') == 'db'
