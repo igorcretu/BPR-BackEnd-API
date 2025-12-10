@@ -76,7 +76,7 @@ def test_trigger_scraping_check_timeout(client):
                               json={'mode': 'incremental'},
                               content_type='application/json')
         
-        # Should still proceed with scraping despite timeout
+        # Should still proceed with scraping despite error
         assert response.status_code == 202
 
 
@@ -224,11 +224,14 @@ def test_debug_script_paths_endpoint(client):
         assert response.status_code == 200
         data = response.get_json()
         assert 'training_script' in data
-        assert 'scraper_script' in data
+        assert 'scraper_script_legacy' in data
+        assert 'scraper_script_incremental' in data
         assert 'python' in data
         assert 'ml_model_directory' in data
         assert data['training_script']['docker_path'] == '/app/ML_Model/train_models.py'
-        assert data['scraper_script']['docker_path'] == '/app/ML_Model/auto_scraper.py'
+        assert data['scraper_script_legacy']['docker_path'] == '/app/ML_Model/auto_scraper.py'
+        assert data['scraper_script_incremental']['docker_path'] == '/app/ML_Model/bilbasen_incremental.py'
+        assert data['scraper_script_incremental']['currently_used'] is True
 
 
 def test_trigger_training_creates_db_record(client, app):
@@ -321,7 +324,9 @@ def test_trigger_scraping_env_vars_mapping(client, app):
          patch('app.main.subprocess.Popen') as mock_popen:
         
         mock_run.return_value = MagicMock(returncode=1)
-        mock_popen.return_value = MagicMock(pid=12345)
+        mock_popen_instance = MagicMock(pid=12345)
+        mock_popen_instance.poll.return_value = None  # Process still running
+        mock_popen.return_value = mock_popen_instance
         
         response = client.post('/api/trigger-scraping', json={'mode': 'incremental'})
         

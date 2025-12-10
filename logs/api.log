@@ -13683,3 +13683,678 @@ RuntimeError: Prediction failed
 2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Request body: {'mode': 'incremental'}
 2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Scraping trigger requested
 2025-12-10 17:57:07 [INFO] [app.main] [Worker-25612] [1765385827800] Response: 202 Duration: 0.003s Size: 219 bytes
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] ================================================================================
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] INITIALIZING BPR BACKEND API
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] ================================================================================
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] Database URL configured: localhost
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] Database initialized with connection pooling
+2025-12-10 18:09:06 [INFO] [app.main] [Worker-9720] Initializing ML predictor...
+2025-12-10 18:09:06 [INFO] [app.ml.predictor] [Worker-9720] Loaded metadata: CatBoost
+2025-12-10 18:09:11 [INFO] [app.ml.predictor] [Worker-9720] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:09:11 [INFO] [app.ml.predictor] [Worker-9720] Model ready: v1.0.0-catboost
+2025-12-10 18:09:11 [INFO] [app.main] [Worker-9720] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 18:09:11 [INFO] [app.main] [Worker-9720] Application loaded by WSGI server
+2025-12-10 18:09:11 [INFO] [app.main] [Worker-9720] Configuration: {}
+2025-12-10 18:09:12 [INFO] [app.main] [Worker-9720] [1765386552117] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:09:12 [INFO] [app.main] [Worker-9720] [1765386552117] Request body: {'mode': 'incremental'}
+2025-12-10 18:09:12 [INFO] [app.main] [Worker-9720] [1765386552117] Scraping trigger requested
+2025-12-10 18:09:12 [INFO] [app.main] [Worker-9720] [1765386552117] Response: 202 Duration: 0.094s Size: 219 bytes
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] ================================================================================
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] INITIALIZING BPR BACKEND API
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] ================================================================================
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] Database URL configured: localhost
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] Database initialized with connection pooling
+2025-12-10 18:10:29 [INFO] [app.main] [Worker-11740] Initializing ML predictor...
+2025-12-10 18:10:29 [INFO] [app.ml.predictor] [Worker-11740] Loaded metadata: CatBoost
+2025-12-10 18:10:33 [INFO] [app.ml.predictor] [Worker-11740] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:10:33 [INFO] [app.ml.predictor] [Worker-11740] Model ready: v1.0.0-catboost
+2025-12-10 18:10:33 [INFO] [app.main] [Worker-11740] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 18:10:33 [INFO] [app.main] [Worker-11740] Application loaded by WSGI server
+2025-12-10 18:10:33 [INFO] [app.main] [Worker-11740] Configuration: {}
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634428] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634428] Request body: {'mode': 'incremental'}
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634428] Scraping trigger requested
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634428] Response: 202 Duration: 0.092s Size: 219 bytes
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634560] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634560] Request body: {'mode': 'incremental'}
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634560] Scraping trigger requested
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] [1765386634560] Response: 202 Duration: 0.058s Size: 219 bytes
+2025-12-10 18:10:34 [WARNING] [app.main] [Worker-11740] Using fallback script path: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] Starting incremental scraper: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] Using Python: C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\python.exe
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] Scraper env: DB=car_prediction, USER=bpr_user, HOST=db
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] Executing command: C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\python.exe C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:10:34 [INFO] [app.main] [Worker-11740] Environment: POSTGRES_HOST=db, POSTGRES_DB=car_prediction
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635377] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635377] Request body: {'mode': 'full'}
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635377] Scraping trigger requested
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635377] Found running scraper: PID 24664
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635377] Response: 400 Duration: 0.042s Size: 72 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635474] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635474] Scraping trigger requested
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635474] Found running scraper: PID 24664
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635474] Response: 400 Duration: 0.046s Size: 72 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635581] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635581] Request body: {'mode': 'incremental'}
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635581] Scraping trigger requested
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635581] Found running scraper: PID 24664
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635581] Response: 400 Duration: 0.056s Size: 72 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635699] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635699] Training trigger requested
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635699] Created training run record: ae9f52fc-5d60-4348-97af-6ac2fd4101af
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635699] Response: 202 Duration: 0.084s Size: 168 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635825] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635825] Training trigger requested
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635825] Response: 400 Duration: 0.003s Size: 81 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635869] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635869] Training trigger requested
+2025-12-10 18:10:35 [WARNING] [app.main] [Worker-11740] [1765386635869] Could not check training process: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635869] Created training run record: 33b3cf69-ae50-474e-b9df-781d1fb4726a
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635869] Response: 202 Duration: 0.008s Size: 168 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635915] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635915] Response: 200 Duration: 0.016s Size: 559 bytes
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635975] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:35 [WARNING] [app.main] [Worker-11740] [1765386635975] Could not check scraper process: Exception: Process check failed
+2025-12-10 18:10:35 [WARNING] [app.main] [Worker-11740] [1765386635975] Could not check training process: Exception: Process check failed
+2025-12-10 18:10:35 [INFO] [app.main] [Worker-11740] [1765386635975] Response: 200 Duration: 0.006s Size: 561 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636022] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636022] Response: 200 Duration: 0.006s Size: 553 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636072] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636072] Response: 200 Duration: 0.004s Size: 521 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636117] GET /api/debug/script-paths from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636117] Script paths debug requested
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636117] Response: 200 Duration: 0.011s Size: 1271 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636191] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636191] Training trigger requested
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636191] Created training run record: 6b8fac0f-2da5-42dd-a42a-7cd8188919d7
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636191] Response: 202 Duration: 0.010s Size: 168 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636254] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636254] Training trigger requested
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636254] Response: 400 Duration: 0.005s Size: 130 bytes
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636304] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636304] Training trigger requested
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636304] Created training run record: a804d009-42e9-48bb-b9b3-e5953be8453e
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636304] Response: 202 Duration: 0.008s Size: 168 bytes
+2025-12-10 18:10:36 [WARNING] [app.main] [Worker-11740] Using fallback script path: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] Starting training with script: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] Training env: DB_NAME=car_prediction, DB_USER=bpr_user, DB_HOST=db
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] Model training started with PID: 12345
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636448] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636448] Request body: {'mode': 'incremental'}
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636448] Scraping trigger requested
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636448] Found running scraper: PID 24664
+2025-12-10 18:10:36 [INFO] [app.main] [Worker-11740] [1765386636448] Response: 400 Duration: 0.041s Size: 72 bytes
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] ================================================================================
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] INITIALIZING BPR BACKEND API
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] ================================================================================
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] Database URL configured: localhost
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] Database initialized with connection pooling
+2025-12-10 18:13:46 [INFO] [app.main] [Worker-11280] Initializing ML predictor...
+2025-12-10 18:13:46 [INFO] [app.ml.predictor] [Worker-11280] Loaded metadata: CatBoost
+2025-12-10 18:13:51 [INFO] [app.ml.predictor] [Worker-11280] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:13:51 [INFO] [app.ml.predictor] [Worker-11280] Model ready: v1.0.0-catboost
+2025-12-10 18:13:51 [INFO] [app.main] [Worker-11280] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 18:13:51 [INFO] [app.main] [Worker-11280] Application loaded by WSGI server
+2025-12-10 18:13:51 [INFO] [app.main] [Worker-11280] Configuration: {}
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833496] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833496] Training trigger requested
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833496] Created training run record: 4edcfffc-9461-4e48-a5a9-2c4f4527b5fa
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833496] Response: 202 Duration: 0.073s Size: 168 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833602] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833602] Training trigger requested
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833602] Response: 400 Duration: 0.004s Size: 81 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833643] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833643] Training trigger requested
+2025-12-10 18:13:53 [WARNING] [app.main] [Worker-11280] [1765386833643] Could not check training process: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833643] Created training run record: 38de080c-3e28-4ee8-a97c-49f74f043aa8
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833643] Response: 202 Duration: 0.010s Size: 168 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833690] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833690] Response: 200 Duration: 0.021s Size: 559 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833752] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [WARNING] [app.main] [Worker-11280] [1765386833752] Could not check scraper process: Exception: Process check failed
+2025-12-10 18:13:53 [WARNING] [app.main] [Worker-11280] [1765386833752] Could not check training process: Exception: Process check failed
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833752] Response: 200 Duration: 0.008s Size: 561 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833801] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833801] Response: 200 Duration: 0.005s Size: 553 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833838] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833838] Response: 200 Duration: 0.005s Size: 521 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833882] GET /api/debug/script-paths from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833882] Script paths debug requested
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833882] Response: 200 Duration: 0.010s Size: 1271 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833925] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833925] Training trigger requested
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833925] Created training run record: 39a20cdb-df87-47c8-8c97-516a3894ade5
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833925] Response: 202 Duration: 0.007s Size: 168 bytes
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833981] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833981] Training trigger requested
+2025-12-10 18:13:53 [INFO] [app.main] [Worker-11280] [1765386833981] Response: 400 Duration: 0.005s Size: 130 bytes
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] [1765386834021] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] [1765386834021] Training trigger requested
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] [1765386834021] Created training run record: 085e0913-2f4b-4b52-9cc5-ab227c8e6717
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] [1765386834021] Response: 202 Duration: 0.009s Size: 168 bytes
+2025-12-10 18:13:54 [WARNING] [app.main] [Worker-11280] Using fallback script path: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] Starting training with script: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] Training env: DB_NAME=car_prediction, DB_USER=bpr_user, DB_HOST=db
+2025-12-10 18:13:54 [INFO] [app.main] [Worker-11280] Model training started with PID: 12345
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] ================================================================================
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] INITIALIZING BPR BACKEND API
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] ================================================================================
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] CORS locked to: ['https://bpr-g26.netlify.app', 'https://test.bachelorproject26.site', 'https://bachelorproject26.site', 'http://localhost:5173', 'http://127.0.0.1:5173', 'https://carpredict.netlify.app']
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] Database URL configured: localhost
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] Database initialized with connection pooling
+2025-12-10 18:15:19 [INFO] [app.main] [Worker-41580] Initializing ML predictor...
+2025-12-10 18:15:19 [INFO] [app.ml.predictor] [Worker-41580] Loaded metadata: CatBoost
+2025-12-10 18:15:23 [INFO] [app.ml.predictor] [Worker-41580] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:15:23 [INFO] [app.ml.predictor] [Worker-41580] Model ready: v1.0.0-catboost
+2025-12-10 18:15:23 [INFO] [app.main] [Worker-41580] ML Predictor initialized: {'version': 'v1.0.0-catboost', 'loaded': True, 'type': 'trained', 'model_name': 'CatBoost', 'test_r2': 0.84656701293307, 'test_mae': 27140.913258916094, 'features_count': 27}
+2025-12-10 18:15:23 [INFO] [app.main] [Worker-41580] Application loaded by WSGI server
+2025-12-10 18:15:23 [INFO] [app.main] [Worker-41580] Configuration: {}
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924719] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924719] Request body: {'body_type': 'Sedan', 'brand': 'BMW', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': '320d', 'price': 250000.0, 'transmission': 'Automatic', 'year': 2020}
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924719] Creating new car: BMW 320d
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924719] Successfully created car with ID: a4de53de-4291-41e2-b0d3-b84c41b7b46b
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924719] Response: 201 Duration: 0.082s Size: 1261 bytes
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924836] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924836] Request body: {'brand': 'BMW', 'model': '320d'}
+2025-12-10 18:15:24 [WARNING] [app.main] [Worker-41580] [1765386924836] Validation error in create_car: Missing required fields: year, mileage, fuel_type, transmission, body_type, price
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924836] Response: 400 Duration: 0.002s Size: 110 bytes
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924875] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924875] Request body: {'body_type': 'Sedan', 'brand': 'BMW', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': '320d', 'price': 250000.0, 'transmission': 'Automatic', 'year': 'not_a_year'}
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924875] Creating new car: BMW 320d
+2025-12-10 18:15:24 [WARNING] [app.main] [Worker-41580] [1765386924875] Validation error in create_car: Year must be an integer
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924875] Response: 400 Duration: 0.001s Size: 52 bytes
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924920] GET /api/cars/test-car-123 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924920] Fetching car with ID: test-car-123
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924920] Successfully retrieved car test-car-123
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924920] Response: 200 Duration: 0.009s Size: 1211 bytes
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924971] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924971] Request body: {'body_type': 'Sedan', 'brand': 'Audi', 'fuel_type': 'Diesel', 'mileage': 60000, 'model': 'A4', 'transmission': 'Automatic', 'year': 2019}
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924971] Price prediction requested for: Audi A4 2019
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924971] Prediction completed in 0.005s: 299500.94 DKK (confidence: 84.66%)
+2025-12-10 18:15:24 [INFO] [app.main] [Worker-41580] [1765386924971] Response: 200 Duration: 0.015s Size: 330 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925020] GET /api/queue/job/nonexistent-id from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [WARNING] [app.main] [Worker-41580] [1765386925020] 404 error: /api/queue/job/nonexistent-id
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925020] Response: 404 Duration: 0.001s Size: 86 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925055] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925055] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('fuel_type', 'Diesel'), ('min_year', '2018')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925055] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925055] Response: 200 Duration: 0.035s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925127] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925127] Fetching cars with filters: ImmutableMultiDict([('search', 'Toyota')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925127] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925127] Response: 200 Duration: 0.030s Size: 1314 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925198] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925198] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'price'), ('sort_order', 'desc')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925198] Found 3 cars, returning page 1/1 with 3 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925198] Response: 200 Duration: 0.012s Size: 3762 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925242] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925242] Fetching brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925242] Found 1 brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925242] Response: 200 Duration: 0.004s Size: 56 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925278] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925278] Request body: {'body_type': 'Sedan', 'brand': 'Mercedes', 'doors': 4, 'engine_size': 2.0, 'fuel_type': 'Diesel', 'horsepower': 200, 'mileage': 30000, 'model': 'C-Class', 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925278] Price prediction requested for: Mercedes C-Class 2021
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925278] Prediction completed in 0.005s: 440601.22 DKK (confidence: 89.66%)
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925278] Response: 200 Duration: 0.010s Size: 394 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925325] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925325] Request body: {'body_type': 'Sedan', 'brand': 'Mercedes', 'fuel_type': 'Diesel', 'mileage': 30000, 'model': 'C-Class', 'transmission': 'Automatic', 'year': 'invalid'}
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925325] Price prediction requested for: Mercedes C-Class invalid
+2025-12-10 18:15:25 [WARNING] [app.main] [Worker-41580] [1765386925325] Validation error in predict_price: Year must be an integer
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925325] Response: 400 Duration: 0.001s Size: 52 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925357] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925357] Fetching cars with filters: ImmutableMultiDict([('page', '999999')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925357] Found 0 cars, returning page 999999/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925357] Response: 200 Duration: 0.006s Size: 131 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925401] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925401] Fetching cars with filters: ImmutableMultiDict([('per_page', '2')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925401] Found 5 cars, returning page 1/3 with 2 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925401] Response: 200 Duration: 0.008s Size: 2548 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925449] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925449] Fetching market statistics
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925449] Statistics: 1 total cars
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925449] Response: 200 Duration: 0.014s Size: 217 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925497] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925497] Fetching cars with filters: ImmutableMultiDict([])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925497] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925497] Response: 200 Duration: 0.007s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925539] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925539] Fetching cars with filters: ImmutableMultiDict([])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925539] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925539] Response: 200 Duration: 0.006s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925579] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925579] Fetching cars with filters: ImmutableMultiDict([('page', '1'), ('per_page', '10')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925579] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925579] Response: 200 Duration: 0.005s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925616] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925616] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('fuel_type', 'Benzin')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925616] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925616] Response: 200 Duration: 0.006s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925651] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925651] Fetching cars with filters: ImmutableMultiDict([('q', 'Toyota')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925651] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925651] Response: 200 Duration: 0.027s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925718] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925718] Fetching cars with filters: ImmutableMultiDict([('price_min', '100000'), ('price_max', '500000')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925718] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925718] Response: 200 Duration: 0.036s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925787] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925787] Fetching cars with filters: ImmutableMultiDict([('year_min', '2018'), ('year_max', '2022')])
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925787] Found 0 cars, returning page 1/0 with 0 items
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925787] Response: 200 Duration: 0.035s Size: 127 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925854] GET /api/cars/invalid-id-999999 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925854] Fetching car with ID: invalid-id-999999
+2025-12-10 18:15:25 [WARNING] [app.main] [Worker-41580] [1765386925854] 404 error: /api/cars/invalid-id-999999
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925854] Response: 404 Duration: 0.011s Size: 84 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925905] GET /api/cars/test-id from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925905] Fetching car with ID: test-id
+2025-12-10 18:15:25 [WARNING] [app.main] [Worker-41580] [1765386925905] 404 error: /api/cars/test-id
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925905] Response: 404 Duration: 0.003s Size: 74 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925939] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925939] Fetching brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925939] Found 0 brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925939] Response: 200 Duration: 0.004s Size: 29 bytes
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925976] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925976] Fetching brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925976] Found 0 brands
+2025-12-10 18:15:25 [INFO] [app.main] [Worker-41580] [1765386925976] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926011] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926011] Fetching brands
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926011] Found 0 brands
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926011] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926048] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926048] Fetching filter options
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926048] Retrieved all filter options successfully
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926048] Response: 200 Duration: 0.018s Size: 210 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926100] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926100] Fetching filter options
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926100] Retrieved all filter options successfully
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926100] Response: 200 Duration: 0.008s Size: 210 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926145] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926145] Fetching filter options
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926145] Retrieved all filter options successfully
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926145] Response: 200 Duration: 0.008s Size: 210 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926195] GET /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926195] 405 error: GET /api/predict
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926195] Response: 405 Duration: 0.001s Size: 84 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926229] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926229] Request body: {'brand': 'Toyota', 'model': 'Camry', 'year': 2020, 'mileage': 50000, 'fuel_type': 'Benzin', 'transmission': 'Automatisk', 'body_type': 'Sedan', 'horsepower': 200, 'engine_size': 2.5, 'doors': 4, 'color': 'Black'}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926229] Price prediction requested for: Toyota Camry 2020
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926229] Prediction completed in 0.004s: 323902.38 DKK (confidence: 89.66%)
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926229] Response: 200 Duration: 0.010s Size: 398 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926271] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926271] Validation error in predict_price: Request body must be valid JSON
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926271] Response: 400 Duration: 0.002s Size: 60 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926305] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926305] Validation error in predict_price: Missing required fields: brand, model, year, mileage, fuel_type, transmission, body_type
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926305] Response: 400 Duration: 0.001s Size: 117 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926343] GET /api/health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926343] 404 error: /api/health
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926343] Response: 404 Duration: 0.002s Size: 68 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926383] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926383] Fetching ML models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926383] Found 0 models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926383] Response: 200 Duration: 0.011s Size: 29 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926431] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926431] Fetching ML models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926431] Found 0 models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926431] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926466] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926466] Fetching ML models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926466] Found 0 models
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926466] Response: 200 Duration: 0.002s Size: 29 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926499] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926499] Fetching market statistics
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926499] Statistics: 0 total cars
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926499] Response: 200 Duration: 0.006s Size: 136 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926534] GET /api/stats from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926534] Fetching market statistics
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926534] Statistics: 0 total cars
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926534] Response: 200 Duration: 0.005s Size: 136 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926576] GET /api/queue/status from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926576] 404 error: /api/queue/status
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926576] Response: 404 Duration: 0.002s Size: 74 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926613] GET /api/queue/job/test-job-123 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926613] 404 error: /api/queue/job/test-job-123
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926613] Response: 404 Duration: 0.002s Size: 84 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926646] GET /api/nonexistent-endpoint from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926646] 404 error: /api/nonexistent-endpoint
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926646] Response: 404 Duration: 0.002s Size: 82 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926682] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926682] Validation error in predict_price: Request body must be valid JSON
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926682] Response: 400 Duration: 0.002s Size: 60 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926719] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926719] Validation error in predict_price: Request body must be valid JSON
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926719] Response: 400 Duration: 0.002s Size: 60 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926756] PUT /api/cars/d5888c59-3aa4-4d5a-830e-ee4534db575c from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926756] Request body: {'mileage': 60000, 'price': 300000.0}
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926756] 405 error: PUT /api/cars/d5888c59-3aa4-4d5a-830e-ee4534db575c
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926756] Response: 405 Duration: 0.003s Size: 118 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926799] DELETE /api/cars/b87b29be-a755-4f8e-a17f-bf8e892881c4 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926799] 405 error: DELETE /api/cars/b87b29be-a755-4f8e-a17f-bf8e892881c4
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926799] Response: 405 Duration: 0.002s Size: 121 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926839] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926839] Request body: {'body_type': 'Hatchback', 'brand': 'Volkswagen', 'engine_size': 1.4, 'fuel_type': 'Benzin', 'horsepower': 150, 'mileage': 40000, 'model': 'Golf', 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926839] Price prediction requested for: Volkswagen Golf 2019
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926839] Prediction completed in 0.004s: 153758.24 DKK (confidence: 89.66%)
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926839] Response: 200 Duration: 0.010s Size: 375 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926885] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926885] Request body: {'body_type': 'Stationcar', 'brand': 'Ford', 'doors': 5, 'fuel_type': 'Diesel', 'horsepower': 120, 'mileage': 70000, 'model': 'Focus', 'seats': 5, 'transmission': 'Automatic', 'year': 2018}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926885] Price prediction requested for: Ford Focus 2018
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926885] Prediction completed in 0.004s: 240418.08 DKK (confidence: 89.66%)
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926885] Response: 200 Duration: 0.009s Size: 375 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926925] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926925] Request body: {'body_type': 'Hatchback', 'brand': 'Audi', 'engine_size': 'not_a_number', 'fuel_type': 'Diesel', 'mileage': 30000, 'model': 'A3', 'transmission': 'Automatic', 'year': 2020}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926925] Price prediction requested for: Audi A3 2020
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926925] Validation error in predict_price: engine_size must be numeric
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926925] Response: 400 Duration: 0.003s Size: 56 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926960] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926960] Request body: {'body_type': 'Hatchback', 'brand': 'Seat', 'fuel_type': 'Benzin', 'horsepower': 'invalid', 'mileage': 50000, 'model': 'Leon', 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926960] Price prediction requested for: Seat Leon 2019
+2025-12-10 18:15:26 [WARNING] [app.main] [Worker-41580] [1765386926960] Validation error in predict_price: horsepower must be an integer
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926960] Response: 400 Duration: 0.003s Size: 58 bytes
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926998] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926998] Request body: {'body_type': 'Sedan', 'brand': 'Skoda', 'fuel_type': 'Diesel', 'mileage': 20000, 'model': 'Octavia', 'transmission': 'Automatic', 'year': 2020}
+2025-12-10 18:15:26 [INFO] [app.main] [Worker-41580] [1765386926998] Price prediction requested for: Skoda Octavia 2020
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386926998] Prediction completed in 0.005s: 360454.75 DKK (confidence: 84.66%)
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386926998] Response: 200 Duration: 0.009s Size: 337 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927043] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927043] Request body: {'body_type': 'Hatchback', 'brand': 'Renault', 'fuel_type': 'Benzin', 'mileage': 45000, 'model': 'Clio', 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927043] Price prediction requested for: Renault Clio 2019
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927043] Queued prediction job 5d45ef35-0ace-4379-8668-c8371920479b (mode=client_force_queue, priority=100, position=0)
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927043] Response: 202 Duration: 0.020s Size: 403 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927102] GET /api/cars/nonexistent-id-12345 from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927102] Fetching car with ID: nonexistent-id-12345
+2025-12-10 18:15:27 [WARNING] [app.main] [Worker-41580] [1765386927102] 404 error: /api/cars/nonexistent-id-12345
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927102] Response: 404 Duration: 0.003s Size: 87 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927135] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927135] Request body: {'body_type': 'Hatchback', 'brand': 'Peugeot', 'color': 'Blue', 'dealer_name': 'Test Dealer', 'doors': 5, 'engine_size': 1.2, 'fuel_type': 'Benzin', 'horsepower': 100, 'location': 'Aarhus', 'mileage': 15000, 'model': '208', 'price': 180000.0, 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927135] Creating new car: Peugeot 208
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927135] Successfully created car with ID: fd4f217a-7a39-4233-b7d4-a461b411626d
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927135] Response: 201 Duration: 0.006s Size: 1275 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927181] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927181] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('model', 'Camry'), ('fuel_type', 'Benzin'), ('transmission', 'Automatisk'), ('body_type', 'Sedan'), ('min_year', '2015'), ('max_year', '2025'), ('min_price', '100000'), ('max_price', '500000'), ('min_mileage', '0'), ('max_mileage', '100000'), ('page', '1'), ('per_page', '10'), ('sort_by', 'price'), ('sort_order', 'asc')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927181] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927181] Response: 200 Duration: 0.034s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927247] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927247] Request body: {'body_type': 'Hatchback', 'brand': 'Citroen', 'fuel_type': 'Diesel', 'mileage': 'lots', 'model': 'C3', 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927247] Price prediction requested for: Citroen C3 2019
+2025-12-10 18:15:27 [WARNING] [app.main] [Worker-41580] [1765386927247] Validation error in predict_price: Mileage must be an integer
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927247] Response: 400 Duration: 0.002s Size: 55 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927286] GET /api/brands from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927286] Fetching brands
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927286] Found 1 brands
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927286] Response: 200 Duration: 0.003s Size: 56 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927325] GET /api/models from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927325] Fetching ML models
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927325] Found 0 models
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927325] Response: 200 Duration: 0.003s Size: 29 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927363] GET /api/filters from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927363] Fetching filter options
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927363] Retrieved all filter options successfully
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927363] Response: 200 Duration: 0.008s Size: 339 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927408] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927408] Fetching cars with filters: ImmutableMultiDict([('search', 'Toy')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927408] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927408] Response: 200 Duration: 0.005s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927447] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927447] Request body: {'body_type': 'SUV', 'brand': 'Mazda', 'color': 'Red', 'doors': 5, 'engine_size': 2.0, 'fuel_type': 'Benzin', 'horsepower': 165, 'mileage': 25000, 'model': 'CX-5', 'seats': 5, 'transmission': 'Automatic', 'year': 2021}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927447] Price prediction requested for: Mazda CX-5 2021
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927447] Prediction completed in 0.005s: 272287.46 DKK (confidence: 89.66%)
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927447] Response: 200 Duration: 0.008s Size: 400 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927491] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927491] Request body: {'body_type': 'Hatchback', 'brand': 'Hyundai', 'fuel_type': 'Diesel', 'mileage': 60000, 'model': 'i30', 'price': 140000.0, 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927491] Creating new car: Hyundai i30
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927491] Successfully created car with ID: 02d1712e-a79e-4cf9-8e93-110ae86d5062
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927491] Response: 201 Duration: 0.008s Size: 1265 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927535] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927535] Fetching cars with filters: ImmutableMultiDict([('min_price', '100000')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927535] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927535] Response: 200 Duration: 0.006s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927543] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927543] Fetching cars with filters: ImmutableMultiDict([('max_price', '500000')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927543] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927543] Response: 200 Duration: 0.005s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927592] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927592] Fetching cars with filters: ImmutableMultiDict([('min_year', '2015')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927592] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927592] Response: 200 Duration: 0.004s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927598] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927598] Fetching cars with filters: ImmutableMultiDict([('max_year', '2025')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927598] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927598] Response: 200 Duration: 0.003s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927633] GET /api/health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [WARNING] [app.main] [Worker-41580] [1765386927633] 404 error: /api/health
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927633] Response: 404 Duration: 0.002s Size: 68 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927672] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927672] Fetching cars with filters: ImmutableMultiDict([('min_mileage', '10000'), ('max_mileage', '100000')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927672] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927672] Response: 200 Duration: 0.006s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927718] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927718] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'price'), ('sort_order', 'asc')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927718] Found 3 cars, returning page 1/1 with 3 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927718] Response: 200 Duration: 0.014s Size: 3762 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927766] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927766] Request body: {'body_type': 'Hatchback', 'brand': 'Kia', 'fuel_type': 'Diesel', 'mileage': 35000, 'model': 'Ceed', 'transmission': 'Manual', 'year': 2020}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927766] Price prediction requested for: Kia Ceed 2020
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927766] Prediction completed in 0.006s: 221838.22 DKK (confidence: 84.66%)
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927766] Response: 200 Duration: 0.008s Size: 333 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927811] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927811] Request body: {'body_type': 'SUV', 'brand': 'Nissan', 'fuel_type': 'Diesel', 'mileage': 50000, 'model': 'Qashqai', 'transmission': 'Automatic', 'year': 2019}
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927811] Price prediction requested for: Nissan Qashqai 2019
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927811] Prediction completed in 0.005s: 279529.41 DKK (confidence: 84.66%)
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927811] Response: 200 Duration: 0.010s Size: 335 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927857] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927857] Fetching cars with filters: ImmutableMultiDict([('model', 'Camry')])
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927857] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927857] Response: 200 Duration: 0.031s Size: 1338 bytes
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927928] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:27 [INFO] [app.main] [Worker-41580] [1765386927928] Fetching cars with filters: ImmutableMultiDict([('location', 'Copenhagen')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386927928] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386927928] Response: 200 Duration: 0.149s Size: 1338 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928121] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928121] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'year'), ('sort_order', 'desc')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928121] Found 3 cars, returning page 1/1 with 3 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928121] Response: 200 Duration: 0.012s Size: 3762 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928176] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928176] Fetching cars with filters: ImmutableMultiDict([('sort_by', 'mileage'), ('sort_order', 'asc')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928176] Found 3 cars, returning page 1/1 with 3 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928176] Response: 200 Duration: 0.011s Size: 3762 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928226] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928226] Fetching cars with filters: ImmutableMultiDict([('max_mileage', '100000')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928226] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928226] Response: 200 Duration: 0.006s Size: 1338 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928273] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928273] Fetching cars with filters: ImmutableMultiDict([('min_mileage', '10000')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928273] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928273] Response: 200 Duration: 0.006s Size: 1338 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928316] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928316] Request body: {'body_type': 'Sedan', 'brand': 'Honda', 'fuel_type': 'Benzin', 'mileage': 40000, 'model': 'Civic', 'transmission': 'Manual', 'year': 2020}
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928316] Price prediction requested for: Honda Civic 2020
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928316] Prediction completed in 0.004s: 192843.88 DKK (confidence: 84.66%)
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928316] Response: 200 Duration: 0.007s Size: 330 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928358] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928358] Fetching cars with filters: ImmutableMultiDict([('brand', 'Toyota'), ('model', 'Camry'), ('fuel_type', 'Benzin'), ('transmission', 'Automatisk'), ('body_type', 'Sedan'), ('location', 'Aarhus'), ('min_year', '2015'), ('max_year', '2025')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928358] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928358] Response: 200 Duration: 0.026s Size: 1334 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928415] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928415] Request body: {'body_type': 'Sedan', 'brand': 'Subaru', 'fuel_type': 'Benzin', 'mileage': 55000, 'model': 'Impreza', 'price': 'expensive', 'transmission': 'Manual', 'year': 2019}
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928415] Creating new car: Subaru Impreza
+2025-12-10 18:15:28 [WARNING] [app.main] [Worker-41580] [1765386928415] Validation error in create_car: Price must be a number
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928415] Response: 400 Duration: 0.001s Size: 51 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928446] POST /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928446] Request body: {'body_type': 'SUV', 'brand': 'Mitsubishi', 'fuel_type': 'Diesel', 'mileage': -1000, 'model': 'Outlander', 'price': 280000.0, 'transmission': 'Automatic', 'year': 2020}
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928446] Creating new car: Mitsubishi Outlander
+2025-12-10 18:15:28 [WARNING] [app.main] [Worker-41580] [1765386928446] Validation error in create_car: mileage cannot be negative
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928446] Response: 400 Duration: 0.002s Size: 55 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928481] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928481] Request body: {'body_type': 'Sedan', 'brand': 'Lexus', 'doors': 'many', 'fuel_type': 'Benzin', 'mileage': 35000, 'model': 'IS', 'transmission': 'Automatic', 'year': 2019}
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928481] Price prediction requested for: Lexus IS 2019
+2025-12-10 18:15:28 [WARNING] [app.main] [Worker-41580] [1765386928481] Validation error in predict_price: doors must be an integer
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928481] Response: 400 Duration: 0.003s Size: 53 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928520] POST /api/predict from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928520] Request body: {'body_type': 'SUV', 'brand': 'Jeep', 'fuel_type': 'Benzin', 'mileage': 28000, 'model': 'Cherokee', 'seats': 'lots', 'transmission': 'Automatic', 'year': 2020}
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928520] Price prediction requested for: Jeep Cherokee 2020
+2025-12-10 18:15:28 [WARNING] [app.main] [Worker-41580] [1765386928520] Validation error in predict_price: seats must be an integer
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928520] Response: 400 Duration: 0.002s Size: 53 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928564] GET /api/cars/1a775323-bd47-4b3a-ac50-c778c364055f from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928564] Fetching car with ID: 1a775323-bd47-4b3a-ac50-c778c364055f
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928564] Successfully retrieved car 1a775323-bd47-4b3a-ac50-c778c364055f
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928564] Response: 200 Duration: 0.006s Size: 1235 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928605] GET /api/cars from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928605] Fetching cars with filters: ImmutableMultiDict([('min_price', '100000'), ('max_price', '400000'), ('min_year', '2015'), ('max_year', '2023')])
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928605] Found 1 cars, returning page 1/1 with 1 items
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928605] Response: 200 Duration: 0.005s Size: 1338 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928646] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928646] Response: 200 Duration: 0.146s Size: 521 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928834] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:28 [ERROR] [app.main] [Worker-41580] [1765386928834] Database connection: FAILED - (builtins.Exception) Database connection refused
+[SQL: connection failed]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928834] Response: 503 Duration: 0.116s Size: 778 bytes
+2025-12-10 18:15:28 [INFO] [app.main] [Worker-41580] [1765386928988] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386928988] Response: 200 Duration: 0.122s Size: 521 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929151] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929151] Response: 200 Duration: 0.121s Size: 397 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929314] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929314] Response: 200 Duration: 0.110s Size: 521 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929456] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929456] Response: 200 Duration: 0.103s Size: 521 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929593] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929593] Response: 200 Duration: 0.108s Size: 521 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929739] POST /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [WARNING] [app.main] [Worker-41580] [1765386929739] 405 error: POST /health
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929739] Response: 405 Duration: 0.003s Size: 80 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929743] PUT /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [WARNING] [app.main] [Worker-41580] [1765386929743] 405 error: PUT /health
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929743] Response: 405 Duration: 0.001s Size: 79 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929745] DELETE /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [WARNING] [app.main] [Worker-41580] [1765386929745] 405 error: DELETE /health
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929745] Response: 405 Duration: 0.002s Size: 82 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929782] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929782] Response: 200 Duration: 0.116s Size: 521 bytes
+2025-12-10 18:15:29 [INFO] [app.main] [Worker-41580] [1765386929933] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386929933] Response: 200 Duration: 0.110s Size: 521 bytes
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930076] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930076] Response: 200 Duration: 0.105s Size: 521 bytes
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930223] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930223] Response: 200 Duration: 0.115s Size: 521 bytes
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930340] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930340] Response: 200 Duration: 0.108s Size: 521 bytes
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930450] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930450] Response: 200 Duration: 0.106s Size: 521 bytes
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded metadata: CatBoost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Model ready: v1.0.0-catboost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded metadata: CatBoost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Model ready: v1.0.0-catboost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded metadata: CatBoost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Model ready: v1.0.0-catboost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded metadata: CatBoost
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Loaded model from C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\ml\../models\best_model_catboost.pkl
+2025-12-10 18:15:30 [INFO] [app.ml.predictor] [Worker-41580] Model ready: v1.0.0-catboost
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930947] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930947] Request body: {'mode': 'incremental'}
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930947] Scraping trigger requested
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930947] Response: 202 Duration: 0.003s Size: 219 bytes
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930986] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930986] Request body: {'mode': 'incremental'}
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930986] Scraping trigger requested
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930986] Found running scraper: bilbasen_incremental
+2025-12-10 18:15:30 [INFO] [app.main] [Worker-41580] [1765386930986] Response: 400 Duration: 0.002s Size: 72 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931026] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931026] Request body: {'mode': 'full'}
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931026] Scraping trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931026] Response: 202 Duration: 0.003s Size: 212 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931065] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931065] Scraping trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931065] Response: 202 Duration: 0.002s Size: 219 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931105] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931105] Request body: {'mode': 'incremental'}
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931105] Scraping trigger requested
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] [1765386931105] Could not check scraper status: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931105] Response: 202 Duration: 0.003s Size: 219 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931141] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931141] Training trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931141] Created training run record: e8a884b3-5afd-4547-a090-11ac952a7e7e
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931141] Response: 202 Duration: 0.016s Size: 168 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931195] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931195] Training trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931195] Response: 400 Duration: 0.004s Size: 81 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931233] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931233] Training trigger requested
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] [1765386931233] Could not check training process: TimeoutExpired: Command 'pgrep' timed out after 2 seconds
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931233] Created training run record: e0dff622-08dd-4451-8437-95126fb2c0cc
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931233] Response: 202 Duration: 0.008s Size: 168 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931275] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931275] Response: 200 Duration: 0.006s Size: 559 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931313] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] [1765386931313] Could not check scraper process: Exception: Process check failed
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] [1765386931313] Could not check training process: Exception: Process check failed
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931313] Response: 200 Duration: 0.004s Size: 561 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931357] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931357] Response: 200 Duration: 0.004s Size: 553 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931405] GET /health from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931405] Response: 200 Duration: 0.004s Size: 521 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931448] GET /api/debug/script-paths from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931448] Script paths debug requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931448] Response: 200 Duration: 0.010s Size: 1271 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931496] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931496] Training trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931496] Created training run record: 140bbe4e-9128-4ace-9a94-9ca7c77d58f8
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931496] Response: 202 Duration: 0.011s Size: 168 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931551] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931551] Training trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931551] Response: 400 Duration: 0.003s Size: 130 bytes
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931595] POST /api/trigger-training from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931595] Training trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931595] Created training run record: 2c8441b8-9fc0-44a3-b7fe-c578b195fec7
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931595] Response: 202 Duration: 0.008s Size: 168 bytes
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] Using fallback script path: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Starting training with script: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/train_models.py
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Training env: DB_NAME=car_prediction, DB_USER=bpr_user, DB_HOST=db
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Model training started with PID: 12345
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931739] POST /api/trigger-scraping from 127.0.0.1 User-Agent: Werkzeug/3.1.3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931739] Request body: {'mode': 'incremental'}
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931739] Scraping trigger requested
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [1765386931739] Response: 202 Duration: 0.003s Size: 219 bytes
+2025-12-10 18:15:31 [WARNING] [app.main] [Worker-41580] Using fallback script path: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Starting incremental scraper: C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Using Python: python3
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Scraper env: DB=car_prediction, USER=bpr_user, HOST=db
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Executing command: python3 C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\../../ML_Model/bilbasen_incremental.py
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] Environment: POSTGRES_HOST=db, POSTGRES_DB=car_prediction
+2025-12-10 18:15:31 [INFO] [app.main] [Worker-41580] [SUCCESS] Incremental scraper started successfully with PID: 12345
+2025-12-10 18:15:32 [INFO] [prediction_worker] [Worker-41580] Completed job 964ea8d8-77fa-4138-90db-59a9733826dd
+2025-12-10 18:15:32 [ERROR] [prediction_worker] [Worker-41580] Job accff4f9-c969-4b03-a67d-2f5276a3d00d failed
+Traceback (most recent call last):
+  File "C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\worker.py", line 62, in _process_job
+    result = predictor_instance.predict(job.payload)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: Prediction failed
+2025-12-10 18:15:32 [ERROR] [prediction_worker] [Worker-41580] Job 108654c2-767e-42b3-9c8a-a0f9db49855b failed
+Traceback (most recent call last):
+  File "C:\Users\Igor Cretu\Desktop\Bachelor\Project\BackEnd\API\app\worker.py", line 62, in _process_job
+    result = predictor_instance.predict(job.payload)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Igor Cretu\AppData\Local\Programs\Python\Python312\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: Prediction failed

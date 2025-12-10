@@ -491,9 +491,12 @@ def debug_script_paths():
     training_script_docker = '/app/ML_Model/train_models.py'
     training_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
     
-    # Check scraper script
+    # Check scraper scripts (both old and new)
     scraper_script_docker = '/app/ML_Model/auto_scraper.py'
     scraper_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+    
+    incremental_scraper_docker = '/app/ML_Model/bilbasen_incremental.py'
+    incremental_scraper_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
     
     # Check Python availability
     python3_available = False
@@ -528,13 +531,22 @@ def debug_script_paths():
             'local_exists': os.path.exists(training_script_local),
             'local_readable': os.access(training_script_local, os.R_OK) if os.path.exists(training_script_local) else False
         },
-        'scraper_script': {
+        'scraper_script_legacy': {
             'docker_path': scraper_script_docker,
             'docker_exists': os.path.exists(scraper_script_docker),
             'docker_readable': os.access(scraper_script_docker, os.R_OK) if os.path.exists(scraper_script_docker) else False,
             'local_path': scraper_script_local,
             'local_exists': os.path.exists(scraper_script_local),
             'local_readable': os.access(scraper_script_local, os.R_OK) if os.path.exists(scraper_script_local) else False
+        },
+        'scraper_script_incremental': {
+            'docker_path': incremental_scraper_docker,
+            'docker_exists': os.path.exists(incremental_scraper_docker),
+            'docker_readable': os.access(incremental_scraper_docker, os.R_OK) if os.path.exists(incremental_scraper_docker) else False,
+            'local_path': incremental_scraper_local,
+            'local_exists': os.path.exists(incremental_scraper_local),
+            'local_readable': os.access(incremental_scraper_local, os.R_OK) if os.path.exists(incremental_scraper_local) else False,
+            'currently_used': True
         },
         'python': {
             'python3_available': python3_available,
@@ -693,40 +705,28 @@ def trigger_scraping():
     
     # Check if already running
     try:
-        try:
-            # Check for any scraper process (new incremental scraper or legacy ones)
-            patterns_to_check = ['bilbasen_incremental', 'auto_scraper', 'bilbasen_scraper']
-            found_running = False
-            
-            for pattern in patterns_to_check:
-                result = subprocess.run(
-                    ['pgrep', '-f', pattern],
-                    capture_output=True,
-                    text=True,
-                    timeout=2
-                )
-                if result.returncode == 0:
-                    found_running = True
-                    break
-            
-            if found_running:
-                return jsonify({
-                    'success': False,
-                    'message': 'Scraper is already running',
-                    'running': True
-                }), 400
-                
-        except (FileNotFoundError, OSError, PermissionError) as e:
-            # Fallback to ps
-            logger.debug(f"[{g.request_id}] pgrep not available for trigger check, using ps fallback")
-            result = subprocess.run(['ps', 'aux'], capture_output=True, text=True, timeout=2)
-            if any('bilbasen_scraper' in line or 'auto_scraper' in line for line in result.stdout.split('\n')):
-                return jsonify({
-                    'success': False,
-                    'message': 'Scraper is already running',
-                    'running': True
-                }), 400
-            
+        # Check for any scraper process (new incremental scraper or legacy ones)
+        patterns_to_check = ['bilbasen_incremental', 'auto_scraper', 'bilbasen_scraper']
+        found_running = False
+        
+        for pattern in patterns_to_check:
+            result = subprocess.run(
+                ['pgrep', '-f', pattern],
+                capture_output=True,
+                text=True,
+                timeout=2
+            )
+            if result.returncode == 0:
+                found_running = True
+                logger.info(f"[{g.request_id}] Found running scraper: {pattern}")
+                break
+        
+        if found_running:
+            return jsonify({
+                'success': False,
+                'message': 'Scraper is already running',
+                'running': True
+            }), 400
     except Exception as e:
         logger.warning(f"[{g.request_id}] Could not check scraper status: {type(e).__name__}: {e}")
     
@@ -746,14 +746,14 @@ def trigger_scraping():
                 script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
                 logger.warning(f"Using fallback script path: {script_path}")
             
+            if not os.path.exists(script_path):
+                raise FileNotFoundError(f"Scraper script not found at: {script_path}")
+            
             logger.info(f"Starting incremental scraper: {script_path}")
             
-            # Use python3 or python depending on availability
+            # Use python3 on Linux
             python_cmd = 'python3'
-            try:
-                subprocess.run(['which', 'python3'], capture_output=True, check=True)
-            except:
-                python_cmd = 'python'
+            logger.info(f"Using Python: {python_cmd}")
             
             # Prepare environment variables for the scraper script
             env = os.environ.copy()
@@ -793,6 +793,9 @@ def trigger_scraping():
             if mode == 'test':
                 cmd.append('--test')  # Only 10 listings for testing
             
+            logger.info(f"Executing command: {' '.join(cmd)}")
+            logger.info(f"Environment: POSTGRES_HOST={env.get('POSTGRES_HOST')}, POSTGRES_DB={env.get('POSTGRES_DB')}")
+            
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -800,9 +803,18 @@ def trigger_scraping():
                 env=env,
                 start_new_session=True
             )
-            logger.info(f"Incremental scraper started with PID: {process.pid}")
+            logger.info(f"[SUCCESS] Incremental scraper started successfully with PID: {process.pid}")
+            
+            # Wait a moment and check if process is still alive
+            import time
+            time.sleep(0.5)
+            if process.poll() is not None:
+                stdout, stderr = process.communicate()
+                logger.error(f"[FAILED] Scraper died immediately! Exit code: {process.returncode}")
+                logger.error(f"STDOUT: {stdout.decode('utf-8', errors='ignore')}")
+                logger.error(f"STDERR: {stderr.decode('utf-8', errors='ignore')}")
         except Exception as e:
-            logger.error(f"Failed to start scraper: {e}", exc_info=True)
+            logger.error(f"[FAILED] Failed to start scraper: {e}", exc_info=True)
     
     thread = threading.Thread(target=run_scraper, daemon=True)
     thread.start()
@@ -839,8 +851,17 @@ def get_scraper_logs():
                 'logs': []
             }), 404
         
-        # Get last N lines
-        lines_to_read = int(request.args.get('lines', 50))
+        # Get last N lines with robust parameter parsing
+        try:
+            lines_param = request.args.get('lines', '50')
+            # Strip any quotes or whitespace that might have been added
+            lines_param = str(lines_param).strip().strip('"').strip("'")
+            lines_to_read = int(lines_param)
+            if lines_to_read <= 0:
+                lines_to_read = 50
+        except (ValueError, TypeError) as e:
+            logger.warning(f"[{g.request_id}] Invalid lines parameter '{request.args.get('lines')}', using default 50")
+            lines_to_read = 50
         
         with open(log_file, 'r', encoding='utf-8') as f:
             # Read all lines and get last N
