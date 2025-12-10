@@ -762,230 +762,231 @@ def trigger_scraping():
     def run_scraper():
         """Background thread to run scraper"""
         thread_id = threading.current_thread().name
-        try:
-            logger.info(f"[{request_id}][{thread_id}] ===== BACKGROUND THREAD STARTED =====")
-            # Use the new incremental scraper that works with AWS WAF
-            script_path = '/app/ML_Model/bilbasen_incremental.py'
-            logger.info(f"[{request_id}][{thread_id}] Step 3a: Checking Docker script path: {script_path}")
-            
-            # Check if script exists
-            if not os.path.exists(script_path):
-                logger.warning(f"[{request_id}][{thread_id}] Docker path not found, trying local development path...")
-                # Fallback to relative path for local development
-                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
-                logger.info(f"[{request_id}][{thread_id}] Step 3b: Using fallback script path: {script_path}")
-            
-            script_exists = os.path.exists(script_path)
-            script_readable = os.access(script_path, os.R_OK) if script_exists else False
-            script_executable = os.access(script_path, os.X_OK) if script_exists else False
-            
-            logger.info(f"[{request_id}][{thread_id}] Script validation: exists={script_exists}, readable={script_readable}, executable={script_executable}")
-            
-            if not script_exists:
-                error_msg = f"Scraper script not found at: {script_path}"
-                logger.error(f"[{request_id}][{thread_id}] {error_msg}")
-                raise FileNotFoundError(error_msg)
-            
-            logger.info(f"[{request_id}][{thread_id}] Step 4: Script validated, preparing to start: {script_path}")
-            
-            # Use python3 on Linux
-            python_cmd = 'python3'
-            logger.info(f"[{request_id}][{thread_id}] Step 5: Using Python command: {python_cmd}")
-            
-            # Verify python3 exists
+        with app.app_context():  # Required for database operations in background thread
             try:
-                python_check = subprocess.run(['which', python_cmd], capture_output=True, text=True, timeout=2)
-                logger.info(f"[{request_id}][{thread_id}] Python location: {python_check.stdout.strip()}")
+                logger.info(f"[{request_id}][{thread_id}] ===== BACKGROUND THREAD STARTED =====")
+                # Use the new incremental scraper that works with AWS WAF
+                script_path = '/app/ML_Model/bilbasen_incremental.py'
+                logger.info(f"[{request_id}][{thread_id}] Step 3a: Checking Docker script path: {script_path}")
+                
+                # Check if script exists
+                if not os.path.exists(script_path):
+                    logger.warning(f"[{request_id}][{thread_id}] Docker path not found, trying local development path...")
+                    # Fallback to relative path for local development
+                    script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
+                    logger.info(f"[{request_id}][{thread_id}] Step 3b: Using fallback script path: {script_path}")
+                
+                script_exists = os.path.exists(script_path)
+                script_readable = os.access(script_path, os.R_OK) if script_exists else False
+                script_executable = os.access(script_path, os.X_OK) if script_exists else False
+                
+                logger.info(f"[{request_id}][{thread_id}] Script validation: exists={script_exists}, readable={script_readable}, executable={script_executable}")
+                
+                if not script_exists:
+                    error_msg = f"Scraper script not found at: {script_path}"
+                    logger.error(f"[{request_id}][{thread_id}] {error_msg}")
+                    raise FileNotFoundError(error_msg)
+                
+                logger.info(f"[{request_id}][{thread_id}] Step 4: Script validated, preparing to start: {script_path}")
+                
+                # Use python3 on Linux
+                python_cmd = 'python3'
+                logger.info(f"[{request_id}][{thread_id}] Step 5: Using Python command: {python_cmd}")
+                
+                # Verify python3 exists
+                try:
+                    python_check = subprocess.run(['which', python_cmd], capture_output=True, text=True, timeout=2)
+                    logger.info(f"[{request_id}][{thread_id}] Python location: {python_check.stdout.strip()}")
+                except Exception as e:
+                    logger.warning(f"[{request_id}][{thread_id}] Could not verify python location: {e}")
+            
+                # Prepare environment variables for the scraper script
+                logger.info(f"[{request_id}][{thread_id}] Step 6: Preparing environment variables...")
+                env = os.environ.copy()
+                
+                # Get database credentials from Flask's DATABASE_URL
+                database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+                logger.info(f"[{request_id}][{thread_id}] Database URL present: {bool(database_url)}")
+                
+                # Parse database URL to extract credentials
+                # Format: postgresql://user:password@host:port/dbname
+                if database_url and 'postgresql://' in database_url:
+                    import re
+                    match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
+                    if match:
+                        db_user, db_pass, db_host, db_port, db_name = match.groups()
+                        env['POSTGRES_USER'] = db_user
+                        env['POSTGRES_PASSWORD'] = db_pass
+                        env['POSTGRES_HOST'] = db_host
+                        env['POSTGRES_PORT'] = db_port
+                        env['POSTGRES_DB'] = db_name
+                        logger.info(f"[{request_id}][{thread_id}] Parsed DB credentials from URI")
+                    else:
+                        logger.warning(f"[{request_id}][{thread_id}] Could not parse database URL")
+                
+                # Fallback to defaults if not parsed
+                if 'POSTGRES_DB' not in env:
+                    env['POSTGRES_DB'] = 'car_prediction'
+                    logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_DB")
+                if 'POSTGRES_USER' not in env:
+                    env['POSTGRES_USER'] = 'bpr_user'
+                    logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_USER")
+                if 'POSTGRES_PASSWORD' not in env:
+                    env['POSTGRES_PASSWORD'] = 'your_secure_password'
+                    logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PASSWORD")
+                if 'POSTGRES_HOST' not in env:
+                    env['POSTGRES_HOST'] = 'db'
+                    logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_HOST")
+                if 'POSTGRES_PORT' not in env:
+                    env['POSTGRES_PORT'] = '5432'
+                    logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PORT")
+                
+                logger.info(f"[{request_id}][{thread_id}] Final env vars: DB={env.get('POSTGRES_DB')}, USER={env.get('POSTGRES_USER')}, HOST={env.get('POSTGRES_HOST')}, PORT={env.get('POSTGRES_PORT')}")
+                
+                # Build command - mode ignored for incremental scraper (always incremental)
+                logger.info(f"[{request_id}][{thread_id}] Step 7: Building command...")
+                cmd = [python_cmd, script_path]
+                if mode == 'test':
+                    cmd.append('--test')  # Only 10 listings for testing
+                    logger.info(f"[{request_id}][{thread_id}] Test mode enabled - will scrape only 10 listings")
+                
+                logger.info(f"[{request_id}][{thread_id}] Step 8: Executing command: {' '.join(cmd)}")
+                logger.info(f"[{request_id}][{thread_id}] Working directory: {os.getcwd()}")
+                logger.info(f"[{request_id}][{thread_id}] Environment summary: POSTGRES_HOST={env.get('POSTGRES_HOST')}, POSTGRES_DB={env.get('POSTGRES_DB')}")
+                
+                logger.info(f"[{request_id}][{thread_id}] Step 9: Starting subprocess.Popen...")
+                process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    env=env,
+                    start_new_session=True
+                )
+                logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process spawned with PID: {process.pid}")
+                
+                # Wait a moment and check if process is still alive
+                import time
+                logger.info(f"[{request_id}][{thread_id}] Step 10: Waiting 0.5s to check process health...")
+                time.sleep(0.5)
+                
+                poll_result = process.poll()
+                logger.info(f"[{request_id}][{thread_id}] Process poll result: {poll_result} (None=still running)")
+                
+                if poll_result is not None:
+                    stdout, stderr = process.communicate(timeout=5)
+                    stdout_text = stdout.decode('utf-8', errors='ignore')
+                    stderr_text = stderr.decode('utf-8', errors='ignore')
+                    
+                    logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died immediately!")
+                    logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                    logger.error(f"[{request_id}][{thread_id}] STDOUT ({len(stdout_text)} chars): {stdout_text[:500]}")
+                    logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
+                    
+                    # Try to determine the error type
+                    error_type = "Unknown error"
+                    if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                        error_type = "Missing Python dependency"
+                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    elif 'SyntaxError' in stderr_text:
+                        error_type = "Python syntax error in script"
+                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
+                        error_type = "Permission denied"
+                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
+                        error_type = "Database connection failed"
+                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    else:
+                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    
+                    # Update database log with immediate failure
+                    try:
+                        from app.models import ScrapingLog
+                        log_entry = db.session.get(ScrapingLog, log_id)
+                        if log_entry:
+                            log_entry.success = False
+                            log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                            log_entry.completed_at = datetime.utcnow()
+                            db.session.commit()
+                            logger.info(f"[{request_id}][{thread_id}] Updated scraping log with immediate failure")
+                    except Exception as db_error:
+                        logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
+                else:
+                    logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
+                    
+                    # Monitor for another 5 seconds to catch early crashes
+                    logger.info(f"[{request_id}][{thread_id}] Step 10b: Monitoring process for 5 more seconds...")
+                    for i in range(1, 6):
+                        time.sleep(1)
+                        poll_result = process.poll()
+                        if poll_result is not None:
+                            stdout, stderr = process.communicate(timeout=5)
+                            stdout_text = stdout.decode('utf-8', errors='ignore')
+                            stderr_text = stderr.decode('utf-8', errors='ignore')
+                            
+                            logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died after {i} seconds!")
+                            logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                            logger.error(f"[{request_id}][{thread_id}] STDOUT: {stdout_text}")
+                            logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
+                            
+                            # Error classification
+                            error_type = "Script execution error"
+                            if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                                error_type = "Missing Python dependency"
+                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                            elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
+                                error_type = "Database connection/library issue"
+                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                            elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
+                                error_type = "Database connection refused"
+                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                            else:
+                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                            
+                            # Update database log with failure
+                            try:
+                                from app.models import ScrapingLog
+                                log_entry = db.session.get(ScrapingLog, log_id)
+                                if log_entry:
+                                    log_entry.success = False
+                                    log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                                    log_entry.completed_at = datetime.utcnow()
+                                    db.session.commit()
+                                    logger.info(f"[{request_id}][{thread_id}] Updated scraping log with failure after {i}s")
+                            except Exception as db_error:
+                                logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
+                            break
+                        logger.info(f"[{request_id}][{thread_id}] Still running after {i} seconds...")
+                    else:
+                        logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process survived 5.5 seconds - scraper is running")
+                        logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
+                        
+                        # Update database log - scraper started successfully
+                        # Note: Final stats will be updated by the scraper script itself when it completes
+                        try:
+                            from app.models import ScrapingLog
+                            log_entry = db.session.get(ScrapingLog, log_id)
+                            if log_entry:
+                                log_entry.success = True  # Started successfully
+                                # Don't set completed_at yet - scraper will update when done
+                                db.session.commit()
+                                logger.info(f"[{request_id}][{thread_id}] Updated scraping log - scraper running")
+                        except Exception as db_error:
+                            logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
+                    
             except Exception as e:
-                logger.warning(f"[{request_id}][{thread_id}] Could not verify python location: {e}")
-            
-            # Prepare environment variables for the scraper script
-            logger.info(f"[{request_id}][{thread_id}] Step 6: Preparing environment variables...")
-            env = os.environ.copy()
-            
-            # Get database credentials from Flask's DATABASE_URL
-            database_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            logger.info(f"[{request_id}][{thread_id}] Database URL present: {bool(database_url)}")
-            
-            # Parse database URL to extract credentials
-            # Format: postgresql://user:password@host:port/dbname
-            if database_url and 'postgresql://' in database_url:
-                import re
-                match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', database_url)
-                if match:
-                    db_user, db_pass, db_host, db_port, db_name = match.groups()
-                    env['POSTGRES_USER'] = db_user
-                    env['POSTGRES_PASSWORD'] = db_pass
-                    env['POSTGRES_HOST'] = db_host
-                    env['POSTGRES_PORT'] = db_port
-                    env['POSTGRES_DB'] = db_name
-                    logger.info(f"[{request_id}][{thread_id}] Parsed DB credentials from URI")
-                else:
-                    logger.warning(f"[{request_id}][{thread_id}] Could not parse database URL")
-            
-            # Fallback to defaults if not parsed
-            if 'POSTGRES_DB' not in env:
-                env['POSTGRES_DB'] = 'car_prediction'
-                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_DB")
-            if 'POSTGRES_USER' not in env:
-                env['POSTGRES_USER'] = 'bpr_user'
-                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_USER")
-            if 'POSTGRES_PASSWORD' not in env:
-                env['POSTGRES_PASSWORD'] = 'your_secure_password'
-                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PASSWORD")
-            if 'POSTGRES_HOST' not in env:
-                env['POSTGRES_HOST'] = 'db'
-                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_HOST")
-            if 'POSTGRES_PORT' not in env:
-                env['POSTGRES_PORT'] = '5432'
-                logger.info(f"[{request_id}][{thread_id}] Using default POSTGRES_PORT")
-            
-            logger.info(f"[{request_id}][{thread_id}] Final env vars: DB={env.get('POSTGRES_DB')}, USER={env.get('POSTGRES_USER')}, HOST={env.get('POSTGRES_HOST')}, PORT={env.get('POSTGRES_PORT')}")
-            
-            # Build command - mode ignored for incremental scraper (always incremental)
-            logger.info(f"[{request_id}][{thread_id}] Step 7: Building command...")
-            cmd = [python_cmd, script_path]
-            if mode == 'test':
-                cmd.append('--test')  # Only 10 listings for testing
-                logger.info(f"[{request_id}][{thread_id}] Test mode enabled - will scrape only 10 listings")
-            
-            logger.info(f"[{request_id}][{thread_id}] Step 8: Executing command: {' '.join(cmd)}")
-            logger.info(f"[{request_id}][{thread_id}] Working directory: {os.getcwd()}")
-            logger.info(f"[{request_id}][{thread_id}] Environment summary: POSTGRES_HOST={env.get('POSTGRES_HOST')}, POSTGRES_DB={env.get('POSTGRES_DB')}")
-            
-            logger.info(f"[{request_id}][{thread_id}] Step 9: Starting subprocess.Popen...")
-            process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=env,
-                start_new_session=True
-            )
-            logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process spawned with PID: {process.pid}")
-            
-            # Wait a moment and check if process is still alive
-            import time
-            logger.info(f"[{request_id}][{thread_id}] Step 10: Waiting 0.5s to check process health...")
-            time.sleep(0.5)
-            
-            poll_result = process.poll()
-            logger.info(f"[{request_id}][{thread_id}] Process poll result: {poll_result} (None=still running)")
-            
-            if poll_result is not None:
-                stdout, stderr = process.communicate(timeout=5)
-                stdout_text = stdout.decode('utf-8', errors='ignore')
-                stderr_text = stderr.decode('utf-8', errors='ignore')
-                
-                logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died immediately!")
-                logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
-                logger.error(f"[{request_id}][{thread_id}] STDOUT ({len(stdout_text)} chars): {stdout_text[:500]}")
-                logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
-                
-                # Try to determine the error type
-                error_type = "Unknown error"
-                if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                    error_type = "Missing Python dependency"
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                elif 'SyntaxError' in stderr_text:
-                    error_type = "Python syntax error in script"
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
-                    error_type = "Permission denied"
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
-                    error_type = "Database connection failed"
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                else:
-                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                
-                # Update database log with immediate failure
+                logger.error(f"[{request_id}][{thread_id}] [EXCEPTION] Failed to start scraper: {type(e).__name__}: {e}", exc_info=True)
+                # Update database log with exception
                 try:
                     from app.models import ScrapingLog
                     log_entry = db.session.get(ScrapingLog, log_id)
                     if log_entry:
                         log_entry.success = False
-                        log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                        log_entry.error_message = f"Exception: {type(e).__name__}: {str(e)}"
                         log_entry.completed_at = datetime.utcnow()
                         db.session.commit()
-                        logger.info(f"[{request_id}][{thread_id}] Updated scraping log with immediate failure")
                 except Exception as db_error:
-                    logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
-            else:
-                logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
-                
-                # Monitor for another 5 seconds to catch early crashes
-                logger.info(f"[{request_id}][{thread_id}] Step 10b: Monitoring process for 5 more seconds...")
-                for i in range(1, 6):
-                    time.sleep(1)
-                    poll_result = process.poll()
-                    if poll_result is not None:
-                        stdout, stderr = process.communicate(timeout=5)
-                        stdout_text = stdout.decode('utf-8', errors='ignore')
-                        stderr_text = stderr.decode('utf-8', errors='ignore')
-                        
-                        logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died after {i} seconds!")
-                        logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
-                        logger.error(f"[{request_id}][{thread_id}] STDOUT: {stdout_text}")
-                        logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
-                        
-                        # Error classification
-                        error_type = "Script execution error"
-                        if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                            error_type = "Missing Python dependency"
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                        elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
-                            error_type = "Database connection/library issue"
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                        elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
-                            error_type = "Database connection refused"
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                        else:
-                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                        
-                        # Update database log with failure
-                        try:
-                            from app.models import ScrapingLog
-                            log_entry = db.session.get(ScrapingLog, log_id)
-                            if log_entry:
-                                log_entry.success = False
-                                log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
-                                log_entry.completed_at = datetime.utcnow()
-                                db.session.commit()
-                                logger.info(f"[{request_id}][{thread_id}] Updated scraping log with failure after {i}s")
-                        except Exception as db_error:
-                            logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
-                        break
-                    logger.info(f"[{request_id}][{thread_id}] Still running after {i} seconds...")
-                else:
-                    logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process survived 5.5 seconds - scraper is running")
-                    logger.info(f"[{request_id}][{thread_id}] Scraper will continue running in background")
-                    
-                    # Update database log - scraper started successfully
-                    # Note: Final stats will be updated by the scraper script itself when it completes
-                    try:
-                        from app.models import ScrapingLog
-                        log_entry = db.session.get(ScrapingLog, log_id)
-                        if log_entry:
-                            log_entry.success = True  # Started successfully
-                            # Don't set completed_at yet - scraper will update when done
-                            db.session.commit()
-                            logger.info(f"[{request_id}][{thread_id}] Updated scraping log - scraper running")
-                    except Exception as db_error:
-                        logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
-                
-        except Exception as e:
-            logger.error(f"[{request_id}][{thread_id}] [EXCEPTION] Failed to start scraper: {type(e).__name__}: {e}", exc_info=True)
-            # Update database log with exception
-            try:
-                from app.models import ScrapingLog
-                log_entry = db.session.get(ScrapingLog, log_id)
-                if log_entry:
-                    log_entry.success = False
-                    log_entry.error_message = f"Exception: {type(e).__name__}: {str(e)}"
-                    log_entry.completed_at = datetime.utcnow()
-                    db.session.commit()
-            except Exception as db_error:
-                logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log with exception: {db_error}")
+                    logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log with exception: {db_error}")
     
     logger.info(f"[{g.request_id}] Step 11: Creating background thread...")
     thread = threading.Thread(target=run_scraper, daemon=True, name=f"ScraperThread-{g.request_id[:8]}")
@@ -999,6 +1000,7 @@ def trigger_scraping():
         'message': 'Incremental scraper started - will fetch new listings and add to database',
         'scraper_type': 'incremental',
         'mode': mode,
+        'log_id': str(log_id),
         'estimated_duration': 'Minutes to hours depending on new listings'
     }), 202
 
