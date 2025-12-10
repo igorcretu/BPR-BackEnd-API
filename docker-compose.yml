@@ -46,12 +46,17 @@ services:
     networks:
       - bpr-network
     volumes:
-      - ./models:/app/models
+      # Mount models from app/models directory
+      - ./app/models:/app/app/models
       - ./logs:/app/logs
       # For development: mount source code
       - ./app:/app/app
       # Mount images directory from ML-Model project
       - ../BPR-BackEnd-ML-Model/bilbasen_scrape/images:/app/images
+      # Mount CSV data for import (optional)
+      - ../BPR-BackEnd-ML-Model/bilbasen_scrape:/app/data
+      # Mount ML-Model scripts directory for scraper and training execution
+      - ../BPR-BackEnd-ML-Model:/app/ML_Model
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -81,9 +86,12 @@ services:
     networks:
       - bpr-network
     volumes:
-      - ./models:/app/models
+      # Mount models from app/models directory
+      - ./app/models:/app/app/models
       - ./logs:/app/logs
       - ./app:/app/app
+      # Mount ML-Model scripts directory
+      - ../BPR-BackEnd-ML-Model:/app/ML_Model
 
 volumes:
   postgres_data:
