@@ -873,44 +873,66 @@ def trigger_scraping():
                 logger.info(f"[{request_id}][{thread_id}] Process poll result: {poll_result} (None=still running)")
                 
                 if poll_result is not None:
+                    # Process finished - check exit code
                     stdout, stderr = process.communicate(timeout=5)
                     stdout_text = stdout.decode('utf-8', errors='ignore')
                     stderr_text = stderr.decode('utf-8', errors='ignore')
                     
-                    logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died immediately!")
-                    logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
-                    logger.error(f"[{request_id}][{thread_id}] STDOUT ({len(stdout_text)} chars): {stdout_text[:500]}")
-                    logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
-                    
-                    # Try to determine the error type
-                    error_type = "Unknown error"
-                    if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                        error_type = "Missing Python dependency"
-                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                    elif 'SyntaxError' in stderr_text:
-                        error_type = "Python syntax error in script"
-                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                    elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
-                        error_type = "Permission denied"
-                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                    elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
-                        error_type = "Database connection failed"
-                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                    if process.returncode == 0:
+                        # Exit code 0 = success (scraper finished quickly)
+                        logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Scraper completed immediately with exit code 0")
+                        logger.info(f"[{request_id}][{thread_id}] STDOUT: {stdout_text[:500]}")
+                        logger.info(f"[{request_id}][{thread_id}] STDERR: {stderr_text[:500]}")
+                        
+                        # Update database log - successful completion
+                        # The scraper script should have already updated the log with final stats
+                        try:
+                            from app.models import ScrapingLog
+                            log_entry = db.session.get(ScrapingLog, log_id)
+                            if log_entry and not log_entry.completed_at:
+                                # Only update if scraper didn't already update it
+                                log_entry.success = True
+                                log_entry.completed_at = datetime.utcnow()
+                                db.session.commit()
+                                logger.info(f"[{request_id}][{thread_id}] Updated scraping log with success")
+                        except Exception as db_error:
+                            logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                     else:
-                        logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                    
-                    # Update database log with immediate failure
-                    try:
-                        from app.models import ScrapingLog
-                        log_entry = db.session.get(ScrapingLog, log_id)
-                        if log_entry:
-                            log_entry.success = False
-                            log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
-                            log_entry.completed_at = datetime.utcnow()
-                            db.session.commit()
-                            logger.info(f"[{request_id}][{thread_id}] Updated scraping log with immediate failure")
-                    except Exception as db_error:
-                        logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
+                        # Non-zero exit code = actual failure
+                        logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died immediately!")
+                        logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                        logger.error(f"[{request_id}][{thread_id}] STDOUT ({len(stdout_text)} chars): {stdout_text[:500]}")
+                        logger.error(f"[{request_id}][{thread_id}] STDERR ({len(stderr_text)} chars): {stderr_text[:500]}")
+                        
+                        # Try to determine the error type
+                        error_type = "Unknown error"
+                        if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                            error_type = "Missing Python dependency"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        elif 'SyntaxError' in stderr_text:
+                            error_type = "Python syntax error in script"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        elif 'PermissionError' in stderr_text or 'Permission denied' in stderr_text:
+                            error_type = "Permission denied"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        elif 'ConnectionError' in stderr_text or 'could not connect' in stderr_text.lower():
+                            error_type = "Database connection failed"
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        else:
+                            logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                        
+                        # Update database log with immediate failure
+                        try:
+                            from app.models import ScrapingLog
+                            log_entry = db.session.get(ScrapingLog, log_id)
+                            if log_entry:
+                                log_entry.success = False
+                                log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                                log_entry.completed_at = datetime.utcnow()
+                                db.session.commit()
+                                logger.info(f"[{request_id}][{thread_id}] Updated scraping log with immediate failure")
+                        except Exception as db_error:
+                            logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                 else:
                     logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Process still running after 0.5s - scraper appears healthy")
                     
@@ -920,41 +942,65 @@ def trigger_scraping():
                         time.sleep(1)
                         poll_result = process.poll()
                         if poll_result is not None:
+                            # Process finished during health check
                             stdout, stderr = process.communicate(timeout=5)
                             stdout_text = stdout.decode('utf-8', errors='ignore')
                             stderr_text = stderr.decode('utf-8', errors='ignore')
                             
-                            logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died after {i} seconds!")
-                            logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
-                            logger.error(f"[{request_id}][{thread_id}] STDOUT: {stdout_text}")
-                            logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
-                            
-                            # Error classification
-                            error_type = "Script execution error"
-                            if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
-                                error_type = "Missing Python dependency"
-                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                            elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
-                                error_type = "Database connection/library issue"
-                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                            elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
-                                error_type = "Database connection refused"
-                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                            if process.returncode == 0:
+                                # Exit code 0 = success (scraper finished quickly)
+                                logger.info(f"[{request_id}][{thread_id}] [SUCCESS] Scraper completed successfully after {i} seconds!")
+                                logger.info(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                                logger.info(f"[{request_id}][{thread_id}] STDOUT: {stdout_text[:1000]}")
+                                if stderr_text:
+                                    logger.info(f"[{request_id}][{thread_id}] STDERR: {stderr_text[:1000]}")
+                                
+                                # Update database log - successful completion
+                                # The scraper script should have already updated the log with final stats
+                                try:
+                                    from app.models import ScrapingLog
+                                    log_entry = db.session.get(ScrapingLog, log_id)
+                                    if log_entry and not log_entry.completed_at:
+                                        # Only update if scraper didn't already update it
+                                        log_entry.success = True
+                                        log_entry.completed_at = datetime.utcnow()
+                                        db.session.commit()
+                                        logger.info(f"[{request_id}][{thread_id}] Updated scraping log with success after {i}s")
+                                except Exception as db_error:
+                                    logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                             else:
-                                logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
-                            
-                            # Update database log with failure
-                            try:
-                                from app.models import ScrapingLog
-                                log_entry = db.session.get(ScrapingLog, log_id)
-                                if log_entry:
-                                    log_entry.success = False
-                                    log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
-                                    log_entry.completed_at = datetime.utcnow()
-                                    db.session.commit()
-                                    logger.info(f"[{request_id}][{thread_id}] Updated scraping log with failure after {i}s")
-                            except Exception as db_error:
-                                logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
+                                # Non-zero exit code = actual failure
+                                logger.error(f"[{request_id}][{thread_id}] [FAILED] Scraper died after {i} seconds!")
+                                logger.error(f"[{request_id}][{thread_id}] Exit code: {process.returncode}")
+                                logger.error(f"[{request_id}][{thread_id}] STDOUT: {stdout_text}")
+                                logger.error(f"[{request_id}][{thread_id}] STDERR: {stderr_text}")
+                                
+                                # Error classification
+                                error_type = "Script execution error"
+                                if 'ModuleNotFoundError' in stderr_text or 'ImportError' in stderr_text:
+                                    error_type = "Missing Python dependency"
+                                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                                elif 'psycopg2' in stderr_text or 'PostgreSQL' in stderr_text:
+                                    error_type = "Database connection/library issue"
+                                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                                elif 'ConnectionError' in stderr_text or 'Connection refused' in stderr_text:
+                                    error_type = "Database connection refused"
+                                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                                else:
+                                    logger.error(f"[{request_id}][{thread_id}] ERROR TYPE: {error_type}")
+                                
+                                # Update database log with failure
+                                try:
+                                    from app.models import ScrapingLog
+                                    log_entry = db.session.get(ScrapingLog, log_id)
+                                    if log_entry:
+                                        log_entry.success = False
+                                        log_entry.error_message = f"{error_type}: {stderr_text[:500]}"
+                                        log_entry.completed_at = datetime.utcnow()
+                                        db.session.commit()
+                                        logger.info(f"[{request_id}][{thread_id}] Updated scraping log with failure after {i}s")
+                                except Exception as db_error:
+                                    logger.error(f"[{request_id}][{thread_id}] Failed to update scraping log: {db_error}")
                             break
                         logger.info(f"[{request_id}][{thread_id}] Still running after {i} seconds...")
                     else:
