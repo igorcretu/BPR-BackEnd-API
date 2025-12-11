@@ -339,7 +339,8 @@ def health_check():
                 'test_size': latest_training.test_size,
                 'duration_seconds': float(latest_training.training_duration_seconds) if latest_training.training_duration_seconds else None,
                 'models_trained': latest_training.models_trained,
-                'best_model_id': latest_training.best_model_id
+                'best_model_id': latest_training.best_model_id,
+                'notes': latest_training.notes
             }
     except Exception as e:
         logger.error(f"[{g.request_id}] Failed to fetch training status: {str(e)}")
