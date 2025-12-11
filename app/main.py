@@ -1118,19 +1118,36 @@ def trigger_training():
     
     # Check if there's already a pending or running training
     try:
+        from datetime import datetime, timedelta
+        
         existing_training = ModelTrainingRun.query.filter(
             ModelTrainingRun.status.in_(['pending', 'running'])
         ).first()
         
         if existing_training:
-            return jsonify({
-                'success': False,
-                'message': 'Training is already in progress',
-                'running': True,
-                'training_id': existing_training.id
-            }), 400
+            # Check if the training is stale (started more than 12 hours ago)
+            stale_threshold = datetime.utcnow() - timedelta(hours=12)
+            
+            if existing_training.run_date and existing_training.run_date < stale_threshold:
+                logger.warning(f"[{g.request_id}] Found stale training run (ID: {existing_training.id}, started: {existing_training.run_date})")
+                logger.warning(f"[{g.request_id}] Marking as failed and allowing new training")
+                
+                # Mark the stale training as failed
+                existing_training.status = 'failed'
+                existing_training.notes = 'Marked as failed due to timeout (>12 hours)'
+                db.session.commit()
+            else:
+                # Recent training still in progress
+                logger.info(f"[{g.request_id}] Training already in progress (ID: {existing_training.id}, status: {existing_training.status})")
+                return jsonify({
+                    'success': False,
+                    'message': 'Training is already in progress',
+                    'running': True,
+                    'training_id': existing_training.id
+                }), 400
     except Exception as e:
         logger.warning(f"[{g.request_id}] Could not check existing training: {e}")
+        db.session.rollback()
     
     # Check if process is actually running
     try:
