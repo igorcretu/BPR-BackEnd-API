@@ -1824,7 +1824,7 @@ def get_brands():
         'brands': [{'name': brand, 'count': count} for brand, count in brands]
     }), 200
 
-@app.route('/api/models/<brand>', methods=['GET'])
+@app.route('/api/car-models/<brand>', methods=['GET'])
 @handle_errors
 def get_models(brand):
     """Get all models for a specific brand"""
