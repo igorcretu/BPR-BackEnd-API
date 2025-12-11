@@ -355,36 +355,22 @@ class ModelComparisonMetrics(db.Model):
     __tablename__ = 'model_comparison_metrics'
     
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    model_id = db.Column(db.String(36), db.ForeignKey('ml_models.id'), nullable=False, index=True)
+    model_id = db.Column(db.String(36), db.ForeignKey('ml_models.id'), index=True)
     training_run_id = db.Column(db.String(36), db.ForeignKey('model_training_runs.id'), index=True)
     
-    # Overall metrics
-    overall_mae = db.Column(db.Numeric(12, 2))
-    overall_rmse = db.Column(db.Numeric(12, 2))
-    overall_r2 = db.Column(db.Numeric(6, 4))
-    overall_mape = db.Column(db.Numeric(6, 4))
+    # Core metrics (matching actual database schema)
+    mae = db.Column(db.Numeric(12, 2))
+    rmse = db.Column(db.Numeric(12, 2))
+    r2_score = db.Column(db.Numeric(6, 4))
+    mape = db.Column(db.Numeric(6, 4))
+    median_ae = db.Column(db.Numeric(12, 2))
+    percentile_90_error = db.Column(db.Numeric(12, 2))
     
     # Metrics by price range
     mae_under_100k = db.Column(db.Numeric(12, 2))
-    mae_100k_300k = db.Column(db.Numeric(12, 2))
-    mae_300k_500k = db.Column(db.Numeric(12, 2))
+    mae_100k_to_300k = db.Column(db.Numeric(12, 2))
+    mae_300k_to_500k = db.Column(db.Numeric(12, 2))
     mae_over_500k = db.Column(db.Numeric(12, 2))
-    
-    # Metrics by fuel type
-    mae_petrol = db.Column(db.Numeric(12, 2))
-    mae_diesel = db.Column(db.Numeric(12, 2))
-    mae_electric = db.Column(db.Numeric(12, 2))
-    mae_hybrid = db.Column(db.Numeric(12, 2))
-    
-    # Metrics by year range
-    mae_pre_2010 = db.Column(db.Numeric(12, 2))
-    mae_2010_2015 = db.Column(db.Numeric(12, 2))
-    mae_2015_2020 = db.Column(db.Numeric(12, 2))
-    mae_post_2020 = db.Column(db.Numeric(12, 2))
-    
-    # Performance metrics
-    avg_inference_time_ms = db.Column(db.Numeric(10, 2))
-    confidence_calibration_score = db.Column(db.Numeric(6, 4))
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -395,23 +381,15 @@ class ModelComparisonMetrics(db.Model):
             'id': self.id,
             'model_id': self.model_id,
             'training_run_id': self.training_run_id,
-            'overall_mae': float(self.overall_mae) if self.overall_mae else None,
-            'overall_rmse': float(self.overall_rmse) if self.overall_rmse else None,
-            'overall_r2': float(self.overall_r2) if self.overall_r2 else None,
-            'overall_mape': float(self.overall_mape) if self.overall_mape else None,
+            'mae': float(self.mae) if self.mae else None,
+            'rmse': float(self.rmse) if self.rmse else None,
+            'r2_score': float(self.r2_score) if self.r2_score else None,
+            'mape': float(self.mape) if self.mape else None,
+            'median_ae': float(self.median_ae) if self.median_ae else None,
+            'percentile_90_error': float(self.percentile_90_error) if self.percentile_90_error else None,
             'mae_under_100k': float(self.mae_under_100k) if self.mae_under_100k else None,
-            'mae_100k_300k': float(self.mae_100k_300k) if self.mae_100k_300k else None,
-            'mae_300k_500k': float(self.mae_300k_500k) if self.mae_300k_500k else None,
+            'mae_100k_to_300k': float(self.mae_100k_to_300k) if self.mae_100k_to_300k else None,
+            'mae_300k_to_500k': float(self.mae_300k_to_500k) if self.mae_300k_to_500k else None,
             'mae_over_500k': float(self.mae_over_500k) if self.mae_over_500k else None,
-            'mae_petrol': float(self.mae_petrol) if self.mae_petrol else None,
-            'mae_diesel': float(self.mae_diesel) if self.mae_diesel else None,
-            'mae_electric': float(self.mae_electric) if self.mae_electric else None,
-            'mae_hybrid': float(self.mae_hybrid) if self.mae_hybrid else None,
-            'mae_pre_2010': float(self.mae_pre_2010) if self.mae_pre_2010 else None,
-            'mae_2010_2015': float(self.mae_2010_2015) if self.mae_2010_2015 else None,
-            'mae_2015_2020': float(self.mae_2015_2020) if self.mae_2015_2020 else None,
-            'mae_post_2020': float(self.mae_post_2020) if self.mae_post_2020 else None,
-            'avg_inference_time_ms': float(self.avg_inference_time_ms) if self.avg_inference_time_ms else None,
-            'confidence_calibration_score': float(self.confidence_calibration_score) if self.confidence_calibration_score else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
