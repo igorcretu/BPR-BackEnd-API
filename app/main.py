@@ -1519,42 +1519,70 @@ def predict_price():
     
     # Check if specific model requested
     model_id = data.get('model_id')
-    if model_id:
-        logger.info(f"[{g.request_id}] Using specific model: {model_id}")
-        # Load the specific model for prediction
-        from app.models import MLModel
-        ml_model = MLModel.query.filter_by(id=model_id, is_active=True).first()
-        if not ml_model:
-            raise ValueError(f"Model {model_id} not found or inactive")
-        
-        # Load the model file and predict
-        import joblib
-        model_obj = joblib.load(ml_model.model_path)
-        
-        # Prepare features same way as predictor
-        features = predictor._prepare_features(data)
-        predicted_price = float(model_obj.predict([features])[0])
-        
-        # Get confidence (simplified for specific model)
-        confidence = 75.0  # Default confidence for specific model predictions
-        price_range = {
-            'min': predicted_price * 0.85,
-            'max': predicted_price * 1.15
-        }
-        
-        prediction_result = {
-            'predicted_price': round(predicted_price, 2),
-            'confidence': confidence,
-            'price_range': price_range,
-            'model_version': ml_model.name,
-            'model_id': model_id,
-            'similar_cars_count': 0
-        }
-        logger.info(
-            f"[{g.request_id}] Prediction with {ml_model.name}: "
-            f"{prediction_result['predicted_price']} DKK"
-        )
-    else:
+    if model_id and model_id != 'default':
+        try:
+            logger.info(f"[{g.request_id}] Using specific model: {model_id}")
+            # Load the specific model for prediction
+            from app.models import MLModel
+            ml_model = MLModel.query.filter_by(id=model_id, is_active=True).first()
+            if not ml_model:
+                raise ValueError(f"Model {model_id} not found or inactive")
+            
+            # Convert model path to container path if needed
+            import os
+            model_path = ml_model.model_path
+            
+            # If path contains /home/igor/BachelorApi/BPR-BackEnd-ML-Model, convert to /app/ML_Model
+            if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
+                model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
+            # If path is just the filename, look in /app/ML_Model/models
+            elif not model_path.startswith('/'):
+                model_path = f'/app/ML_Model/models/{model_path}'
+            
+            logger.info(f"[{g.request_id}] Looking for model at: {model_path}")
+            
+            if not os.path.exists(model_path):
+                raise ValueError(f"Model file not found: {model_path} (original: {ml_model.model_path})")
+            
+            # Load the model file and predict
+            import joblib
+            model_obj = joblib.load(model_path)
+            
+            # Prepare features same way as predictor
+            features = predictor._prepare_features(data)
+            
+            # Handle different model types
+            if hasattr(model_obj, 'predict'):
+                predicted_price = float(model_obj.predict([features])[0])
+            else:
+                raise ValueError(f"Model type not supported: {type(model_obj)}")
+            
+            # Get confidence (simplified for specific model)
+            confidence = 75.0  # Default confidence for specific model predictions
+            price_range = {
+                'min': predicted_price * 0.85,
+                'max': predicted_price * 1.15
+            }
+            
+            prediction_result = {
+                'predicted_price': round(predicted_price, 2),
+                'confidence': confidence,
+                'price_range': price_range,
+                'model_version': ml_model.name,
+                'model_id': model_id,
+                'similar_cars_count': 0
+            }
+            logger.info(
+                f"[{g.request_id}] Prediction with {ml_model.name}: "
+                f"{prediction_result['predicted_price']} DKK"
+            )
+        except Exception as e:
+            logger.error(f"[{g.request_id}] Error using specific model {model_id}: {e}")
+            # Fall back to default model
+            logger.info(f"[{g.request_id}] Falling back to default model")
+            model_id = None
+    
+    if not model_id or model_id == 'default':
         # Get prediction using default model
         logger.debug(f"[{g.request_id}] Running ML prediction with default model...")
         start_time = time.time()
