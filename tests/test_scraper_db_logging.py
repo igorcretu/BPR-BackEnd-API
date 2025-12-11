@@ -227,3 +227,46 @@ def test_scraper_db_timestamps(client):
         assert latest_log.started_at is not None
         assert before_time <= latest_log.started_at <= after_time
         assert latest_log.created_at is not None
+
+
+def test_scraper_test_mode(client):
+    """Test scraper with test mode"""
+    with patch('app.main.subprocess.run') as mock_run, \
+         patch('app.main.subprocess.Popen') as mock_popen, \
+         patch('app.main.os.path.exists') as mock_exists, \
+         patch('app.main.threading.Thread') as mock_thread:
+        
+        mock_run.return_value = MagicMock(returncode=1, stdout=MagicMock(strip=MagicMock(return_value='')))
+        mock_exists.return_value = True
+        
+        mock_process = MagicMock()
+        mock_process.pid = 12345
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+        
+        response = client.post('/api/trigger-scraping',
+                              json={'mode': 'test'},
+                              content_type='application/json')
+        
+        assert response.status_code == 202
+        data = response.get_json()
+        assert data['mode'] == 'test'
+
+
+def test_scraper_already_running(client):
+    """Test triggering scraper when one is already running"""
+    with patch('app.main.subprocess.run') as mock_run:
+        
+        # Mock pgrep to return running process
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=MagicMock(strip=MagicMock(return_value='12345'))
+        )
+        
+        response = client.post('/api/trigger-scraping',
+                              json={'mode': 'incremental'},
+                              content_type='application/json')
+        
+        assert response.status_code == 400
+        data = response.get_json()
+        assert 'already running' in data['message'].lower() or 'already' in data['message'].lower()
