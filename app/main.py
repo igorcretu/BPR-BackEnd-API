@@ -1517,17 +1517,55 @@ def predict_price():
     if not predictor:
         raise ValueError("ML predictor not available")
     
-    # Get prediction
-    logger.debug(f"[{g.request_id}] Running ML prediction...")
-    start_time = time.time()
-    prediction_result = predictor.predict(data)
-    prediction_time = time.time() - start_time
-    
-    logger.info(
-        f"[{g.request_id}] Prediction completed in {prediction_time:.3f}s: "
-        f"{prediction_result['predicted_price']} DKK "
-        f"(confidence: {prediction_result['confidence']}%)"
-    )
+    # Check if specific model requested
+    model_id = data.get('model_id')
+    if model_id:
+        logger.info(f"[{g.request_id}] Using specific model: {model_id}")
+        # Load the specific model for prediction
+        from app.models import MLModel
+        ml_model = MLModel.query.filter_by(id=model_id, is_active=True).first()
+        if not ml_model:
+            raise ValueError(f"Model {model_id} not found or inactive")
+        
+        # Load the model file and predict
+        import joblib
+        model_obj = joblib.load(ml_model.model_path)
+        
+        # Prepare features same way as predictor
+        features = predictor._prepare_features(data)
+        predicted_price = float(model_obj.predict([features])[0])
+        
+        # Get confidence (simplified for specific model)
+        confidence = 75.0  # Default confidence for specific model predictions
+        price_range = {
+            'min': predicted_price * 0.85,
+            'max': predicted_price * 1.15
+        }
+        
+        prediction_result = {
+            'predicted_price': round(predicted_price, 2),
+            'confidence': confidence,
+            'price_range': price_range,
+            'model_version': ml_model.name,
+            'model_id': model_id,
+            'similar_cars_count': 0
+        }
+        logger.info(
+            f"[{g.request_id}] Prediction with {ml_model.name}: "
+            f"{prediction_result['predicted_price']} DKK"
+        )
+    else:
+        # Get prediction using default model
+        logger.debug(f"[{g.request_id}] Running ML prediction with default model...")
+        start_time = time.time()
+        prediction_result = predictor.predict(data)
+        prediction_time = time.time() - start_time
+        
+        logger.info(
+            f"[{g.request_id}] Prediction completed in {prediction_time:.3f}s: "
+            f"{prediction_result['predicted_price']} DKK "
+            f"(confidence: {prediction_result['confidence']}%)"
+        )
     
     return jsonify({
         'success': True,
