@@ -92,8 +92,43 @@ class CarPricePredictor:
             ml_model_dir = '/app/ML_Model/models'
             logger.info(f"Looking for models in: {ml_model_dir}")
             
-            if os.path.exists(ml_model_dir):
-                # Get all v3 model files (the new packages) - both .pkl and .pt
+            # Try to get best model from database first
+            try:
+                from app.models import MLModel
+                
+                # Query for best model (highest R² score)
+                best_model_db = MLModel.query.filter_by(is_active=True).order_by(MLModel.r2_score.desc()).first()
+                
+                if best_model_db:
+                    model_path = best_model_db.model_path
+                    model_name = best_model_db.name
+                    
+                    # Convert path if needed (Pi absolute path to container path)
+                    if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
+                        model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
+                    elif not model_path.startswith('/'):
+                        model_path = f'/app/ML_Model/models/{model_path}'
+                    
+                    logger.info(f"✅ Found best model from DB: {model_name} (R²={best_model_db.r2_score:.4f}) at {model_path}")
+                    
+                    # Verify file exists
+                    if not os.path.exists(model_path):
+                        logger.warning(f"⚠️ Model file not found at {model_path}, will search directory")
+                        model_path = None
+                        model_name = None
+                else:
+                    logger.warning("No active models found in database")
+                    model_path = None
+                    model_name = None
+                    
+            except Exception as e:
+                logger.warning(f"Could not query database for best model: {e}")
+                model_path = None
+                model_name = None
+            
+            # Fallback: search directory if DB query failed or file not found
+            if not model_path and os.path.exists(ml_model_dir):
+                logger.info("Falling back to directory search")
                 model_files = []
                 try:
                     files = os.listdir(ml_model_dir)
@@ -111,7 +146,7 @@ class CarPricePredictor:
                     logger.error(f"Error listing directory {ml_model_dir}: {e}")
                 
                 if model_files:
-                    # Sort by modification time (newest first)
+                    # Sort by modification time (newest first) as fallback
                     model_files.sort(key=lambda x: x[1], reverse=True)
                     model_path = model_files[0][0]
                     model_filename = model_files[0][2]

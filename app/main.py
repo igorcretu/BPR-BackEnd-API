@@ -28,6 +28,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import os
 import logging
 import sys
+import numpy as np
 import subprocess
 import threading
 import json
@@ -1557,21 +1558,51 @@ def predict_price():
             if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
                 logger.info(f"[{g.request_id}] Loaded v3.0 model package")
                 model_obj = loaded_obj['model']
-                scaler = loaded_obj.get('scaler')
+                package_scaler = loaded_obj.get('scaler')
                 feature_names = loaded_obj.get('feature_names', [])
+                target_encoders = loaded_obj.get('target_encoders', {})
+                category_mappings = loaded_obj.get('category_mappings', {})
+                
+                logger.info(f"[{g.request_id}] Package contains: scaler={package_scaler is not None}, "
+                           f"features={len(feature_names)}, encoders={len(target_encoders)}")
+                
+                # Prepare features using predictor's feature preparation
+                # (All v3.0 models use same preprocessing pipeline)
+                features_dict = predictor._prepare_features(data)
+                logger.info(f"[{g.request_id}] Prepared features dict with {len(features_dict)} features")
+                
+                # Convert feature dict to ordered array based on package's feature_names
+                if len(feature_names) > 0:
+                    feature_vector = np.array([[features_dict.get(col, 0) for col in feature_names]])
+                    logger.info(f"[{g.request_id}] Created feature vector: shape {feature_vector.shape}")
+                else:
+                    # Fall back to predictor's metadata if package doesn't have feature_names
+                    feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
+                    feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
+                    logger.info(f"[{g.request_id}] Created feature vector from predictor metadata: shape {feature_vector.shape}")
+                
+                # Scale features using package's scaler
+                if package_scaler:
+                    feature_vector = package_scaler.transform(feature_vector)
+                    logger.info(f"[{g.request_id}] Applied package scaler")
+                
+                # Now predict with the specific model
+                predicted_price = float(model_obj.predict(feature_vector)[0])
+                logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
             else:
                 logger.info(f"[{g.request_id}] Loaded standalone model (old format)")
                 model_obj = loaded_obj
-                scaler = None
-            
-            # Prepare features same way as predictor
-            features = predictor._prepare_features(data)
-            
-            # Handle different model types
-            if hasattr(model_obj, 'predict'):
-                predicted_price = float(model_obj.predict([features])[0])
-            else:
-                raise ValueError(f"Model type not supported: {type(model_obj)}")
+                
+                # For old format, use predictor's full prediction flow
+                features_dict = predictor._prepare_features(data)
+                feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
+                feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
+                
+                if predictor.scaler:
+                    feature_vector = predictor.scaler.transform(feature_vector)
+                
+                predicted_price = float(model_obj.predict(feature_vector)[0])
+                logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
             
             # Get confidence (simplified for specific model)
             confidence = 75.0  # Default confidence for specific model predictions
@@ -1584,13 +1615,13 @@ def predict_price():
                 'predicted_price': round(predicted_price, 2),
                 'confidence': confidence,
                 'price_range': price_range,
-                'model_version': ml_model.name,
+                'model_version': f"{ml_model.name} v{ml_model.version}",
                 'model_id': model_id,
                 'similar_cars_count': 0
             }
             logger.info(
-                f"[{g.request_id}] Prediction with {ml_model.name}: "
-                f"{prediction_result['predicted_price']} DKK"
+                f"[{g.request_id}] ✅ Prediction with {ml_model.name} v{ml_model.version}: "
+                f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
             )
         except Exception as e:
             logger.error(f"[{g.request_id}] Error using specific model {model_id}: {e}")
@@ -1606,10 +1637,14 @@ def predict_price():
         prediction_time = time.time() - start_time
         
         logger.info(
-            f"[{g.request_id}] Prediction completed in {prediction_time:.3f}s: "
-            f"{prediction_result['predicted_price']} DKK "
-            f"(confidence: {prediction_result['confidence']}%)"
+            f"[{g.request_id}] 🔵 Default model prediction completed in {prediction_time:.3f}s: "
+            f"{prediction_result['predicted_price']:,.0f} DKK "
+            f"(confidence: {prediction_result['confidence']}%, version: {prediction_result['model_version']})"
         )
+    
+    # Log final result to confirm which model was used
+    logger.info(f"[{g.request_id}] 📊 FINAL RESULT - Model: {prediction_result.get('model_version', 'unknown')}, "
+               f"Price: {prediction_result['predicted_price']:,.0f} DKK")
     
     return jsonify({
         'success': True,
