@@ -85,37 +85,100 @@ class CarPricePredictor:
             return
         
         try:
-            metadata_path = os.path.join(self.model_dir, 'model_metadata.json')
-            if os.path.exists(metadata_path):
-                with open(metadata_path, 'r') as f:
-                    self.metadata = json.load(f)
-                logger.info(f"Loaded metadata: {self.metadata.get('model_name', 'unknown')}")
+            # Try to load the best model from the database
+            model_path = None
+            model_name = None
             
-            model_filename = self.metadata.get('model_filename', 'best_model_xgboost.pkl')
-            model_path = os.path.join(self.model_dir, model_filename)
+            try:
+                from app.models import MLModel
+                from app import db
+                
+                # Get the best performing active model (highest R² score)
+                best_model = MLModel.query.filter_by(is_active=True).order_by(MLModel.r2_score.desc()).first()
+                
+                if best_model:
+                    model_path = best_model.model_path
+                    model_name = best_model.name
+                    
+                    # Convert path if needed (Pi absolute path to container path)
+                    if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
+                        model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
+                    elif not model_path.startswith('/'):
+                        model_path = f'/app/ML_Model/models/{model_path}'
+                    
+                    logger.info(f"Loading best model from database: {model_name} at {model_path}")
+            except Exception as e:
+                logger.warning(f"Could not load model from database: {e}")
             
-            if os.path.exists(model_path):
+            # Fallback to old static model files if database lookup failed
+            if not model_path or not os.path.exists(model_path):
+                logger.info("Falling back to static model files")
+                metadata_path = os.path.join(self.model_dir, 'model_metadata.json')
+                if os.path.exists(metadata_path):
+                    with open(metadata_path, 'r') as f:
+                        self.metadata = json.load(f)
+                    logger.info(f"Loaded metadata: {self.metadata.get('model_name', 'unknown')}")
+                
+                model_filename = self.metadata.get('model_filename', 'best_model_xgboost.pkl')
+                model_path = os.path.join(self.model_dir, model_filename)
+                
+                if not os.path.exists(model_path):
+                    for name in ['best_model_catboost.pkl', 'best_model_xgboost.pkl', 'best_model_lightgbm.pkl', 'best_model_random_forest.pkl']:
+                        alt_path = os.path.join(self.model_dir, name)
+                        if os.path.exists(alt_path):
+                            model_path = alt_path
+                            logger.info(f"Found fallback model: {model_path}")
+                            break
+            
+            # Load the model
+            if model_path and os.path.exists(model_path):
                 self.model = joblib.load(model_path)
-                logger.info(f"Loaded model from {model_path}")
+                logger.info(f"Successfully loaded model from {model_path}")
+                if model_name:
+                    self.model_version = f"v2.0.0-{model_name.lower().replace(' ', '-')}"
             else:
-                for name in ['best_model_catboost.pkl', 'best_model_xgboost.pkl', 'best_model_lightgbm.pkl', 'best_model_random_forest.pkl']:
-                    alt_path = os.path.join(self.model_dir, name)
-                    if os.path.exists(alt_path):
-                        self.model = joblib.load(alt_path)
-                        logger.info(f"Loaded model from {alt_path}")
-                        break
+                logger.warning(f"No model file found at {model_path}")
             
-            scaler_path = os.path.join(self.model_dir, 'feature_scaler.pkl')
-            if os.path.exists(scaler_path):
-                self.scaler = joblib.load(scaler_path)
+            # Try to load scaler and encoders from ML_Model directory first, then fallback to app/models
+            scaler_loaded = False
+            for scaler_dir in ['/app/ML_Model/models', self.model_dir]:
+                scaler_path = os.path.join(scaler_dir, 'feature_scaler.pkl')
+                if os.path.exists(scaler_path):
+                    self.scaler = joblib.load(scaler_path)
+                    logger.info(f"Loaded scaler from {scaler_path}")
+                    scaler_loaded = True
+                    break
             
-            encoders_path = os.path.join(self.model_dir, 'label_encoders.pkl')
-            if os.path.exists(encoders_path):
-                self.label_encoders = joblib.load(encoders_path)
+            if not scaler_loaded:
+                logger.warning("No scaler found - will use unscaled features")
             
-            if self.model is not None and self.scaler is not None:
+            encoders_loaded = False
+            for encoder_dir in ['/app/ML_Model/models', self.model_dir]:
+                encoders_path = os.path.join(encoder_dir, 'label_encoders.pkl')
+                if os.path.exists(encoders_path):
+                    self.label_encoders = joblib.load(encoders_path)
+                    logger.info(f"Loaded encoders from {encoders_path}")
+                    encoders_loaded = True
+                    break
+            
+            if not encoders_loaded:
+                logger.warning("No label encoders found - will use raw categorical values")
+            
+            # Load metadata from ML_Model directory
+            metadata_loaded = False
+            for metadata_dir in ['/app/ML_Model/models', self.model_dir]:
+                metadata_path = os.path.join(metadata_dir, 'model_metadata.json')
+                if os.path.exists(metadata_path):
+                    with open(metadata_path, 'r') as f:
+                        self.metadata = json.load(f)
+                    logger.info(f"Loaded metadata from {metadata_path}")
+                    metadata_loaded = True
+                    break
+            
+            if self.model is not None:
                 self.model_loaded = True
-                self.model_version = f"v1.0.0-{self.metadata.get('model_name', 'trained').lower().replace(' ', '-')}"
+                if not self.model_version:
+                    self.model_version = f"v2.0.0-{self.metadata.get('model_name', 'trained').lower().replace(' ', '-')}"
                 logger.info(f"Model ready: {self.model_version}")
             else:
                 self.model_version = "v1.0.0-heuristic"
