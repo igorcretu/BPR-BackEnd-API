@@ -112,9 +112,15 @@ jobs:
               ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
             cd ~/BachelorApi/BPR-BackEnd-API
             
-            # Pull latest code
-            echo "📥 Pulling latest code..."
+            # Pull latest API code
+            echo "📥 Pulling latest API code..."
             git pull origin main
+            
+            # Pull latest ML_Model code (scraper)
+            echo "📥 Pulling latest ML_Model code..."
+            cd ~/BachelorApi/BPR-BackEnd-ML-Model
+            git pull origin main
+            cd ~/BachelorApi/BPR-BackEnd-API
             
             # Pull latest Docker image
             echo "🐳 Pulling latest Docker image..."
