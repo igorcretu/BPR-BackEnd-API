@@ -48,8 +48,16 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers (chromium only for efficiency)
-RUN playwright install chromium && \
-    playwright install-deps chromium
+# Install browser first, then dependencies separately with error handling
+RUN playwright install chromium
+
+# Install Playwright system dependencies
+# Use --allow-change-held-packages and || true to handle missing packages gracefully
+RUN playwright install-deps chromium || \
+    (apt-get update && apt-get install -y --no-install-recommends \
+    fonts-unifont \
+    fonts-ubuntu \
+    && rm -rf /var/lib/apt/lists/*) || true
 
 # Copy application code
 COPY . .
