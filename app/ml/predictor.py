@@ -130,56 +130,63 @@ class CarPricePredictor:
                             logger.info(f"Found fallback model: {model_path}")
                             break
             
-            # Load the model
+            # Load the model (could be a package or standalone model)
             if model_path and os.path.exists(model_path):
-                self.model = joblib.load(model_path)
-                logger.info(f"Successfully loaded model from {model_path}")
+                loaded_obj = joblib.load(model_path)
+                logger.info(f"Successfully loaded from {model_path}")
+                
+                # Check if it's a package (dict with 'model' key) or standalone model
+                if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
+                    logger.info("Loaded model package (v3.0 format)")
+                    # New format - package with everything
+                    self.model = loaded_obj['model']
+                    self.scaler = loaded_obj.get('scaler')
+                    self.target_encoders = loaded_obj.get('target_encoders', {})
+                    self.category_mappings = loaded_obj.get('category_mappings', {})
+                    self.numeric_medians = loaded_obj.get('numeric_medians', {})
+                    self.feature_names = loaded_obj.get('feature_names', [])
+                    
+                    logger.info(f"Package contains: model, scaler={self.scaler is not None}, "
+                               f"encoders={len(self.target_encoders)}, features={len(self.feature_names)}")
+                else:
+                    logger.info("Loaded standalone model (old format)")
+                    # Old format - just the model
+                    self.model = loaded_obj
+                    
+                    # Try to load separate scaler/encoders for old models
+                    for scaler_dir in ['/app/ML_Model/models', self.model_dir]:
+                        scaler_path = os.path.join(scaler_dir, 'feature_scaler.pkl')
+                        if os.path.exists(scaler_path):
+                            self.scaler = joblib.load(scaler_path)
+                            logger.info(f"Loaded separate scaler from {scaler_path}")
+                            break
+                    
+                    for encoder_dir in ['/app/ML_Model/models', self.model_dir]:
+                        encoders_path = os.path.join(encoder_dir, 'label_encoders.pkl')
+                        if os.path.exists(encoders_path):
+                            self.label_encoders = joblib.load(encoders_path)
+                            logger.info(f"Loaded separate encoders from {encoders_path}")
+                            break
+                
                 if model_name:
-                    self.model_version = f"v2.0.0-{model_name.lower().replace(' ', '-')}"
+                    self.model_version = f"v3.0.0-{model_name.lower().replace(' ', '-')}"
             else:
                 logger.warning(f"No model file found at {model_path}")
             
-            # Try to load scaler and encoders from ML_Model directory first, then fallback to app/models
-            scaler_loaded = False
-            for scaler_dir in ['/app/ML_Model/models', self.model_dir]:
-                scaler_path = os.path.join(scaler_dir, 'feature_scaler.pkl')
-                if os.path.exists(scaler_path):
-                    self.scaler = joblib.load(scaler_path)
-                    logger.info(f"Loaded scaler from {scaler_path}")
-                    scaler_loaded = True
-                    break
-            
-            if not scaler_loaded:
-                logger.warning("No scaler found - will use unscaled features")
-            
-            encoders_loaded = False
-            for encoder_dir in ['/app/ML_Model/models', self.model_dir]:
-                encoders_path = os.path.join(encoder_dir, 'label_encoders.pkl')
-                if os.path.exists(encoders_path):
-                    self.label_encoders = joblib.load(encoders_path)
-                    logger.info(f"Loaded encoders from {encoders_path}")
-                    encoders_loaded = True
-                    break
-            
-            if not encoders_loaded:
-                logger.warning("No label encoders found - will use raw categorical values")
-            
-            # Load metadata from ML_Model directory
-            metadata_loaded = False
+            # Load metadata if available
             for metadata_dir in ['/app/ML_Model/models', self.model_dir]:
                 metadata_path = os.path.join(metadata_dir, 'model_metadata.json')
                 if os.path.exists(metadata_path):
                     with open(metadata_path, 'r') as f:
                         self.metadata = json.load(f)
                     logger.info(f"Loaded metadata from {metadata_path}")
-                    metadata_loaded = True
                     break
             
             if self.model is not None:
                 self.model_loaded = True
                 if not self.model_version:
-                    self.model_version = f"v2.0.0-{self.metadata.get('model_name', 'trained').lower().replace(' ', '-')}"
-                logger.info(f"Model ready: {self.model_version}")
+                    self.model_version = f"v3.0.0-{self.metadata.get('model_name', 'trained').lower().replace(' ', '-')}"
+                logger.info(f"✅ Model ready: {self.model_version}")
             else:
                 self.model_version = "v1.0.0-heuristic"
                 
