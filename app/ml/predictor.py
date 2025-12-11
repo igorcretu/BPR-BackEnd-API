@@ -85,30 +85,64 @@ class CarPricePredictor:
             return
         
         try:
-            # Try to load the best model from the database
+            # Find the latest model in /app/ML_Model/models directory
             model_path = None
             model_name = None
             
-            try:
-                from app.models import MLModel
-                from app import db
-                
-                # Get the best performing active model (highest R² score)
-                best_model = MLModel.query.filter_by(is_active=True).order_by(MLModel.r2_score.desc()).first()
-                
-                if best_model:
-                    model_path = best_model.model_path
-                    model_name = best_model.name
+            ml_model_dir = '/app/ML_Model/models'
+            logger.info(f"Looking for models in: {ml_model_dir}")
+            
+            if os.path.exists(ml_model_dir):
+                # Get all v3 model files (the new packages) - both .pkl and .pt
+                model_files = []
+                try:
+                    files = os.listdir(ml_model_dir)
+                    logger.info(f"Found {len(files)} files in models directory")
                     
-                    # Convert path if needed (Pi absolute path to container path)
-                    if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
-                        model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
-                    elif not model_path.startswith('/'):
-                        model_path = f'/app/ML_Model/models/{model_path}'
+                    for f in files:
+                        # Match v3 .pkl models only (exclude PyTorch models for now)
+                        is_pkl_v3 = f.endswith('.pkl') and any(x in f for x in ['_v3_', 'xgboost_v', 'catboost_v', 'lightgbm_v', 'ridge_v', 'lasso_v', 'elasticnet_v'])
+                        
+                        if is_pkl_v3:
+                            full_path = os.path.join(ml_model_dir, f)
+                            model_files.append((full_path, os.path.getmtime(full_path), f))
+                            logger.debug(f"Found candidate model: {f}")
+                except Exception as e:
+                    logger.error(f"Error listing directory {ml_model_dir}: {e}")
+                
+                if model_files:
+                    # Sort by modification time (newest first)
+                    model_files.sort(key=lambda x: x[1], reverse=True)
+                    model_path = model_files[0][0]
+                    model_filename = model_files[0][2]
                     
-                    logger.info(f"Loading best model from database: {model_name} at {model_path}")
-            except Exception as e:
-                logger.warning(f"Could not load model from database: {e}")
+                    logger.info(f"Selected newest model file: {model_filename}")
+                    
+                    # Extract model name from filename (e.g., "xgboost_v3_..." -> "XGBoost")
+                    if 'xgboost' in model_filename.lower():
+                        model_name = 'XGBoost'
+                    elif 'catboost' in model_filename.lower():
+                        model_name = 'CatBoost'
+                    elif 'lightgbm' in model_filename.lower():
+                        model_name = 'LightGBM'
+                    elif 'ridge' in model_filename.lower():
+                        model_name = 'Ridge'
+                    elif 'lasso' in model_filename.lower():
+                        model_name = 'Lasso'
+                    elif 'elasticnet' in model_filename.lower():
+                        model_name = 'ElasticNet'
+                    elif 'lstm' in model_filename.lower():
+                        model_name = 'LSTM'
+                    elif 'gru' in model_filename.lower():
+                        model_name = 'GRU'
+                    
+                    logger.info(f"✅ Found latest model: {model_name} at {model_path}")
+                else:
+                    logger.warning(f"⚠️ No v3 models found in {ml_model_dir} (checked {len(files)} files)")
+            else:
+                logger.error(f"❌ ML model directory not found: {ml_model_dir}")
+                logger.info(f"Current working directory: {os.getcwd()}")
+                logger.info(f"Directory listing of /app: {os.listdir('/app') if os.path.exists('/app') else 'N/A'}")
             
             # Fallback to old static model files if database lookup failed
             if not model_path or not os.path.exists(model_path):

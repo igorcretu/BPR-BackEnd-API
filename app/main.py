@@ -1546,7 +1546,23 @@ def predict_price():
             
             # Load the model file and predict
             import joblib
-            model_obj = joblib.load(model_path)
+            
+            # Check if it's a PyTorch model (.pt file)
+            if model_path.endswith('.pt'):
+                raise ValueError("PyTorch models (LSTM/GRU) not yet supported for direct selection")
+            
+            loaded_obj = joblib.load(model_path)
+            
+            # Check if it's a package (v3.0 format) or standalone model
+            if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
+                logger.info(f"[{g.request_id}] Loaded v3.0 model package")
+                model_obj = loaded_obj['model']
+                scaler = loaded_obj.get('scaler')
+                feature_names = loaded_obj.get('feature_names', [])
+            else:
+                logger.info(f"[{g.request_id}] Loaded standalone model (old format)")
+                model_obj = loaded_obj
+                scaler = None
             
             # Prepare features same way as predictor
             features = predictor._prepare_features(data)
