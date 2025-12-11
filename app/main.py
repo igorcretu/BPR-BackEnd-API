@@ -164,10 +164,11 @@ logger.info("Database initialized with connection pooling")
 # ML PREDICTOR INITIALIZATION
 # ============================================
 
-logger.info("Initializing ML predictor...")
+logger.info("Initializing ML predictor with app context...")
 try:
-    predictor = CarPricePredictor()
-    logger.info(f"ML Predictor initialized: {predictor.get_model_info()}")
+    with app.app_context():
+        predictor = CarPricePredictor()
+        logger.info(f"ML Predictor initialized: {predictor.get_model_info()}")
 except Exception as e:
     logger.error(f"Failed to initialize ML predictor: {str(e)}")
     logger.error(traceback.format_exc())
