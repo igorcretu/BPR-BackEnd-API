@@ -49,6 +49,10 @@ services:
       # Mount ML models directory
       - ./app/models:/app/app/models
       - ./logs:/app/logs
+      # TEMPORARY: Mount specific files for hotfixes
+      - ./app/main.py:/app/app/main.py
+      - ./app/ml/predictor.py:/app/app/ml/predictor.py
+      - ./app/ml/ml_utils.py:/app/app/ml/ml_utils.py
       # Mount images directory from ML-Model project
       - ../BPR-BackEnd-ML-Model/bilbasen_scrape/images:/app/images
       # Mount CSV data directory for imports and scraper logs
@@ -85,6 +89,10 @@ services:
       # Mount ML models directory
       - ./app/models:/app/app/models
       - ./logs:/app/logs
+      # TEMPORARY: Mount specific files for hotfixes
+      - ./app/main.py:/app/app/main.py
+      - ./app/ml/predictor.py:/app/app/ml/predictor.py
+      - ./app/ml/ml_utils.py:/app/app/ml/ml_utils.py
       # Mount ML-Model scripts directory
       - ../BPR-BackEnd-ML-Model:/app/ML_Model
 

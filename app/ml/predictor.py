@@ -96,24 +96,34 @@ class CarPricePredictor:
             try:
                 from app.models import MLModel
                 
-                # Query for best model (highest R² score)
-                best_model_db = MLModel.query.filter_by(is_active=True).order_by(MLModel.r2_score.desc()).first()
+                # Query for all active models (highest R² score first) - exclude PyTorch models for now
+                available_models = MLModel.query.filter_by(is_active=True).filter(
+                    ~MLModel.model_file_path.like('%.pt')
+                ).order_by(MLModel.r2_score.desc()).all()
                 
-                if best_model_db:
-                    model_path = best_model_db.model_path
-                    model_name = best_model_db.name
-                    
-                    # Convert path if needed (Pi absolute path to container path)
-                    if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
-                        model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
-                    elif not model_path.startswith('/'):
-                        model_path = f'/app/ML_Model/models/{model_path}'
-                    
-                    logger.info(f"✅ Found best model from DB: {model_name} (R²={best_model_db.r2_score:.4f}) at {model_path}")
-                    
-                    # Verify file exists
-                    if not os.path.exists(model_path):
-                        logger.warning(f"⚠️ Model file not found at {model_path}, will search directory")
+                if available_models:
+                    # Try models in order of R² score until we find one that exists
+                    for model_candidate in available_models:
+                        candidate_path = model_candidate.model_file_path
+                        candidate_name = model_candidate.name
+                        
+                        # Convert path if needed (Pi absolute path to container path)
+                        if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in candidate_path:
+                            candidate_path = candidate_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
+                        elif not candidate_path.startswith('/'):
+                            candidate_path = f'/app/ML_Model/{candidate_path}'
+                        
+                        # Check if file exists
+                        if os.path.exists(candidate_path):
+                            model_path = candidate_path
+                            model_name = candidate_name
+                            logger.info(f"✅ Found best available model from DB: {model_name} (R²={model_candidate.r2_score:.4f}) at {model_path}")
+                            break
+                        else:
+                            logger.debug(f"⚠️ Model file not found: {candidate_name} at {candidate_path}")
+                    else:
+                        # No model files found
+                        logger.warning("No model files exist for any database entries, will search directory")
                         model_path = None
                         model_name = None
                 else:
@@ -134,24 +144,37 @@ class CarPricePredictor:
                     files = os.listdir(ml_model_dir)
                     logger.info(f"Found {len(files)} files in models directory")
                     
+                    # Model priority ranking (higher is better)
+                    model_priority = {
+                        'xgboost': 90, 'catboost': 89, 'lightgbm': 88,
+                        'histgb': 70, 'random_forest': 60, 'gru': 85, 'lstm': 84,
+                        'ridge': 30, 'lasso': 29, 'elasticnet': 28
+                    }
+                    
                     for f in files:
-                        # Match v3 .pkl models only (exclude PyTorch models for now)
-                        is_pkl_v3 = f.endswith('.pkl') and any(x in f for x in ['_v3_', 'xgboost_v', 'catboost_v', 'lightgbm_v', 'ridge_v', 'lasso_v', 'elasticnet_v'])
+                        # Match v2/v3 .pkl models (exclude PyTorch models and v1 linear models)
+                        is_good_model = f.endswith('.pkl') and any(x in f for x in ['xgboost_v', 'catboost_v', 'lightgbm_v', 'gru_v', 'lstm_v', 'histgb_v', 'random_forest_v'])
                         
-                        if is_pkl_v3:
+                        if is_good_model:
                             full_path = os.path.join(ml_model_dir, f)
-                            model_files.append((full_path, os.path.getmtime(full_path), f))
-                            logger.debug(f"Found candidate model: {f}")
+                            # Determine priority based on model type
+                            priority = 0
+                            for model_type, prio in model_priority.items():
+                                if model_type in f.lower():
+                                    priority = prio
+                                    break
+                            model_files.append((full_path, os.path.getmtime(full_path), f, priority))
+                            logger.debug(f"Found candidate model: {f} (priority: {priority})")
                 except Exception as e:
                     logger.error(f"Error listing directory {ml_model_dir}: {e}")
                 
                 if model_files:
-                    # Sort by modification time (newest first) as fallback
-                    model_files.sort(key=lambda x: x[1], reverse=True)
+                    # Sort by priority first, then by modification time (newest first)
+                    model_files.sort(key=lambda x: (x[3], x[1]), reverse=True)
                     model_path = model_files[0][0]
                     model_filename = model_files[0][2]
                     
-                    logger.info(f"Selected newest model file: {model_filename}")
+                    logger.info(f"Selected best available model file: {model_filename} (priority: {model_files[0][3]})")
                     
                     # Extract model name from filename (e.g., "xgboost_v3_..." -> "XGBoost")
                     if 'xgboost' in model_filename.lower():

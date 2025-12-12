@@ -68,3 +68,6 @@ models/*.joblib
 *.tmp
 *.bak
 *.swp
+logs/
+models
+/app/models

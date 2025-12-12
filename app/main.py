@@ -78,6 +78,16 @@ def setup_logging():
 
 logger = setup_logging()
 
+# Import ML utilities for model loading (after logger is set up)
+try:
+    from app.ml.ml_utils import TargetEncoder, load_pytorch_model, TORCH_AVAILABLE
+    logger.info("✅ ML utilities imported successfully")
+except ImportError as e:
+    logger.warning(f"⚠️ Could not import ML utilities: {e}")
+    TargetEncoder = None
+    load_pytorch_model = None
+    TORCH_AVAILABLE = False
+
 # ============================================
 # FLASK APP INITIALIZATION
 # ============================================
@@ -1532,98 +1542,219 @@ def predict_price():
             
             # Convert model path to container path if needed
             import os
-            model_path = ml_model.model_path
+            model_path = ml_model.model_file_path  # FIXED: Use model_file_path instead of model_path
             
             # If path contains /home/igor/BachelorApi/BPR-BackEnd-ML-Model, convert to /app/ML_Model
             if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
                 model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
-            # If path is just the filename, look in /app/ML_Model/models
+            # If path is just the filename, look in /app/ML_Model
             elif not model_path.startswith('/'):
-                model_path = f'/app/ML_Model/models/{model_path}'
+                model_path = f'/app/ML_Model/{model_path}'
             
             logger.info(f"[{g.request_id}] Looking for model at: {model_path}")
             
             if not os.path.exists(model_path):
-                raise ValueError(f"Model file not found: {model_path} (original: {ml_model.model_path})")
+                raise ValueError(f"Model file not found: {model_path} (original: {ml_model.model_file_path})")
             
             # Load the model file and predict
             import joblib
             
             # Check if it's a PyTorch model (.pt file)
             if model_path.endswith('.pt'):
-                raise ValueError("PyTorch models (LSTM/GRU) not yet supported for direct selection")
-            
-            loaded_obj = joblib.load(model_path)
-            
-            # Check if it's a package (v3.0 format) or standalone model
-            if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
-                logger.info(f"[{g.request_id}] Loaded v3.0 model package")
-                model_obj = loaded_obj['model']
-                package_scaler = loaded_obj.get('scaler')
-                feature_names = loaded_obj.get('feature_names', [])
-                target_encoders = loaded_obj.get('target_encoders', {})
-                category_mappings = loaded_obj.get('category_mappings', {})
+                if not TORCH_AVAILABLE or not load_pytorch_model:
+                    raise ValueError("PyTorch is not available - cannot load LSTM/GRU models")
                 
-                logger.info(f"[{g.request_id}] Package contains: scaler={package_scaler is not None}, "
-                           f"features={len(feature_names)}, encoders={len(target_encoders)}")
+                logger.info(f"[{g.request_id}] Loading PyTorch model ({ml_model.algorithm})")
                 
-                # Prepare features using predictor's feature preparation
-                # (All v3.0 models use same preprocessing pipeline)
-                features_dict = predictor._prepare_features(data)
-                logger.info(f"[{g.request_id}] Prepared features dict with {len(features_dict)} features")
+                # Load PyTorch model
+                model_obj, model_info = load_pytorch_model(model_path, ml_model.algorithm)
                 
-                # Convert feature dict to ordered array based on package's feature_names
-                if len(feature_names) > 0:
-                    feature_vector = np.array([[features_dict.get(col, 0) for col in feature_names]])
-                    logger.info(f"[{g.request_id}] Created feature vector: shape {feature_vector.shape}")
+                # Load preprocessing objects
+                from app.ml.ml_utils import load_preprocessing_for_pytorch
+                preprocessing = load_preprocessing_for_pytorch(model_path)
+                
+                if not preprocessing:
+                    raise ValueError(f"Preprocessing file not found for {model_path}. Model needs to be retrained with preprocessing objects.")
+                
+                logger.info(f"[{g.request_id}] Loaded preprocessing with {len(preprocessing['feature_names'])} features")
+                
+                # Now we need to prepare features using the SAME pipeline as training
+                # Import the feature engineering from training script
+                from datetime import datetime as dt
+                import pandas as pd
+                
+                # Create a DataFrame row for feature engineering
+                input_df = pd.DataFrame([data])
+                
+                # Apply the same feature engineering as training
+                current_year = dt.now().year
+                
+                # AGE FEATURES
+                input_df['age'] = current_year - input_df['year']
+                input_df['age'] = input_df['age'].clip(0, 50)
+                input_df['age_squared'] = input_df['age'] ** 2
+                input_df['age_cubed'] = input_df['age'] ** 3
+                
+                # MILEAGE FEATURES
+                input_df['mileage'] = input_df['mileage'].clip(0, 800000)
+                input_df['mileage_log'] = np.log1p(input_df['mileage'])
+                input_df['mileage_per_year'] = input_df['mileage'] / (input_df['age'] + 1)
+                input_df['mileage_per_year'] = input_df['mileage_per_year'].clip(0, 100000)
+                input_df['high_mileage'] = (input_df['mileage'] > 150000).astype(int)
+                input_df['low_mileage'] = (input_df['mileage'] < 50000).astype(int)
+                
+                # BRAND FEATURES
+                premium_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Porsche', 'Volvo', 'Polestar', 'Lexus', 'Land Rover', 'Jaguar']
+                economy_brands = ['Dacia', 'Suzuki', 'Fiat', 'Seat', 'Skoda', 'Kia', 'Hyundai', 'Toyota', 'Honda', 'Mazda', 'Nissan']
+                input_df['is_premium'] = input_df['brand'].isin(premium_brands).astype(int)
+                input_df['is_economy'] = input_df['brand'].isin(economy_brands).astype(int)
+                
+                # FUEL TYPE FEATURES
+                input_df['fuel_type'] = input_df['fuel_type'].fillna('Petrol')
+                input_df['is_electric'] = (input_df['fuel_type'] == 'Electricity').astype(int)
+                input_df['is_diesel'] = (input_df['fuel_type'] == 'Diesel').astype(int)
+                input_df['is_hybrid'] = input_df['fuel_type'].str.contains('Hybrid', na=False).astype(int)
+                input_df['is_plugin'] = input_df['fuel_type'].str.contains('Plug-in', na=False).astype(int)
+                
+                # TRANSMISSION
+                input_df['transmission'] = input_df['transmission'].fillna('Manual')
+                input_df['is_automatic'] = (input_df['transmission'] == 'Automatic').astype(int)
+                
+                # BODY TYPE
+                input_df['body_type'] = input_df['body_type'].fillna('Sedan')
+                input_df['is_suv'] = (input_df['body_type'] == 'SUV').astype(int)
+                input_df['is_wagon'] = input_df['body_type'].isin(['Station Wagon', 'Van']).astype(int)
+                input_df['is_hatchback'] = (input_df['body_type'] == 'Hatchback').astype(int)
+                
+                # POWER FEATURES
+                input_df['horsepower'] = input_df.get('horsepower', [130])[0] if 'horsepower' in data else 130
+                input_df['horsepower'] = np.clip(input_df['horsepower'], 30, 1500)
+                input_df['horsepower_log'] = np.log1p(input_df['horsepower'])
+                input_df['horsepower_per_year'] = input_df['horsepower'] / (input_df['age'] + 1)
+                input_df['low_power'] = (input_df['horsepower'] < 100).astype(int)
+                input_df['high_power'] = (input_df['horsepower'] > 200).astype(int)
+                input_df['very_high_power'] = (input_df['horsepower'] > 300).astype(int)
+                
+                # INTERACTION FEATURES
+                input_df['age_mileage_interaction'] = input_df['age'] * input_df['mileage_log']
+                input_df['premium_age'] = input_df['is_premium'] * input_df['age']
+                input_df['premium_mileage'] = input_df['is_premium'] * input_df['mileage_log']
+                input_df['hp_age_ratio'] = input_df['horsepower'] / (input_df['age'] + 1)
+                
+                # Fill missing numeric features with 0
+                for feature in preprocessing['feature_names']:
+                    if feature not in input_df.columns:
+                        input_df[feature] = 0
+                
+                # Extract features in the correct order
+                feature_vector = input_df[preprocessing['feature_names']].values
+                
+                # Scale using saved scaler
+                feature_vector = preprocessing['scaler'].transform(feature_vector)
+                
+                # Convert to tensor and predict
+                import torch
+                with torch.no_grad():
+                    X_tensor = torch.FloatTensor(feature_vector)
+                    y_pred_norm = model_obj(X_tensor).cpu().numpy()
+                    
+                    # Denormalize
+                    predicted_price = float(y_pred_norm * model_info['y_std'] + model_info['y_mean'])
+                
+                logger.info(f"[{g.request_id}] PyTorch model prediction successful: {predicted_price:,.0f} DKK")
+                
+                # Get confidence
+                confidence = 85.0
+                price_range = {
+                    'min': predicted_price * 0.88,
+                    'max': predicted_price * 1.12
+                }
+                
+                prediction_result = {
+                    'predicted_price': round(predicted_price, 2),
+                    'confidence': confidence,
+                    'price_range': price_range,
+                    'model_version': f"{ml_model.name} v{ml_model.version}",
+                    'model_id': model_id,
+                    'similar_cars_count': 0
+                }
+                logger.info(
+                    f"[{g.request_id}] ✅ PyTorch prediction with {ml_model.name} v{ml_model.version}: "
+                    f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
+                )
+            else:
+                # Load joblib model (sklearn models)
+                loaded_obj = joblib.load(model_path)
+                
+                # Check if it's a package (v3.0 format) or standalone model
+                if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
+                    logger.info(f"[{g.request_id}] Loaded v3.0 model package")
+                    model_obj = loaded_obj['model']
+                    package_scaler = loaded_obj.get('scaler')
+                    feature_names = loaded_obj.get('feature_names', [])
+                    target_encoders = loaded_obj.get('target_encoders', {})
+                    category_mappings = loaded_obj.get('category_mappings', {})
+                    
+                    logger.info(f"[{g.request_id}] Package contains: scaler={package_scaler is not None}, "
+                               f"features={len(feature_names)}, encoders={len(target_encoders)}")
+                    
+                    # Prepare features using predictor's feature preparation
+                    # (All v3.0 models use same preprocessing pipeline)
+                    features_dict = predictor._prepare_features(data)
+                    logger.info(f"[{g.request_id}] Prepared features dict with {len(features_dict)} features")
+                    
+                    # Convert feature dict to ordered array based on package's feature_names
+                    if len(feature_names) > 0:
+                        feature_vector = np.array([[features_dict.get(col, 0) for col in feature_names]])
+                        logger.info(f"[{g.request_id}] Created feature vector: shape {feature_vector.shape}")
+                    else:
+                        # Fall back to predictor's metadata if package doesn't have feature_names
+                        feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
+                        feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
+                        logger.info(f"[{g.request_id}] Created feature vector from predictor metadata: shape {feature_vector.shape}")
+                    
+                    # Scale features using package's scaler
+                    if package_scaler:
+                        feature_vector = package_scaler.transform(feature_vector)
+                        logger.info(f"[{g.request_id}] Applied package scaler")
+                    
+                    # Now predict with the specific model
+                    predicted_price = float(model_obj.predict(feature_vector)[0])
+                    logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
                 else:
-                    # Fall back to predictor's metadata if package doesn't have feature_names
+                    logger.info(f"[{g.request_id}] Loaded standalone model (old format)")
+                    model_obj = loaded_obj
+                    
+                    # For old format, use predictor's full prediction flow
+                    features_dict = predictor._prepare_features(data)
                     feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
                     feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
-                    logger.info(f"[{g.request_id}] Created feature vector from predictor metadata: shape {feature_vector.shape}")
+                    
+                    if predictor.scaler:
+                        feature_vector = predictor.scaler.transform(feature_vector)
+                    
+                    predicted_price = float(model_obj.predict(feature_vector)[0])
+                    logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
                 
-                # Scale features using package's scaler
-                if package_scaler:
-                    feature_vector = package_scaler.transform(feature_vector)
-                    logger.info(f"[{g.request_id}] Applied package scaler")
+                # Get confidence (simplified for specific model)
+                confidence = 75.0  # Default confidence for specific model predictions
+                price_range = {
+                    'min': predicted_price * 0.85,
+                    'max': predicted_price * 1.15
+                }
                 
-                # Now predict with the specific model
-                predicted_price = float(model_obj.predict(feature_vector)[0])
-                logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
-            else:
-                logger.info(f"[{g.request_id}] Loaded standalone model (old format)")
-                model_obj = loaded_obj
-                
-                # For old format, use predictor's full prediction flow
-                features_dict = predictor._prepare_features(data)
-                feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
-                feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
-                
-                if predictor.scaler:
-                    feature_vector = predictor.scaler.transform(feature_vector)
-                
-                predicted_price = float(model_obj.predict(feature_vector)[0])
-                logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
-            
-            # Get confidence (simplified for specific model)
-            confidence = 75.0  # Default confidence for specific model predictions
-            price_range = {
-                'min': predicted_price * 0.85,
-                'max': predicted_price * 1.15
-            }
-            
-            prediction_result = {
-                'predicted_price': round(predicted_price, 2),
-                'confidence': confidence,
-                'price_range': price_range,
-                'model_version': f"{ml_model.name} v{ml_model.version}",
-                'model_id': model_id,
-                'similar_cars_count': 0
-            }
-            logger.info(
-                f"[{g.request_id}] ✅ Prediction with {ml_model.name} v{ml_model.version}: "
-                f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
-            )
+                prediction_result = {
+                    'predicted_price': round(predicted_price, 2),
+                    'confidence': confidence,
+                    'price_range': price_range,
+                    'model_version': f"{ml_model.name} v{ml_model.version}",
+                    'model_id': model_id,
+                    'similar_cars_count': 0
+                }
+                logger.info(
+                    f"[{g.request_id}] ✅ Prediction with {ml_model.name} v{ml_model.version}: "
+                    f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
+                )
         except Exception as e:
             logger.error(f"[{g.request_id}] Error using specific model {model_id}: {e}")
             # Fall back to default model
@@ -1860,6 +1991,287 @@ def get_training_runs():
             'has_next': pagination.has_next,
             'has_prev': pagination.has_prev
         }
+    }), 200
+
+
+@app.route('/api/models/analysis/performance', methods=['GET'])
+@handle_errors
+def get_models_performance_analysis():
+    """Get comprehensive performance analysis for all models"""
+    from app.models import MLModel, ModelComparisonMetrics
+    
+    logger.info(f"[{g.request_id}] Fetching models performance analysis")
+    
+    models = MLModel.query.filter_by(is_active=True).order_by(desc(MLModel.r2_score)).all()
+    
+    performance_data = {
+        'overview': [],
+        'metrics_comparison': {
+            'r2_scores': [],
+            'mae_values': [],
+            'rmse_values': [],
+            'mape_values': [],
+            'training_times': []
+        },
+        'price_range_analysis': {},
+        'best_performers': {}
+    }
+    
+    for model in models:
+        model_info = {
+            'id': model.id,
+            'name': model.name,
+            'algorithm': model.algorithm,
+            'version': model.version,
+            'r2_score': float(model.r2_score) if model.r2_score else None,
+            'mae': float(model.mae) if model.mae else None,
+            'rmse': float(model.rmse) if model.rmse else None,
+            'mape': float(model.mape) if model.mape else None,
+            'median_ae': float(model.median_ae) if model.median_ae else None,
+            'percentile_90_error': float(model.percentile_90_error) if model.percentile_90_error else None,
+            'training_time': float(model.training_time_seconds) if model.training_time_seconds else None
+        }
+        
+        performance_data['overview'].append(model_info)
+        
+        # Add to comparison arrays
+        if model.r2_score:
+            performance_data['metrics_comparison']['r2_scores'].append({
+                'model': model.name,
+                'value': float(model.r2_score)
+            })
+        if model.mae:
+            performance_data['metrics_comparison']['mae_values'].append({
+                'model': model.name,
+                'value': float(model.mae)
+            })
+        if model.rmse:
+            performance_data['metrics_comparison']['rmse_values'].append({
+                'model': model.name,
+                'value': float(model.rmse)
+            })
+        if model.mape:
+            performance_data['metrics_comparison']['mape_values'].append({
+                'model': model.name,
+                'value': float(model.mape)
+            })
+        if model.training_time_seconds:
+            performance_data['metrics_comparison']['training_times'].append({
+                'model': model.name,
+                'value': float(model.training_time_seconds)
+            })
+        
+        # Get price range analysis from comparison metrics
+        latest_metrics = ModelComparisonMetrics.query.filter_by(
+            model_id=model.id
+        ).order_by(desc(ModelComparisonMetrics.created_at)).first()
+        
+        if latest_metrics:
+            performance_data['price_range_analysis'][model.name] = {
+                'under_100k': float(latest_metrics.mae_under_100k) if latest_metrics.mae_under_100k else None,
+                '100k_to_300k': float(latest_metrics.mae_100k_to_300k) if latest_metrics.mae_100k_to_300k else None,
+                '300k_to_500k': float(latest_metrics.mae_300k_to_500k) if latest_metrics.mae_300k_to_500k else None,
+                'over_500k': float(latest_metrics.mae_over_500k) if latest_metrics.mae_over_500k else None
+            }
+    
+    # Determine best performers
+    if models:
+        best_r2 = max(models, key=lambda m: m.r2_score if m.r2_score else -999)
+        best_mae = min(models, key=lambda m: m.mae if m.mae else 999999999)
+        fastest = min(models, key=lambda m: m.training_time_seconds if m.training_time_seconds else 999999999)
+        
+        performance_data['best_performers'] = {
+            'highest_r2': {
+                'model': best_r2.name,
+                'value': float(best_r2.r2_score) if best_r2.r2_score else None
+            },
+            'lowest_mae': {
+                'model': best_mae.name,
+                'value': float(best_mae.mae) if best_mae.mae else None
+            },
+            'fastest_training': {
+                'model': fastest.name,
+                'value': float(fastest.training_time_seconds) if fastest.training_time_seconds else None
+            }
+        }
+    
+    logger.info(f"[{g.request_id}] Performance analysis completed for {len(models)} models")
+    
+    return jsonify({
+        'success': True,
+        'data': performance_data
+    }), 200
+
+
+@app.route('/api/models/<model_id>/analysis', methods=['GET'])
+@handle_errors
+def get_model_detailed_analysis(model_id):
+    """Get detailed analysis for a specific model"""
+    from app.models import MLModel, ModelComparisonMetrics, PricePrediction
+    
+    logger.info(f"[{g.request_id}] Fetching detailed analysis for model {model_id}")
+    
+    model = MLModel.query.get_or_404(model_id)
+    
+    # Get all comparison metrics (history)
+    metrics_history = ModelComparisonMetrics.query.filter_by(
+        model_id=model_id
+    ).order_by(ModelComparisonMetrics.created_at).all()
+    
+    # Get prediction count
+    prediction_count = PricePrediction.query.filter_by(model_id=model_id).count()
+    
+    # Calculate average confidence from predictions
+    predictions = PricePrediction.query.filter_by(model_id=model_id).limit(1000).all()
+    avg_confidence = np.mean([float(p.confidence) for p in predictions if p.confidence]) if predictions else None
+    
+    analysis = {
+        'model': model.to_dict(),
+        'usage_stats': {
+            'total_predictions': prediction_count,
+            'average_confidence': round(avg_confidence, 2) if avg_confidence else None
+        },
+        'metrics_history': [m.to_dict() for m in metrics_history],
+        'feature_importance': model.feature_importances if model.feature_importances else {},
+        'hyperparameters': model.hyperparameters if model.hyperparameters else {}
+    }
+    
+    # Add price range performance if available
+    latest_metrics = metrics_history[-1] if metrics_history else None
+    if latest_metrics:
+        analysis['price_range_performance'] = {
+            'under_100k': {
+                'mae': float(latest_metrics.mae_under_100k) if latest_metrics.mae_under_100k else None,
+                'label': '< 100k DKK'
+            },
+            '100k_to_300k': {
+                'mae': float(latest_metrics.mae_100k_to_300k) if latest_metrics.mae_100k_to_300k else None,
+                'label': '100k - 300k DKK'
+            },
+            '300k_to_500k': {
+                'mae': float(latest_metrics.mae_300k_to_500k) if latest_metrics.mae_300k_to_500k else None,
+                'label': '300k - 500k DKK'
+            },
+            'over_500k': {
+                'mae': float(latest_metrics.mae_over_500k) if latest_metrics.mae_over_500k else None,
+                'label': '> 500k DKK'
+            }
+        }
+    
+    logger.info(f"[{g.request_id}] Detailed analysis completed for {model.name}")
+    
+    return jsonify({
+        'success': True,
+        'analysis': analysis
+    }), 200
+
+
+@app.route('/api/models/charts/comparison', methods=['GET'])
+@handle_errors
+def get_models_comparison_charts():
+    """Get data formatted for comparison charts"""
+    from app.models import MLModel
+    
+    logger.info(f"[{g.request_id}] Fetching comparison chart data")
+    
+    models = MLModel.query.filter_by(is_active=True).order_by(MLModel.name).all()
+    
+    chart_data = {
+        'bar_charts': {
+            'r2_comparison': {
+                'labels': [],
+                'data': [],
+                'title': 'R² Score Comparison',
+                'ylabel': 'R² Score',
+                'description': 'Higher is better (max 1.0)'
+            },
+            'mae_comparison': {
+                'labels': [],
+                'data': [],
+                'title': 'Mean Absolute Error Comparison',
+                'ylabel': 'MAE (DKK)',
+                'description': 'Lower is better'
+            },
+            'training_time_comparison': {
+                'labels': [],
+                'data': [],
+                'title': 'Training Time Comparison',
+                'ylabel': 'Time (seconds)',
+                'description': 'Training duration'
+            }
+        },
+        'scatter_plot': {
+            'title': 'Accuracy vs Training Time',
+            'xlabel': 'Training Time (seconds)',
+            'ylabel': 'R² Score',
+            'data': []
+        },
+        'radar_chart': {
+            'title': 'Model Performance Metrics (Normalized)',
+            'labels': ['R² Score', 'MAE', 'RMSE', 'MAPE', 'Training Speed'],
+            'datasets': []
+        }
+    }
+    
+    # Collect data
+    for model in models:
+        if model.r2_score:
+            chart_data['bar_charts']['r2_comparison']['labels'].append(model.name)
+            chart_data['bar_charts']['r2_comparison']['data'].append(float(model.r2_score))
+        
+        if model.mae:
+            chart_data['bar_charts']['mae_comparison']['labels'].append(model.name)
+            chart_data['bar_charts']['mae_comparison']['data'].append(float(model.mae))
+        
+        if model.training_time_seconds:
+            chart_data['bar_charts']['training_time_comparison']['labels'].append(model.name)
+            chart_data['bar_charts']['training_time_comparison']['data'].append(float(model.training_time_seconds))
+        
+        # Scatter plot data
+        if model.r2_score and model.training_time_seconds:
+            chart_data['scatter_plot']['data'].append({
+                'x': float(model.training_time_seconds),
+                'y': float(model.r2_score),
+                'label': model.name
+            })
+    
+    # Normalize data for radar chart (0-100 scale)
+    if models:
+        max_r2 = max([float(m.r2_score) for m in models if m.r2_score], default=1.0)
+        min_mae = min([float(m.mae) for m in models if m.mae], default=1.0)
+        max_mae = max([float(m.mae) for m in models if m.mae], default=1.0)
+        min_rmse = min([float(m.rmse) for m in models if m.rmse], default=1.0)
+        max_rmse = max([float(m.rmse) for m in models if m.rmse], default=1.0)
+        min_mape = min([float(m.mape) for m in models if m.mape], default=1.0)
+        max_mape = max([float(m.mape) for m in models if m.mape], default=1.0)
+        min_time = min([float(m.training_time_seconds) for m in models if m.training_time_seconds], default=1.0)
+        max_time = max([float(m.training_time_seconds) for m in models if m.training_time_seconds], default=1.0)
+        
+        for model in models:
+            if all([model.r2_score, model.mae, model.rmse, model.mape, model.training_time_seconds]):
+                # Normalize (higher is better for all metrics in radar chart)
+                norm_r2 = (float(model.r2_score) / max_r2) * 100 if max_r2 > 0 else 0
+                norm_mae = ((max_mae - float(model.mae)) / (max_mae - min_mae)) * 100 if max_mae > min_mae else 50
+                norm_rmse = ((max_rmse - float(model.rmse)) / (max_rmse - min_rmse)) * 100 if max_rmse > min_rmse else 50
+                norm_mape = ((max_mape - float(model.mape)) / (max_mape - min_mape)) * 100 if max_mape > min_mape else 50
+                norm_speed = ((max_time - float(model.training_time_seconds)) / (max_time - min_time)) * 100 if max_time > min_time else 50
+                
+                chart_data['radar_chart']['datasets'].append({
+                    'label': model.name,
+                    'data': [
+                        round(norm_r2, 2),
+                        round(norm_mae, 2),
+                        round(norm_rmse, 2),
+                        round(norm_mape, 2),
+                        round(norm_speed, 2)
+                    ]
+                })
+    
+    logger.info(f"[{g.request_id}] Comparison charts data compiled for {len(models)} models")
+    
+    return jsonify({
+        'success': True,
+        'charts': chart_data
     }), 200
 
 
