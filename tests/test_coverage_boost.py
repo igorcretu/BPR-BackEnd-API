@@ -71,7 +71,7 @@ class TestAdvancedPrediction:
         response = client.post('/api/predict',
                               json=data,
                               content_type='application/json')
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [200, 201, 202, 400, 422]
     
     def test_predict_with_doors_and_seats(self, client):
         """Test prediction with doors and seats."""
@@ -90,7 +90,7 @@ class TestAdvancedPrediction:
         response = client.post('/api/predict',
                               json=data,
                               content_type='application/json')
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [200, 201, 202, 400, 422]
     
     def test_predict_with_invalid_engine_size(self, client):
         """Test prediction with invalid engine_size type."""
@@ -137,10 +137,10 @@ class TestAdvancedPrediction:
             'transmission': 'Automatic',
             'body_type': 'Sedan'
         }
-        response = client.post('/api/predict?priority=5',
+        response = client.post('/api/predict?priority=high',
                               json=data,
                               content_type='application/json')
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [200, 201, 202, 400, 422]
     
     def test_predict_with_mode_param(self, client):
         """Test prediction with mode parameter."""

@@ -92,8 +92,8 @@ class TestQueueEndpoints:
         response = client.post('/api/predict',
                               json=job_data,
                               content_type='application/json')
-        # Should either succeed or return a known error status
-        assert response.status_code in [200, 201, 400, 422]
+        # Should either succeed or return a known error status (202 = queued)
+        assert response.status_code in [200, 201, 202, 400, 422]
     
     def test_get_job_with_invalid_id(self, client):
         """Test getting a job with invalid ID."""
@@ -184,7 +184,7 @@ class TestPredictionValidation:
         response = client.post('/api/predict',
                               json=data,
                               content_type='application/json')
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [200, 201, 202, 400, 422]
     
     def test_predict_with_invalid_data_types(self, client):
         """Test prediction with invalid data types."""
