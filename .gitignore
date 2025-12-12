@@ -76,3 +76,6 @@ data/bilbasen_scrape/images/*.jpg
 data/bilbasen_scrape/*.csv
 data/bilbasen_scrape/*.html
 data/bilbasen_scrape/*.json
+/logs/
+/logs
+logs/*
