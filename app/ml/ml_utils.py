@@ -3,6 +3,7 @@ ML utilities for model loading and preprocessing
 Contains classes needed for deserializing trained models
 """
 
+import os
 import numpy as np
 import pandas as pd
 
