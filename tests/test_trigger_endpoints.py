@@ -214,7 +214,7 @@ def test_debug_script_paths_endpoint(client):
          patch('os.path.isdir') as mock_isdir, \
          patch('os.listdir') as mock_listdir:
         # Mock Docker paths exist
-        mock_exists.side_effect = lambda path: '/app/ML_Model' in path
+        mock_exists.side_effect = lambda path: '/app/app' in path
         mock_access.return_value = True
         mock_isdir.return_value = True
         mock_listdir.return_value = ['train_models.py', 'auto_scraper.py', 'requirements.txt']
@@ -228,9 +228,9 @@ def test_debug_script_paths_endpoint(client):
         assert 'scraper_script_incremental' in data
         assert 'python' in data
         assert 'ml_model_directory' in data
-        assert data['training_script']['docker_path'] == '/app/ML_Model/train_models.py'
-        assert data['scraper_script_legacy']['docker_path'] == '/app/ML_Model/auto_scraper.py'
-        assert data['scraper_script_incremental']['docker_path'] == '/app/ML_Model/bilbasen_incremental.py'
+        assert data['training_script']['docker_path'] == '/app/app/ml/training/train_models.py'
+        assert data['scraper_script_legacy']['docker_path'] == '/app/app/scraping/auto_scraper.py'
+        assert data['scraper_script_incremental']['docker_path'] == '/app/app/scraping/bilbasen_incremental.py'
         assert data['scraper_script_incremental']['currently_used'] is True
 
 

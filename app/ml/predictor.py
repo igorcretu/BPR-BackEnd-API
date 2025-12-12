@@ -5,9 +5,16 @@ Trained on bilbasen.dk data
 
 import os
 import json
+import sys
 import numpy as np
 from datetime import datetime
 import logging
+
+# Import TargetEncoder and inject into __main__ for joblib unpickling
+from app.ml.encoding import TargetEncoder
+# Make TargetEncoder available in __main__ namespace for pickle
+import __main__
+__main__.TargetEncoder = TargetEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -18,17 +25,38 @@ except ImportError:
     JOBLIB_AVAILABLE = False
     logger.warning("joblib not available - using mock predictions")
 
+try:
+    import torch
+    from app.ml.pytorch_models import ImprovedLSTMNetwork, ImprovedGRUNetwork
+    # Make PyTorch model classes available in __main__ namespace for torch.load unpickling
+    __main__.ImprovedLSTMNetwork = ImprovedLSTMNetwork
+    __main__.ImprovedGRUNetwork = ImprovedGRUNetwork
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    ImprovedLSTMNetwork = None
+    ImprovedGRUNetwork = None
+    logger.warning("PyTorch not available - cannot load LSTM/GRU models")
+
 
 class CarPricePredictor:
-    """Car price prediction using trained ML model with heuristic fallback."""
+    """Car price prediction using trained ML models. Supports all 10 trained models."""
     
-    def __init__(self):
+    def __init__(self, model_name=None):
+        self.models = {}  # Cache of loaded models {model_name: model_data}
+        self.current_model_name = model_name  # Selected model, None = best model
+        self.model_dir = os.path.join(os.path.dirname(__file__), '../models')
+        
+        # Will be set when loading a model
         self.model = None
         self.scaler = None
         self.label_encoders = {}
+        self.target_encoders = {}
+        self.category_mappings = {}
+        self.numeric_medians = {}
+        self.feature_names = []
         self.metadata = {}
         self.model_loaded = False
-        self.model_dir = os.path.join(os.path.dirname(__file__), '../models')
         
         # Updated mappings to match standardized database values
         self.fuel_type_mapping = {
@@ -75,223 +103,240 @@ class CarPricePredictor:
         self.premium_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Porsche', 
                                'Volvo', 'Polestar', 'Lexus', 'Land Rover', 'Jaguar']
         
-        self._load_model()
+        # Load the specified model or best available model
+        self._load_model(self.current_model_name)
     
-    def _load_model(self):
-        """Load trained model and artifacts from disk."""
+    def _load_model(self, model_name=None):
+        """
+        Load trained model from disk. 
+        Args:
+            model_name (str, optional): Specific model to load (e.g., 'XGBoost', 'GRU'). 
+                                       If None, loads best available model by R² score.
+        """
         if not JOBLIB_AVAILABLE:
-            logger.warning("joblib not available, using fallback predictor")
-            self.model_version = "v1.0.0-heuristic"
-            return
+            raise RuntimeError("joblib not available - cannot load ML models")
         
         try:
-            # Find the latest model in /app/ML_Model/models directory
-            model_path = None
-            model_name = None
+            ml_model_dir = '/app/app/models'
+            logger.info(f"Loading model: {model_name or 'best available'} from {ml_model_dir}")
             
-            ml_model_dir = '/app/ML_Model/models'
-            logger.info(f"Looking for models in: {ml_model_dir}")
+            # Get models from database
+            from app.models import MLModel
             
-            # Try to get best model from database first
-            try:
-                from app.models import MLModel
-                
-                # Query for all active models (highest R² score first) - exclude PyTorch models for now
-                available_models = MLModel.query.filter_by(is_active=True).filter(
-                    ~MLModel.model_file_path.like('%.pt')
-                ).order_by(MLModel.r2_score.desc()).all()
-                
-                if available_models:
-                    # Try models in order of R² score until we find one that exists
-                    for model_candidate in available_models:
-                        candidate_path = model_candidate.model_file_path
-                        candidate_name = model_candidate.name
-                        
-                        # Convert path if needed (Pi absolute path to container path)
-                        if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in candidate_path:
-                            candidate_path = candidate_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
-                        elif not candidate_path.startswith('/'):
-                            candidate_path = f'/app/ML_Model/{candidate_path}'
-                        
-                        # Check if file exists
-                        if os.path.exists(candidate_path):
-                            model_path = candidate_path
-                            model_name = candidate_name
-                            logger.info(f"✅ Found best available model from DB: {model_name} (R²={model_candidate.r2_score:.4f}) at {model_path}")
-                            break
-                        else:
-                            logger.debug(f"⚠️ Model file not found: {candidate_name} at {candidate_path}")
-                    else:
-                        # No model files found
-                        logger.warning("No model files exist for any database entries, will search directory")
-                        model_path = None
-                        model_name = None
-                else:
-                    logger.warning("No active models found in database")
-                    model_path = None
-                    model_name = None
-                    
-            except Exception as e:
-                logger.warning(f"Could not query database for best model: {e}")
-                model_path = None
-                model_name = None
+            # Build query - filter by name if specified
+            query = MLModel.query.filter_by(is_active=True)
             
-            # Fallback: search directory if DB query failed or file not found
-            if not model_path and os.path.exists(ml_model_dir):
-                logger.info("Falling back to directory search")
-                model_files = []
-                try:
-                    files = os.listdir(ml_model_dir)
-                    logger.info(f"Found {len(files)} files in models directory")
-                    
-                    # Model priority ranking (higher is better)
-                    model_priority = {
-                        'xgboost': 90, 'catboost': 89, 'lightgbm': 88,
-                        'histgb': 70, 'random_forest': 60, 'gru': 85, 'lstm': 84,
-                        'ridge': 30, 'lasso': 29, 'elasticnet': 28
-                    }
-                    
-                    for f in files:
-                        # Match v2/v3 .pkl models (exclude PyTorch models and v1 linear models)
-                        is_good_model = f.endswith('.pkl') and any(x in f for x in ['xgboost_v', 'catboost_v', 'lightgbm_v', 'gru_v', 'lstm_v', 'histgb_v', 'random_forest_v'])
-                        
-                        if is_good_model:
-                            full_path = os.path.join(ml_model_dir, f)
-                            # Determine priority based on model type
-                            priority = 0
-                            for model_type, prio in model_priority.items():
-                                if model_type in f.lower():
-                                    priority = prio
-                                    break
-                            model_files.append((full_path, os.path.getmtime(full_path), f, priority))
-                            logger.debug(f"Found candidate model: {f} (priority: {priority})")
-                except Exception as e:
-                    logger.error(f"Error listing directory {ml_model_dir}: {e}")
-                
-                if model_files:
-                    # Sort by priority first, then by modification time (newest first)
-                    model_files.sort(key=lambda x: (x[3], x[1]), reverse=True)
-                    model_path = model_files[0][0]
-                    model_filename = model_files[0][2]
-                    
-                    logger.info(f"Selected best available model file: {model_filename} (priority: {model_files[0][3]})")
-                    
-                    # Extract model name from filename (e.g., "xgboost_v3_..." -> "XGBoost")
-                    if 'xgboost' in model_filename.lower():
-                        model_name = 'XGBoost'
-                    elif 'catboost' in model_filename.lower():
-                        model_name = 'CatBoost'
-                    elif 'lightgbm' in model_filename.lower():
-                        model_name = 'LightGBM'
-                    elif 'ridge' in model_filename.lower():
-                        model_name = 'Ridge'
-                    elif 'lasso' in model_filename.lower():
-                        model_name = 'Lasso'
-                    elif 'elasticnet' in model_filename.lower():
-                        model_name = 'ElasticNet'
-                    elif 'lstm' in model_filename.lower():
-                        model_name = 'LSTM'
-                    elif 'gru' in model_filename.lower():
-                        model_name = 'GRU'
-                    
-                    logger.info(f"✅ Found latest model: {model_name} at {model_path}")
-                else:
-                    logger.warning(f"⚠️ No v3 models found in {ml_model_dir} (checked {len(files)} files)")
+            if model_name:
+                # Specific model requested
+                query = query.filter_by(name=model_name)
+                models = query.all()
+                if not models:
+                    raise ValueError(f"Model '{model_name}' not found in database")
             else:
-                logger.error(f"❌ ML model directory not found: {ml_model_dir}")
-                logger.info(f"Current working directory: {os.getcwd()}")
-                logger.info(f"Directory listing of /app: {os.listdir('/app') if os.path.exists('/app') else 'N/A'}")
+                # Get best model by R² score
+                query = query.order_by(MLModel.r2_score.desc())
+                models = query.all()
             
-            # Fallback to old static model files if database lookup failed
-            if not model_path or not os.path.exists(model_path):
-                logger.info("Falling back to static model files")
-                metadata_path = os.path.join(self.model_dir, 'model_metadata.json')
-                if os.path.exists(metadata_path):
-                    with open(metadata_path, 'r') as f:
-                        self.metadata = json.load(f)
-                    logger.info(f"Loaded metadata: {self.metadata.get('model_name', 'unknown')}")
-                
-                model_filename = self.metadata.get('model_filename', 'best_model_xgboost.pkl')
-                model_path = os.path.join(self.model_dir, model_filename)
+            # Try to load the first available model file
+            loaded_model_data = None
+            for db_model in models:
+                model_path = self._normalize_model_path(db_model.model_file_path)
                 
                 if not os.path.exists(model_path):
-                    for name in ['best_model_catboost.pkl', 'best_model_xgboost.pkl', 'best_model_lightgbm.pkl', 'best_model_random_forest.pkl']:
-                        alt_path = os.path.join(self.model_dir, name)
-                        if os.path.exists(alt_path):
-                            model_path = alt_path
-                            logger.info(f"Found fallback model: {model_path}")
-                            break
-            
-            # Load the model (could be a package or standalone model)
-            if model_path and os.path.exists(model_path):
-                loaded_obj = joblib.load(model_path)
-                logger.info(f"Successfully loaded from {model_path}")
+                    logger.debug(f"⚠️ Model file not found: {db_model.name} at {model_path}")
+                    continue
                 
-                # Check if it's a package (dict with 'model' key) or standalone model
-                if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
-                    logger.info("Loaded model package (v3.0 format)")
-                    # New format - package with everything
-                    self.model = loaded_obj['model']
-                    self.scaler = loaded_obj.get('scaler')
-                    self.target_encoders = loaded_obj.get('target_encoders', {})
-                    self.category_mappings = loaded_obj.get('category_mappings', {})
-                    self.numeric_medians = loaded_obj.get('numeric_medians', {})
-                    self.feature_names = loaded_obj.get('feature_names', [])
+                try:
+                    logger.info(f"Loading {db_model.name} from {model_path}")
                     
-                    logger.info(f"Package contains: model, scaler={self.scaler is not None}, "
-                               f"encoders={len(self.target_encoders)}, features={len(self.feature_names)}")
-                else:
-                    logger.info("Loaded standalone model (old format)")
-                    # Old format - just the model
-                    self.model = loaded_obj
+                    # Determine file type and load accordingly
+                    if model_path.endswith('.pt'):
+                        # PyTorch model
+                        if not TORCH_AVAILABLE:
+                            logger.warning(f"Skipping {db_model.name} - PyTorch not available")
+                            continue
+                        
+                        # Load PyTorch model checkpoint
+                        checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
+                        
+                        # Reconstruct model from state_dict
+                        if 'model_state_dict' in checkpoint:
+                            # Determine which architecture to use
+                            input_dim = checkpoint.get('input_dim', 50)
+                            params = checkpoint.get('params', {})
+                            
+                            if db_model.name == 'LSTM':
+                                model = ImprovedLSTMNetwork(
+                                    input_dim=input_dim,
+                                    hidden_dim=params.get('hidden_dim', 128),
+                                    num_layers=params.get('num_layers', 2),
+                                    dropout=params.get('dropout', 0.3)
+                                )
+                            elif db_model.name == 'GRU':
+                                model = ImprovedGRUNetwork(
+                                    input_dim=input_dim,
+                                    hidden_dim=params.get('hidden_dim', 128),
+                                    num_layers=params.get('num_layers', 2),
+                                    dropout=params.get('dropout', 0.3)
+                                )
+                            else:
+                                logger.error(f"Unknown PyTorch model type: {db_model.name}")
+                                continue
+                            
+                            model.load_state_dict(checkpoint['model_state_dict'])
+                            model.eval()
+                            
+                            # Load preprocessing objects from separate file
+                            preprocessing_path = model_path.rsplit('.', 1)[0] + '_preprocessing.pkl'
+                            preprocessing = {}
+                            if os.path.exists(preprocessing_path):
+                                preprocessing = joblib.load(preprocessing_path)
+                                logger.info(f"Loaded preprocessing from {preprocessing_path}")
+                            else:
+                                logger.warning(f"Preprocessing file not found: {preprocessing_path}")
+                            
+                            # Create a package-like structure
+                            loaded_obj = {
+                                'model': model,
+                                'y_mean': checkpoint.get('y_mean', 0),
+                                'y_std': checkpoint.get('y_std', 1),
+                                'scaler': preprocessing.get('scaler'),
+                                'target_encoders': preprocessing.get('target_encoders', {}),
+                                'category_mappings': preprocessing.get('category_mappings', {}),
+                                'numeric_medians': preprocessing.get('numeric_medians', {}),
+                                'feature_names': preprocessing.get('feature_names', []),
+                                'input_dim': input_dim,
+                                'params': params
+                            }
+                        else:
+                            # Old format - direct model object
+                            loaded_obj = checkpoint
+                    else:
+                        # Joblib model (.pkl)
+                        loaded_obj = joblib.load(model_path)
                     
-                    # Try to load separate scaler/encoders for old models
-                    for scaler_dir in ['/app/ML_Model/models', self.model_dir]:
-                        scaler_path = os.path.join(scaler_dir, 'feature_scaler.pkl')
-                        if os.path.exists(scaler_path):
-                            self.scaler = joblib.load(scaler_path)
-                            logger.info(f"Loaded separate scaler from {scaler_path}")
-                            break
+                    # Check if it's a package (v3 format) or standalone model
+                    if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
+                        # v3 package format
+                        loaded_model_data = {
+                            'model': loaded_obj['model'],
+                            'scaler': loaded_obj.get('scaler'),
+                            'target_encoders': loaded_obj.get('target_encoders', {}),
+                            'category_mappings': loaded_obj.get('category_mappings', {}),
+                            'numeric_medians': loaded_obj.get('numeric_medians', {}),
+                            'feature_names': loaded_obj.get('feature_names', []),
+                            'y_mean': loaded_obj.get('y_mean', 0),
+                            'y_std': loaded_obj.get('y_std', 1),
+                            'name': db_model.name,
+                            'version': f"v3.0.0-{db_model.name.lower().replace(' ', '-')}",
+                            'r2_score': db_model.r2_score,
+                            'mae': db_model.mae,
+                            'rmse': db_model.rmse
+                        }
+                        logger.info(f"✅ Loaded {db_model.name} (R²={db_model.r2_score:.4f}, MAE={db_model.mae:.0f})")
+                    else:
+                        # Old standalone format - load it but less preferred
+                        loaded_model_data = {
+                            'model': loaded_obj,
+                            'scaler': None,
+                            'target_encoders': {},
+                            'category_mappings': {},
+                            'numeric_medians': {},
+                            'feature_names': [],
+                            'name': db_model.name,
+                            'version': f"v2.0.0-{db_model.name.lower().replace(' ', '-')}",
+                            'r2_score': db_model.r2_score,
+                            'mae': db_model.mae,
+                            'rmse': db_model.rmse
+                        }
+                        logger.warning(f"Loaded {db_model.name} in old format (missing preprocessing artifacts)")
                     
-                    for encoder_dir in ['/app/ML_Model/models', self.model_dir]:
-                        encoders_path = os.path.join(encoder_dir, 'label_encoders.pkl')
-                        if os.path.exists(encoders_path):
-                            self.label_encoders = joblib.load(encoders_path)
-                            logger.info(f"Loaded separate encoders from {encoders_path}")
-                            break
-                
-                if model_name:
-                    self.model_version = f"v3.0.0-{model_name.lower().replace(' ', '-')}"
-            else:
-                logger.warning(f"No model file found at {model_path}")
+                    break  # Successfully loaded
+                    
+                except Exception as e:
+                    logger.error(f"Failed to load {db_model.name}: {e}")
+                    continue
             
-            # Load metadata if available
-            for metadata_dir in ['/app/ML_Model/models', self.model_dir]:
-                metadata_path = os.path.join(metadata_dir, 'model_metadata.json')
-                if os.path.exists(metadata_path):
-                    with open(metadata_path, 'r') as f:
-                        self.metadata = json.load(f)
-                    logger.info(f"Loaded metadata from {metadata_path}")
-                    break
+            if not loaded_model_data:
+                raise RuntimeError(f"No valid model files found for: {model_name or 'any model'}")
             
-            if self.model is not None:
-                self.model_loaded = True
-                if not self.model_version:
-                    self.model_version = f"v3.0.0-{self.metadata.get('model_name', 'trained').lower().replace(' ', '-')}"
-                logger.info(f"✅ Model ready: {self.model_version}")
-            else:
-                self.model_version = "v1.0.0-heuristic"
+            # Set instance variables from loaded model
+            self.model = loaded_model_data['model']
+            
+            # Set PyTorch models to eval mode
+            if TORCH_AVAILABLE and hasattr(self.model, 'eval'):
+                self.model.eval()
+                logger.info(f"Set {loaded_model_data['name']} to eval mode")
+            
+            self.scaler = loaded_model_data['scaler']
+            self.target_encoders = loaded_model_data['target_encoders']
+            self.category_mappings = loaded_model_data['category_mappings']
+            self.numeric_medians = loaded_model_data['numeric_medians']
+            self.feature_names = loaded_model_data['feature_names']
+            self.y_mean = loaded_model_data.get('y_mean', 0)
+            self.y_std = loaded_model_data.get('y_std', 1)
+            self.current_model_name = loaded_model_data['name']
+            self.model_version = loaded_model_data['version']
+            self.metadata = {
+                'model_name': loaded_model_data['name'],
+                'test_r2': loaded_model_data['r2_score'],
+                'test_mae': loaded_model_data['mae'],
+                'test_rmse': loaded_model_data['rmse'],
+                'feature_columns': self.feature_names
+            }
+            self.model_loaded = True
+            
+            logger.info(f"✅ Model ready: {self.current_model_name} ({self.model_version})")
                 
         except Exception as e:
             logger.error(f"Error loading model: {e}")
-            self.model_version = "v1.0.0-heuristic"
-            self.model_loaded = False
+            raise RuntimeError(f"Failed to load model: {e}")
+    
+    def _normalize_model_path(self, path):
+        """Convert database model path to container path."""
+        if path.startswith('/app'):
+            return path
+        elif path.startswith('/home/igor/BachelorApi/BPR-BackEnd-API'):
+            return path.replace('/home/igor/BachelorApi/BPR-BackEnd-API/app/models', '/app/app/models')
+        else:
+            # Assume relative path from models directory
+            return f'/app/app/models/{path}'
+    
+    def switch_model(self, model_name):
+        """
+        Switch to a different trained model.
+        Args:
+            model_name (str): Name of the model to switch to (e.g., 'XGBoost', 'GRU')
+        """
+        if model_name == self.current_model_name:
+            logger.info(f"Already using model: {model_name}")
+            return
+        
+        logger.info(f"Switching from {self.current_model_name} to {model_name}")
+        self._load_model(model_name)
+    
+    def get_available_models(self):
+        """Get list of all available models from database."""
+        try:
+            from app.models import MLModel
+            models = MLModel.query.filter_by(is_active=True).order_by(MLModel.r2_score.desc()).all()
+            
+            return [{
+                'name': m.name,
+                'r2_score': m.r2_score,
+                'mae': m.mae,
+                'rmse': m.rmse,
+                'training_date': m.training_date.isoformat() if m.training_date else None
+            } for m in models]
+        except Exception as e:
+            logger.error(f"Error getting available models: {e}")
+            return []
     
     def predict(self, car_features):
-        """Predict car price based on features."""
-        if self.model_loaded:
-            return self._predict_with_model(car_features)
-        return self._predict_heuristic(car_features)
+        """Predict car price based on features using the currently loaded model."""
+        if not self.model_loaded:
+            raise RuntimeError("No model loaded. Cannot make predictions.")
+        return self._predict_with_model(car_features)
     
     def _predict_with_model(self, car_features):
         """Make prediction using trained ML model."""
@@ -305,7 +350,19 @@ class CarPricePredictor:
             else:
                 feature_vector_scaled = feature_vector
             
-            predicted_price = float(self.model.predict(feature_vector_scaled)[0])
+            # Handle PyTorch vs sklearn models
+            if TORCH_AVAILABLE and hasattr(self.model, 'eval'):
+                # PyTorch model
+                with torch.no_grad():
+                    feature_tensor = torch.FloatTensor(feature_vector_scaled)
+                    prediction = self.model(feature_tensor)
+                    predicted_price_normalized = float(prediction.item() if prediction.dim() == 0 else prediction[0].item())
+                    # Denormalize: y = y_normalized * y_std + y_mean
+                    predicted_price = predicted_price_normalized * self.y_std + self.y_mean
+            else:
+                # sklearn model
+                predicted_price = float(self.model.predict(feature_vector_scaled)[0])
+            
             predicted_price = max(10000, min(predicted_price, 5000000))
             
             # Calculate dynamic confidence based on car characteristics
@@ -334,7 +391,7 @@ class CarPricePredictor:
                     confidence = max(70, confidence - 5)
                 warning = None
             
-            mae = self.metadata.get('test_mae', predicted_price * 0.1)
+            mae = float(self.metadata.get('test_mae', predicted_price * 0.1))
             price_range = {
                 'min': round(max(10000, predicted_price - mae), 2),
                 'max': round(predicted_price + mae, 2)
@@ -355,8 +412,8 @@ class CarPricePredictor:
             
             return result
         except Exception as e:
-            logger.error(f"Model prediction failed: {e}, falling back to heuristic")
-            return self._predict_heuristic(car_features)
+            logger.error(f"Model prediction failed: {e}")
+            raise RuntimeError(f"Prediction failed: {e}")
     
     def _prepare_features(self, car_features):
         """Prepare feature dictionary for model prediction."""
@@ -446,102 +503,16 @@ class CarPricePredictor:
             return np.random.randint(50, 150)
         return np.random.randint(15, 50)
     
-    def _predict_heuristic(self, car_features):
-        """Fallback heuristic-based prediction for Danish market."""
-        base_price = self._calculate_base_price(car_features)
-        
-        current_year = datetime.now().year
-        year = int(car_features.get('year', current_year - 3))
-        age = max(0, current_year - year)
-        
-        if age == 0:
-            depreciation_factor = 1.0
-        elif age == 1:
-            depreciation_factor = 0.85
-        else:
-            depreciation_factor = 0.85 * (0.90 ** (age - 1))
-        depreciation_factor = max(0.20, depreciation_factor)
-        
-        mileage = int(car_features.get('mileage', 50000))
-        expected_mileage = age * 15000
-        mileage_diff = mileage - expected_mileage
-        mileage_factor = 1.0 - (mileage_diff / 500000)
-        mileage_factor = max(0.7, min(1.1, mileage_factor))
-        
-        predicted_price = base_price * depreciation_factor * mileage_factor
-        predicted_price = max(15000, min(predicted_price, 4000000))
-        
-        confidence = 82.0
-        if car_features.get('horsepower'):
-            confidence += 3
-        if car_features.get('engine_size'):
-            confidence += 2
-        confidence = min(92, confidence)
-        
-        margin = predicted_price * 0.12
-        price_range = {
-            'min': round(predicted_price - margin, 2),
-            'max': round(predicted_price + margin, 2)
-        }
-        
-        return {
-            'predicted_price': round(predicted_price, 2),
-            'confidence': round(confidence, 2),
-            'price_range': price_range,
-            'model_version': self.model_version,
-            'similar_cars_count': self._estimate_similar_cars(car_features)
-        }
-    
-    def _calculate_base_price(self, features):
-        """Calculate base price using heuristics for Danish market."""
-        brand_factors = {
-            'toyota': 1.0, 'volkswagen': 1.1, 'bmw': 1.75, 'mercedes-benz': 1.9,
-            'audi': 1.65, 'tesla': 2.2, 'ford': 0.85, 'hyundai': 0.9, 'kia': 0.88,
-            'skoda': 0.92, 'peugeot': 0.82, 'renault': 0.78, 'nissan': 0.88,
-            'volvo': 1.35, 'mazda': 0.95, 'seat': 0.85, 'opel': 0.8,
-            'fiat': 0.75, 'citroën': 0.78, 'mini': 1.15, 'porsche': 3.0,
-            'land rover': 2.0, 'jaguar': 1.8, 'polestar': 1.7, 'cupra': 1.1,
-            'lexus': 1.6, 'honda': 0.95, 'suzuki': 0.75, 'dacia': 0.65
-        }
-        body_factors = {
-            'sedan': 1.0, 'hatchback': 0.9, 'suv': 1.25, 'wagon': 0.98,
-            'coupe': 1.15, 'van': 1.05, 'pickup': 1.1, 'convertible': 1.3
-        }
-        fuel_factors = {
-            'petrol': 1.0, 'diesel': 0.95, 'electric': 1.35,
-            'hybrid': 1.15, 'plugin-hybrid': 1.25
-        }
-        transmission_factors = {'automatic': 1.08, 'manual': 1.0, 'semi-automatic': 1.05}
-        
-        base_price = 180000
-        brand = (features.get('brand') or '').lower()
-        brand_factor = brand_factors.get(brand, 1.0)
-        body_type = (self._normalize_body_type(features.get('body_type')) or 'Sedan').lower()
-        body_factor = body_factors.get(body_type, 1.0)
-        fuel_type = (self._normalize_fuel_type(features.get('fuel_type')) or 'Petrol').lower()
-        fuel_factor = fuel_factors.get(fuel_type, 1.0)
-        transmission = (self._normalize_transmission(features.get('transmission')) or 'Automatic').lower()
-        transmission_factor = transmission_factors.get(transmission, 1.0)
-        
-        horsepower = features.get('horsepower', 120)
-        if horsepower:
-            hp_factor = 1.0 + (int(horsepower) - 120) / 400
-            hp_factor = max(0.7, min(hp_factor, 2.0))
-        else:
-            hp_factor = 1.0
-        
-        return base_price * brand_factor * body_factor * fuel_factor * transmission_factor * hp_factor
-    
     def get_model_info(self):
-        """Get information about the loaded model."""
+        """Get information about the currently loaded model."""
         return {
             'version': self.model_version,
             'loaded': self.model_loaded,
-            'type': 'trained' if self.model_loaded else 'heuristic',
-            'model_name': self.metadata.get('model_name', 'N/A'),
+            'model_name': self.current_model_name,
             'test_r2': self.metadata.get('test_r2', 'N/A'),
             'test_mae': self.metadata.get('test_mae', 'N/A'),
-            'features_count': len(self.metadata.get('feature_columns', []))
+            'test_rmse': self.metadata.get('test_rmse', 'N/A'),
+            'features_count': len(self.feature_names)
         }
 
 

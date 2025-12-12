@@ -299,24 +299,37 @@ def health_check():
     # Get ML model info from predictor
     ml_info = predictor.get_model_info() if predictor else {'error': 'Predictor not initialized'}
     
-    # Get all registered ML models status
-    ml_models_status = []
+    # Get all registered ML models status (best first)
+    best_ml_model = None
+    other_ml_models = []
     try:
-        all_models = MLModel.query.order_by(desc(MLModel.r2_score)).all()
-        for model in all_models:
-            ml_models_status.append({
+        # Get all active models ordered by R² score (best first)
+        all_models = MLModel.query.filter_by(is_active=True).order_by(desc(MLModel.r2_score)).all()
+        
+        for idx, model in enumerate(all_models):
+            model_data = {
                 'id': model.id,
                 'name': model.name,
                 'algorithm': model.algorithm,
                 'is_active': model.is_active,
                 'r2_score': float(model.r2_score) if model.r2_score else None,
                 'mae': float(model.mae) if model.mae else None,
+                'rmse': float(model.rmse) if model.rmse else None,
                 'version': model.version,
                 'created_at': model.created_at.isoformat() if model.created_at else None
-            })
+            }
+            
+            if idx == 0:
+                # First model is the best
+                best_ml_model = model_data
+            
+            # Include all models in the list (including the best one)
+            other_ml_models.append(model_data)
+                
     except Exception as e:
         logger.error(f"[{g.request_id}] Failed to fetch ML models: {str(e)}")
-        ml_models_status = {'error': str(e)}
+        best_ml_model = {'error': str(e)}
+        other_ml_models = []
     
     # Get latest scraping status
     scraping_status = None
@@ -481,8 +494,8 @@ def health_check():
             'status': db_status,
             'message': 'Database is connected' if db_status == 'connected' else db_status
         },
-        'ml_model': ml_info,
-        'ml_models': ml_models_status,
+        'ml_model': best_ml_model,  # Best model by R² score
+        'ml_models': other_ml_models,  # Other available models
         'scraping': scraping_status,
         'training': training_status,
         'processes': {
@@ -501,15 +514,15 @@ def debug_script_paths():
     logger.info(f"[{g.request_id}] Script paths debug requested")
     
     # Check training script
-    training_script_docker = '/app/ML_Model/train_models.py'
-    training_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
+    training_script_docker = '/app/app/ml/training/train_models.py'
+    training_script_local = os.path.join(os.path.dirname(__file__), 'ml/training/train_models.py')
     
     # Check scraper scripts (both old and new)
-    scraper_script_docker = '/app/ML_Model/auto_scraper.py'
-    scraper_script_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/auto_scraper.py')
+    scraper_script_docker = '/app/app/scraping/auto_scraper.py'
+    scraper_script_local = os.path.join(os.path.dirname(__file__), 'scraping/auto_scraper.py')
     
-    incremental_scraper_docker = '/app/ML_Model/bilbasen_incremental.py'
-    incremental_scraper_local = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
+    incremental_scraper_docker = '/app/app/scraping/bilbasen_incremental.py'
+    incremental_scraper_local = os.path.join(os.path.dirname(__file__), 'scraping/bilbasen_incremental.py')
     
     # Check Python availability
     python3_available = False
@@ -528,7 +541,7 @@ def debug_script_paths():
     
     # List ML_Model directory if it exists
     ml_model_dir_contents = []
-    ml_model_dir = '/app/ML_Model'
+    ml_model_dir = '/app/app'
     if os.path.exists(ml_model_dir) and os.path.isdir(ml_model_dir):
         try:
             ml_model_dir_contents = os.listdir(ml_model_dir)
@@ -779,14 +792,14 @@ def trigger_scraping():
             try:
                 logger.info(f"[{request_id}][{thread_id}] ===== BACKGROUND THREAD STARTED =====")
                 # Use the new incremental scraper that works with AWS WAF
-                script_path = '/app/ML_Model/bilbasen_incremental.py'
+                script_path = '/app/app/scraping/bilbasen_incremental.py'
                 logger.info(f"[{request_id}][{thread_id}] Step 3a: Checking Docker script path: {script_path}")
                 
                 # Check if script exists
                 if not os.path.exists(script_path):
                     logger.warning(f"[{request_id}][{thread_id}] Docker path not found, trying local development path...")
                     # Fallback to relative path for local development
-                    script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/bilbasen_incremental.py')
+                    script_path = os.path.join(os.path.dirname(__file__), 'scraping/bilbasen_incremental.py')
                     logger.info(f"[{request_id}][{thread_id}] Step 3b: Using fallback script path: {script_path}")
                 
                 script_exists = os.path.exists(script_path)
@@ -1210,12 +1223,12 @@ def trigger_training():
         """Background thread to run training"""
         try:
             # Use absolute path - ML_Model is mounted at /app/ML_Model in Docker
-            script_path = '/app/ML_Model/train_models.py'
+            script_path = '/app/app/ml/training/train_models.py'
             
             # Check if script exists
             if not os.path.exists(script_path):
                 # Fallback to relative path for local development
-                script_path = os.path.join(os.path.dirname(__file__), '../../ML_Model/train_models.py')
+                script_path = os.path.join(os.path.dirname(__file__), 'ml/training/train_models.py')
                 logger.warning(f"Using fallback script path: {script_path}")
             
             logger.info(f"Starting training with script: {script_path}")
@@ -1314,7 +1327,9 @@ def get_car_image(car_id):
     project_root = os.path.dirname(api_root)  # parent directory (contains both BPR-BackEnd-API and BPR-BackEnd-ML-Model)
     
     possible_paths = [
-        # Docker volume mount
+        # Docker data volume mount (new scraped images location)
+        f'/app/data/bilbasen_scrape/images/{filename}',
+        # Docker legacy volume mount
         f'/app/images/{filename}',
         # From project root to ML-Model images (non-Docker)
         os.path.join(project_root, 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
@@ -1361,7 +1376,9 @@ def get_image_by_external_id(external_id):
     project_root = os.path.dirname(api_root)
     
     possible_paths = [
-        # Docker volume mount
+        # Docker data volume mount (new scraped images location)
+        f'/app/data/bilbasen_scrape/images/{filename}',
+        # Docker legacy volume mount
         f'/app/images/{filename}',
         # From project root to ML-Model images (non-Docker)
         os.path.join(project_root, 'BPR-BackEnd-ML-Model', 'bilbasen_scrape', 'images', filename),
@@ -1529,263 +1546,60 @@ def predict_price():
     if not predictor:
         raise ValueError("ML predictor not available")
     
-    # Check if specific model requested
-    model_id = data.get('model_id')
-    if model_id and model_id != 'default':
+    # Check if specific model requested (by name, not ID)
+    model_name = data.get('model_name') or request.args.get('model')
+    if model_name:
         try:
-            logger.info(f"[{g.request_id}] Using specific model: {model_id}")
-            # Load the specific model for prediction
+            logger.info(f"[{g.request_id}] Switching to model: {model_name}")
+            predictor.switch_model(model_name)
+        except Exception as e:
+            logger.error(f"[{g.request_id}] Failed to switch model: {e}")
+            raise ValueError(f"Failed to switch to model '{model_name}': {str(e)}")
+    
+    # Legacy support for model_id parameter - convert to model name
+    model_id = data.get('model_id')
+    if model_id and model_id != 'default' and not model_name:
+        try:
+            logger.info(f"[{g.request_id}] Using specific model ID (legacy): {model_id}")
             from app.models import MLModel
             ml_model = MLModel.query.filter_by(id=model_id, is_active=True).first()
             if not ml_model:
                 raise ValueError(f"Model {model_id} not found or inactive")
             
-            # Convert model path to container path if needed
-            import os
-            model_path = ml_model.model_file_path  # FIXED: Use model_file_path instead of model_path
-            
-            # If path contains /home/igor/BachelorApi/BPR-BackEnd-ML-Model, convert to /app/ML_Model
-            if '/home/igor/BachelorApi/BPR-BackEnd-ML-Model' in model_path:
-                model_path = model_path.replace('/home/igor/BachelorApi/BPR-BackEnd-ML-Model', '/app/ML_Model')
-            # If path is just the filename, look in /app/ML_Model
-            elif not model_path.startswith('/'):
-                model_path = f'/app/ML_Model/{model_path}'
-            
-            logger.info(f"[{g.request_id}] Looking for model at: {model_path}")
-            
-            if not os.path.exists(model_path):
-                raise ValueError(f"Model file not found: {model_path} (original: {ml_model.model_file_path})")
-            
-            # Load the model file and predict
-            import joblib
-            
-            # Check if it's a PyTorch model (.pt file)
-            if model_path.endswith('.pt'):
-                if not TORCH_AVAILABLE or not load_pytorch_model:
-                    raise ValueError("PyTorch is not available - cannot load LSTM/GRU models")
-                
-                logger.info(f"[{g.request_id}] Loading PyTorch model ({ml_model.algorithm})")
-                
-                # Load PyTorch model
-                model_obj, model_info = load_pytorch_model(model_path, ml_model.algorithm)
-                
-                # Load preprocessing objects
-                from app.ml.ml_utils import load_preprocessing_for_pytorch
-                preprocessing = load_preprocessing_for_pytorch(model_path)
-                
-                if not preprocessing:
-                    raise ValueError(f"Preprocessing file not found for {model_path}. Model needs to be retrained with preprocessing objects.")
-                
-                logger.info(f"[{g.request_id}] Loaded preprocessing with {len(preprocessing['feature_names'])} features")
-                
-                # Now we need to prepare features using the SAME pipeline as training
-                # Import the feature engineering from training script
-                from datetime import datetime as dt
-                import pandas as pd
-                
-                # Create a DataFrame row for feature engineering
-                input_df = pd.DataFrame([data])
-                
-                # Apply the same feature engineering as training
-                current_year = dt.now().year
-                
-                # AGE FEATURES
-                input_df['age'] = current_year - input_df['year']
-                input_df['age'] = input_df['age'].clip(0, 50)
-                input_df['age_squared'] = input_df['age'] ** 2
-                input_df['age_cubed'] = input_df['age'] ** 3
-                
-                # MILEAGE FEATURES
-                input_df['mileage'] = input_df['mileage'].clip(0, 800000)
-                input_df['mileage_log'] = np.log1p(input_df['mileage'])
-                input_df['mileage_per_year'] = input_df['mileage'] / (input_df['age'] + 1)
-                input_df['mileage_per_year'] = input_df['mileage_per_year'].clip(0, 100000)
-                input_df['high_mileage'] = (input_df['mileage'] > 150000).astype(int)
-                input_df['low_mileage'] = (input_df['mileage'] < 50000).astype(int)
-                
-                # BRAND FEATURES
-                premium_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Porsche', 'Volvo', 'Polestar', 'Lexus', 'Land Rover', 'Jaguar']
-                economy_brands = ['Dacia', 'Suzuki', 'Fiat', 'Seat', 'Skoda', 'Kia', 'Hyundai', 'Toyota', 'Honda', 'Mazda', 'Nissan']
-                input_df['is_premium'] = input_df['brand'].isin(premium_brands).astype(int)
-                input_df['is_economy'] = input_df['brand'].isin(economy_brands).astype(int)
-                
-                # FUEL TYPE FEATURES
-                input_df['fuel_type'] = input_df['fuel_type'].fillna('Petrol')
-                input_df['is_electric'] = (input_df['fuel_type'] == 'Electricity').astype(int)
-                input_df['is_diesel'] = (input_df['fuel_type'] == 'Diesel').astype(int)
-                input_df['is_hybrid'] = input_df['fuel_type'].str.contains('Hybrid', na=False).astype(int)
-                input_df['is_plugin'] = input_df['fuel_type'].str.contains('Plug-in', na=False).astype(int)
-                
-                # TRANSMISSION
-                input_df['transmission'] = input_df['transmission'].fillna('Manual')
-                input_df['is_automatic'] = (input_df['transmission'] == 'Automatic').astype(int)
-                
-                # BODY TYPE
-                input_df['body_type'] = input_df['body_type'].fillna('Sedan')
-                input_df['is_suv'] = (input_df['body_type'] == 'SUV').astype(int)
-                input_df['is_wagon'] = input_df['body_type'].isin(['Station Wagon', 'Van']).astype(int)
-                input_df['is_hatchback'] = (input_df['body_type'] == 'Hatchback').astype(int)
-                
-                # POWER FEATURES
-                input_df['horsepower'] = input_df.get('horsepower', [130])[0] if 'horsepower' in data else 130
-                input_df['horsepower'] = np.clip(input_df['horsepower'], 30, 1500)
-                input_df['horsepower_log'] = np.log1p(input_df['horsepower'])
-                input_df['horsepower_per_year'] = input_df['horsepower'] / (input_df['age'] + 1)
-                input_df['low_power'] = (input_df['horsepower'] < 100).astype(int)
-                input_df['high_power'] = (input_df['horsepower'] > 200).astype(int)
-                input_df['very_high_power'] = (input_df['horsepower'] > 300).astype(int)
-                
-                # INTERACTION FEATURES
-                input_df['age_mileage_interaction'] = input_df['age'] * input_df['mileage_log']
-                input_df['premium_age'] = input_df['is_premium'] * input_df['age']
-                input_df['premium_mileage'] = input_df['is_premium'] * input_df['mileage_log']
-                input_df['hp_age_ratio'] = input_df['horsepower'] / (input_df['age'] + 1)
-                
-                # Fill missing numeric features with 0
-                for feature in preprocessing['feature_names']:
-                    if feature not in input_df.columns:
-                        input_df[feature] = 0
-                
-                # Extract features in the correct order
-                feature_vector = input_df[preprocessing['feature_names']].values
-                
-                # Scale using saved scaler
-                feature_vector = preprocessing['scaler'].transform(feature_vector)
-                
-                # Convert to tensor and predict
-                import torch
-                with torch.no_grad():
-                    X_tensor = torch.FloatTensor(feature_vector)
-                    y_pred_norm = model_obj(X_tensor).cpu().numpy()
-                    
-                    # Denormalize
-                    predicted_price = float(y_pred_norm * model_info['y_std'] + model_info['y_mean'])
-                
-                logger.info(f"[{g.request_id}] PyTorch model prediction successful: {predicted_price:,.0f} DKK")
-                
-                # Get confidence
-                confidence = 85.0
-                price_range = {
-                    'min': predicted_price * 0.88,
-                    'max': predicted_price * 1.12
-                }
-                
-                prediction_result = {
-                    'predicted_price': round(predicted_price, 2),
-                    'confidence': confidence,
-                    'price_range': price_range,
-                    'model_version': f"{ml_model.name} v{ml_model.version}",
-                    'model_id': model_id,
-                    'similar_cars_count': 0
-                }
-                logger.info(
-                    f"[{g.request_id}] ✅ PyTorch prediction with {ml_model.name} v{ml_model.version}: "
-                    f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
-                )
-            else:
-                # Load joblib model (sklearn models)
-                loaded_obj = joblib.load(model_path)
-                
-                # Check if it's a package (v3.0 format) or standalone model
-                if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
-                    logger.info(f"[{g.request_id}] Loaded v3.0 model package")
-                    model_obj = loaded_obj['model']
-                    package_scaler = loaded_obj.get('scaler')
-                    feature_names = loaded_obj.get('feature_names', [])
-                    target_encoders = loaded_obj.get('target_encoders', {})
-                    category_mappings = loaded_obj.get('category_mappings', {})
-                    
-                    logger.info(f"[{g.request_id}] Package contains: scaler={package_scaler is not None}, "
-                               f"features={len(feature_names)}, encoders={len(target_encoders)}")
-                    
-                    # Prepare features using predictor's feature preparation
-                    # (All v3.0 models use same preprocessing pipeline)
-                    features_dict = predictor._prepare_features(data)
-                    logger.info(f"[{g.request_id}] Prepared features dict with {len(features_dict)} features")
-                    
-                    # Convert feature dict to ordered array based on package's feature_names
-                    if len(feature_names) > 0:
-                        feature_vector = np.array([[features_dict.get(col, 0) for col in feature_names]])
-                        logger.info(f"[{g.request_id}] Created feature vector: shape {feature_vector.shape}")
-                    else:
-                        # Fall back to predictor's metadata if package doesn't have feature_names
-                        feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
-                        feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
-                        logger.info(f"[{g.request_id}] Created feature vector from predictor metadata: shape {feature_vector.shape}")
-                    
-                    # Scale features using package's scaler
-                    if package_scaler:
-                        feature_vector = package_scaler.transform(feature_vector)
-                        logger.info(f"[{g.request_id}] Applied package scaler")
-                    
-                    # Now predict with the specific model
-                    predicted_price = float(model_obj.predict(feature_vector)[0])
-                    logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
-                else:
-                    logger.info(f"[{g.request_id}] Loaded standalone model (old format)")
-                    model_obj = loaded_obj
-                    
-                    # For old format, use predictor's full prediction flow
-                    features_dict = predictor._prepare_features(data)
-                    feature_columns = predictor.metadata.get('feature_columns', list(features_dict.keys()))
-                    feature_vector = np.array([[features_dict.get(col, 0) for col in feature_columns]])
-                    
-                    if predictor.scaler:
-                        feature_vector = predictor.scaler.transform(feature_vector)
-                    
-                    predicted_price = float(model_obj.predict(feature_vector)[0])
-                    logger.info(f"[{g.request_id}] Model prediction successful: {predicted_price:,.0f} DKK")
-                
-                # Get confidence (simplified for specific model)
-                confidence = 75.0  # Default confidence for specific model predictions
-                price_range = {
-                    'min': predicted_price * 0.85,
-                    'max': predicted_price * 1.15
-                }
-                
-                prediction_result = {
-                    'predicted_price': round(predicted_price, 2),
-                    'confidence': confidence,
-                    'price_range': price_range,
-                    'model_version': f"{ml_model.name} v{ml_model.version}",
-                    'model_id': model_id,
-                    'similar_cars_count': 0
-                }
-                logger.info(
-                    f"[{g.request_id}] ✅ Prediction with {ml_model.name} v{ml_model.version}: "
-                    f"{prediction_result['predicted_price']:,.0f} DKK (R²={ml_model.r2_score:.4f})"
-                )
+            # Switch to this model by name
+            model_name = ml_model.name
+            logger.info(f"[{g.request_id}] Converted model ID {model_id} to name: {model_name}")
+            predictor.switch_model(model_name)
         except Exception as e:
-            logger.error(f"[{g.request_id}] Error using specific model {model_id}: {e}")
-            # Fall back to default model
-            logger.info(f"[{g.request_id}] Falling back to default model")
-            model_id = None
+            logger.error(f"[{g.request_id}] Error using specific model ID {model_id}: {e}")
+            # Continue with current model
     
-    if not model_id or model_id == 'default':
-        # Get prediction using default model
-        logger.debug(f"[{g.request_id}] Running ML prediction with default model...")
-        start_time = time.time()
+    # Get prediction using the currently loaded model (either switched or default)
+    logger.debug(f"[{g.request_id}] Running ML prediction with model: {predictor.current_model_name}...")
+    start_time = time.time()
+    
+    try:
         prediction_result = predictor.predict(data)
         prediction_time = time.time() - start_time
         
         logger.info(
-            f"[{g.request_id}] 🔵 Default model prediction completed in {prediction_time:.3f}s: "
+            f"[{g.request_id}] ✅ Prediction completed in {prediction_time:.3f}s: "
             f"{prediction_result['predicted_price']:,.0f} DKK "
-            f"(confidence: {prediction_result['confidence']}%, version: {prediction_result['model_version']})"
+            f"(model: {predictor.current_model_name}, confidence: {prediction_result['confidence']}%)"
         )
-    
-    # Log final result to confirm which model was used
-    logger.info(f"[{g.request_id}] 📊 FINAL RESULT - Model: {prediction_result.get('model_version', 'unknown')}, "
-               f"Price: {prediction_result['predicted_price']:,.0f} DKK")
+    except Exception as e:
+        logger.error(f"[{g.request_id}] Prediction failed: {e}")
+        raise ValueError(f"Prediction failed: {str(e)}")
     
     return jsonify({
         'success': True,
         'predicted_price': prediction_result['predicted_price'],
         'currency': 'DKK',
-        'confidence': prediction_result['confidence'],
+        'confidence': float(prediction_result['confidence']),  # Ensure it's a number, not string
         'price_range': prediction_result['price_range'],
         'model_version': prediction_result['model_version'],
-        'similar_cars_count': prediction_result['similar_cars_count'],
+        'model_name': predictor.current_model_name,
+        'similar_cars_count': prediction_result.get('similar_cars_count', 0),
         'input_features': data
     }), 200
 
