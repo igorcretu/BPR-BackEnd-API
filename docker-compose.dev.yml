@@ -63,20 +63,6 @@ services:
 
   # Cloudflare Tunnel (optional - for testing tunnel locally)
   # Start with: docker compose -f docker-compose.dev.yml --profile cloudflare up -d
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: bpr-cloudflared-dev
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      backend:
-        condition: service_healthy
-    networks:
-      - bpr-network
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    profiles:
-      - cloudflare
 
   prediction-worker:
     build:

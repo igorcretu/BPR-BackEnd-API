@@ -151,27 +151,15 @@ except ImportError:
 
 
 def load_pytorch_model(model_path, model_type='GRU'):
-    """
-    Load a PyTorch model from file
-    
-    Args:
-        model_path: Path to the .pt file
-        model_type: 'LSTM' or 'GRU'
-    
-    Returns:
-        Tuple of (model, model_info_dict)
-    """
+ 
     if not TORCH_AVAILABLE:
         raise ImportError("PyTorch is not available")
     
-    # Load checkpoint (weights_only=False for backward compatibility with numpy)
     checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
     
-    # Extract model parameters
     input_dim = checkpoint['input_dim']
     params = checkpoint['params']
     
-    # Create model
     if model_type.upper() == 'LSTM':
         model = ImprovedLSTMNetwork(
             input_dim=input_dim,

@@ -36,7 +36,3 @@ python-dotenv==1.0.0
 
 # Deep Learning (for LSTM/GRU models)
 torch>=2.0.0
-
-# Development/Testing (optional)
-pytest==7.4.3
-pytest-cov==4.1.0

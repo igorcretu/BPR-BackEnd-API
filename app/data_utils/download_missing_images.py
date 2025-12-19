@@ -13,8 +13,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
 
 # Configuration
-CSV_FILE = os.path.join(os.path.dirname(__file__), 'bilbasen_scrape', 'car_details.csv')
-IMAGES_DIR = os.path.join(os.path.dirname(__file__), 'bilbasen_scrape', 'images')
+# Navigate from app/data_utils/ to data/bilbasen_scrape/
+BASE_DIR = os.path.join(os.path.dirname(__file__), '../../data/bilbasen_scrape')
+CSV_FILE = os.path.join(BASE_DIR, 'car_details.csv')
+IMAGES_DIR = os.path.join(BASE_DIR, 'images')
+
+# If running in Docker container, use absolute path
+if os.path.exists('/app/data/bilbasen_scrape'):
+    BASE_DIR = '/app/data/bilbasen_scrape'
+    CSV_FILE = os.path.join(BASE_DIR, 'car_details.csv')
+    IMAGES_DIR = os.path.join(BASE_DIR, 'images')
+
 MAX_WORKERS = 16  # Number of parallel download threads
 DELAY_BETWEEN_DOWNLOADS = (0.1, 0.3)  # Random delay in seconds
 

@@ -100,8 +100,26 @@ class CarPricePredictor:
             # Fallback abbreviations
             '4WD': 'AWD', 'FWD': 'FWD', 'RWD': 'RWD', 'AWD': 'AWD'
         }
-        self.premium_brands = ['BMW', 'Mercedes-Benz', 'Audi', 'Tesla', 'Porsche', 
-                               'Volvo', 'Polestar', 'Lexus', 'Land Rover', 'Jaguar']
+        
+        # Professional dealer brand classification
+        self.luxury_brands = [
+            'Porsche', 'Tesla', 'Maserati', 'Bentley', 'Rolls-Royce', 'Ferrari',
+            'Lamborghini', 'Aston Martin', 'McLaren', 'Lotus', 'Bugatti'
+        ]
+        self.premium_brands = [
+            'BMW', 'Mercedes-Benz', 'Audi', 'Jaguar', 'Land Rover',
+            'Lexus', 'Volvo', 'Alfa Romeo', 'Genesis', 'Polestar',
+            'Range Rover', 'Cadillac', 'Lincoln', 'Infiniti', 'Acura', 'MINI', 'DS'
+        ]
+        self.mainstream_brands = [
+            'Volkswagen', 'Toyota', 'Honda', 'Mazda', 'Nissan', 'Ford',
+            'Hyundai', 'Kia', 'Renault', 'Peugeot', 'Citroën', 'Opel',
+            'Seat', 'Skoda', 'Subaru', 'Chrysler'
+        ]
+        self.economy_brands = [
+            'Dacia', 'Suzuki', 'Mitsubishi', 'Chevrolet', 'Lada', 'Tata',
+            'Mahindra', 'Proton', 'Geely', 'MG', 'Fiat'
+        ]
         
         # Load the specified model or best available model
         self._load_model(self.current_model_name)
@@ -215,9 +233,9 @@ class CarPricePredictor:
                         # Joblib model (.pkl)
                         loaded_obj = joblib.load(model_path)
                     
-                    # Check if it's a package (v3 format) or standalone model
+                    # Check if it's a package (v3+ format) or standalone model
                     if isinstance(loaded_obj, dict) and 'model' in loaded_obj:
-                        # v3 package format
+                        # v3+ package format (with preprocessing artifacts)
                         loaded_model_data = {
                             'model': loaded_obj['model'],
                             'scaler': loaded_obj.get('scaler'),
@@ -228,7 +246,7 @@ class CarPricePredictor:
                             'y_mean': loaded_obj.get('y_mean', 0),
                             'y_std': loaded_obj.get('y_std', 1),
                             'name': db_model.name,
-                            'version': f"v3.0.0-{db_model.name.lower().replace(' ', '-')}",
+                            'version': f"v{db_model.version}-{db_model.name.lower().replace(' ', '-')}",
                             'r2_score': db_model.r2_score,
                             'mae': db_model.mae,
                             'rmse': db_model.rmse
@@ -244,7 +262,7 @@ class CarPricePredictor:
                             'numeric_medians': {},
                             'feature_names': [],
                             'name': db_model.name,
-                            'version': f"v2.0.0-{db_model.name.lower().replace(' ', '-')}",
+                            'version': f"v{db_model.version}-{db_model.name.lower().replace(' ', '-')}-legacy",
                             'r2_score': db_model.r2_score,
                             'mae': db_model.mae,
                             'rmse': db_model.rmse
@@ -360,8 +378,9 @@ class CarPricePredictor:
                     # Denormalize: y = y_normalized * y_std + y_mean
                     predicted_price = predicted_price_normalized * self.y_std + self.y_mean
             else:
-                # sklearn model
-                predicted_price = float(self.model.predict(feature_vector_scaled)[0])
+                # sklearn model - predictions are in log space, need to inverse transform
+                predicted_log_price = float(self.model.predict(feature_vector_scaled)[0])
+                predicted_price = np.exp(predicted_log_price)  # Convert from log space to actual price
             
             predicted_price = max(10000, min(predicted_price, 5000000))
             
@@ -416,64 +435,137 @@ class CarPricePredictor:
             raise RuntimeError(f"Prediction failed: {e}")
     
     def _prepare_features(self, car_features):
-        """Prepare feature dictionary for model prediction."""
+        """Prepare feature dictionary matching EXACTLY the training feature engineering."""
         features = {}
         current_year = datetime.now().year
         
-        year = int(car_features.get('year', current_year - 3))
-        age = current_year - year
-        features['age'] = max(0, age)
-        
-        # Use 0 for new cars or null mileage
-        mileage = int(car_features.get('mileage', 0))
-        features['mileage_numeric'] = mileage
-        features['horsepower'] = car_features.get('horsepower') or 150
-        features['torque_nm'] = car_features.get('torque_nm') or 200
-        features['doors_numeric'] = car_features.get('doors') or 5
-        features['weight_numeric'] = car_features.get('weight') or 1500
-        features['trunk_size_numeric'] = car_features.get('trunk_size') or 400
-        features['top_speed_numeric'] = car_features.get('top_speed') or 180
-        features['range_numeric'] = car_features.get('range') or 0
-        features['battery_capacity_numeric'] = car_features.get('battery_capacity') or 0
-        features['mileage_per_year'] = mileage / max(age, 1)
-        weight_kg = features['weight_numeric']
-        features['power_to_weight'] = features['horsepower'] / (weight_kg / 1000) if weight_kg > 0 else 100
-        features['equipment_count'] = car_features.get('equipment_count') or 10
-        features['acceleration_0_100'] = car_features.get('acceleration') or 10
-        features['brand_popularity'] = 100
-        
+        # ===== BASIC FEATURES =====
+        year = int(car_features.get('year', current_year - 3) or (current_year - 3))
+        mileage_val = car_features.get('mileage', 0)
+        mileage = int(mileage_val) if mileage_val is not None else 0
+        horsepower_val = car_features.get('horsepower', 150)
+        horsepower = float(horsepower_val) if horsepower_val is not None else 150.0
+        doors_val = car_features.get('doors', 5)
+        doors = int(doors_val) if doors_val is not None else 5
+        seats_val = car_features.get('seats', 5)
+        seats = int(seats_val) if seats_val is not None else 5
+        brand = car_features.get('brand', '')
         fuel_type = self._normalize_fuel_type(car_features.get('fuel_type', 'Petrol'))
-        features['is_electric'] = 1 if fuel_type == 'Electric' else 0
-        features['is_hybrid'] = 1 if fuel_type in ['Hybrid', 'Plugin-Hybrid'] else 0
-        features['is_automatic'] = 1 if self._normalize_transmission(
-            car_features.get('transmission', 'Automatic')) == 'Automatic' else 0
-        features['is_premium'] = 1 if car_features.get('brand', '') in self.premium_brands else 0
+        transmission = self._normalize_transmission(car_features.get('transmission', 'Manual'))
+        body_type = self._normalize_body_type(car_features.get('body_type', 'Sedan'))
         
-        for cat_col in self.label_encoders:
-            col_name = cat_col + '_encoded'
-            raw_value = car_features.get(cat_col, 'Unknown')
-            
-            if cat_col == 'fuel_type_en':
-                raw_value = self._normalize_fuel_type(car_features.get('fuel_type', 'Petrol'))
-            elif cat_col == 'transmission_en':
-                raw_value = self._normalize_transmission(car_features.get('transmission', 'Automatic'))
-            elif cat_col == 'body_type_en':
-                raw_value = self._normalize_body_type(car_features.get('body_type', 'Sedan'))
-            elif cat_col == 'drive_type_en':
-                raw_value = self._normalize_drive_type(car_features.get('drive_type', 'FWD'))
-            elif cat_col == 'brand':
-                raw_value = car_features.get('brand', 'Unknown')
-            elif cat_col == 'color':
-                raw_value = car_features.get('color', 'Unknown')
-            
-            try:
-                encoder = self.label_encoders[cat_col]
-                if str(raw_value) in encoder.classes_:
-                    features[col_name] = encoder.transform([str(raw_value)])[0]
-                else:
-                    features[col_name] = 0
-            except:
-                features[col_name] = 0
+        # Store basic features
+        features['year'] = year
+        features['mileage'] = max(0, min(mileage, 800000))  # Clip to reasonable bounds
+        features['horsepower'] = max(30, min(horsepower, 1500))
+        features['doors'] = doors
+        features['seats'] = seats
+        
+        # ===== AGE FEATURES =====
+        age = current_year - year
+        features['age'] = max(0, min(age, 50))  # Clip to reasonable bounds
+        features['age_squared'] = features['age'] ** 2
+        features['age_cubed'] = features['age'] ** 3
+        
+        # ===== MILEAGE FEATURES =====
+        features['mileage_log'] = np.log1p(features['mileage'])
+        features['mileage_per_year'] = min(features['mileage'] / (features['age'] + 1), 100000)
+        features['high_mileage'] = 1 if features['mileage'] > 150000 else 0
+        features['low_mileage'] = 1 if features['mileage'] < 50000 else 0
+        
+        # ===== BRAND TIER FEATURES =====
+        features['is_luxury'] = 1 if brand in self.luxury_brands else 0
+        features['is_premium'] = 1 if brand in self.premium_brands else 0
+        features['is_mainstream'] = 1 if brand in self.mainstream_brands else 0
+        features['is_economy'] = 1 if brand in self.economy_brands else 0
+        
+        # Brand tier encoding (3=luxury, 2=premium, 1=mainstream, 0=economy/unknown)
+        if features['is_luxury'] == 1:
+            features['brand_tier'] = 3
+        elif features['is_premium'] == 1:
+            features['brand_tier'] = 2
+        elif features['is_mainstream'] == 1:
+            features['brand_tier'] = 1
+        else:
+            features['brand_tier'] = 0
+        
+        # ===== FUEL TYPE FEATURES =====
+        features['is_electric'] = 1 if fuel_type == 'Electricity' else 0
+        features['is_diesel'] = 1 if fuel_type == 'Diesel' else 0
+        features['is_hybrid'] = 1 if 'Hybrid' in fuel_type else 0
+        features['is_plugin'] = 1 if 'Plug-in' in fuel_type else 0
+        
+        # ===== TRANSMISSION FEATURES =====
+        features['is_automatic'] = 1 if transmission == 'Automatic' else 0
+        
+        # ===== BODY TYPE FEATURES =====
+        features['is_suv'] = 1 if body_type == 'SUV' else 0
+        features['is_wagon'] = 1 if body_type in ['Station Wagon', 'Van'] else 0
+        features['is_hatchback'] = 1 if body_type == 'Hatchback' else 0
+        
+        # ===== POWER FEATURES =====
+        features['horsepower_log'] = np.log1p(features['horsepower'])
+        features['horsepower_per_year'] = features['horsepower'] / (features['age'] + 1)
+        features['low_power'] = 1 if features['horsepower'] < 100 else 0
+        features['high_power'] = 1 if features['horsepower'] > 200 else 0
+        features['very_high_power'] = 1 if features['horsepower'] > 300 else 0
+        
+        # ===== INTERACTION FEATURES =====
+        features['age_mileage_interaction'] = features['age'] * features['mileage_log']
+        features['brand_tier_age'] = features['brand_tier'] * features['age']
+        features['brand_tier_mileage'] = features['brand_tier'] * features['mileage_log']
+        features['hp_age_ratio'] = features['horsepower'] / (features['age'] + 1)
+        
+        # Professional dealer mileage expectations
+        features['expected_mileage'] = features['age'] * 12000
+        mileage_vs_expected = (features['mileage'] - features['expected_mileage']) / (features['expected_mileage'] + 1)
+        features['mileage_vs_expected'] = max(-2, min(mileage_vs_expected, 3))  # Clip
+        
+        # Market demand indicators
+        features['is_suv_or_crossover'] = 1 if body_type in ['SUV', 'Crossover'] else 0
+        features['is_electric_or_hybrid'] = 1 if (features['is_electric'] == 1 or features['is_hybrid'] == 1) else 0
+        
+        # ===== EV FEATURES =====
+        battery_capacity_val = car_features.get('battery_capacity', 0)
+        battery_capacity = float(battery_capacity_val) if battery_capacity_val is not None else 0.0
+        range_val = car_features.get('range', 0)
+        range_km = float(range_val) if range_val is not None else 0.0
+        features['battery_capacity'] = battery_capacity
+        features['range_km'] = range_km
+        features['has_ev_data'] = 1 if (battery_capacity > 0 or range_km > 0) else 0
+        
+        # ===== DRIVE TYPE FEATURES =====
+        drive_type = self._normalize_drive_type(car_features.get('drive_type', 'FWD'))
+        features['is_awd'] = 1 if drive_type in ['AWD', '4WD'] else 0
+        
+        # ===== OTHER NUMERIC FEATURES =====
+        torque_val = car_features.get('torque_nm', 0)
+        features['torque_nm'] = float(torque_val) if torque_val is not None else 0.0
+        engine_val = car_features.get('engine_size', 0)
+        features['engine_size'] = float(engine_val) if engine_val is not None else 0.0
+        accel_val = car_features.get('acceleration', 0)
+        features['acceleration'] = float(accel_val) if accel_val is not None else 0.0
+        speed_val = car_features.get('top_speed', 0)
+        features['top_speed'] = float(speed_val) if speed_val is not None else 0.0
+        weight_val = car_features.get('weight', 0)
+        features['weight'] = float(weight_val) if weight_val is not None else 0.0
+        fuel_cons_val = car_features.get('fuel_consumption', 0)
+        features['fuel_consumption'] = float(fuel_cons_val) if fuel_cons_val is not None else 0.0
+        co2_val = car_features.get('co2_emission', 0)
+        features['co2_emission'] = float(co2_val) if co2_val is not None else 0.0
+        tax_val = car_features.get('periodic_tax', 0)
+        features['periodic_tax'] = float(tax_val) if tax_val is not None else 0.0
+        
+        # ===== TARGET ENCODED FEATURES =====
+        # These will be filled in by the model's preprocessing
+        for encoder_key in self.target_encoders:
+            features[f'{encoder_key}_encoded'] = 0  # Default value
+        
+        # Add category mappings for one-hot encoded features (if they exist in the model)
+        if hasattr(self, 'category_mappings'):
+            for cat_col, cat_values in self.category_mappings.items():
+                for cat_val in cat_values:
+                    features[cat_val] = 0  # Default value, will be set based on input
         
         return features
     

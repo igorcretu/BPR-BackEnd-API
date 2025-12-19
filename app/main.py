@@ -336,15 +336,21 @@ def health_check():
     try:
         latest_scrape = ScrapingLog.query.order_by(desc(ScrapingLog.created_at)).first()
         if latest_scrape:
+            # Determine if scraper is currently running
+            is_running = (latest_scrape.completed_at is None and latest_scrape.success is True)
+            status_message = latest_scrape.error_message if is_running else None
+            
             scraping_status = {
                 'last_run': latest_scrape.started_at.isoformat() if latest_scrape.started_at else None,
                 'completed_at': latest_scrape.completed_at.isoformat() if latest_scrape.completed_at else None,
+                'is_running': is_running,
+                'status': status_message,
                 'success': latest_scrape.success,
                 'cars_scraped': latest_scrape.cars_scraped,
                 'cars_new': latest_scrape.cars_new,
                 'cars_updated': latest_scrape.cars_updated,
                 'images_downloaded': latest_scrape.images_downloaded,
-                'error_message': latest_scrape.error_message,
+                'error_message': latest_scrape.error_message if not is_running else None,
                 'source': latest_scrape.source_name
             }
     except Exception as e:

@@ -34,7 +34,7 @@ CONFIG = {
     'BASE_URL': 'https://www.bilbasen.dk/brugt/bil',
     
     'ITEMS_PER_PAGE': 30,
-    'MAX_PAGES': 200,
+    'MAX_PAGES': 100,
     
     'DELAY_BETWEEN_PAGES': (0.5, 1.0),
     'DELAY_BETWEEN_CARS': (0.2, 0.5),
@@ -418,6 +418,44 @@ class IncrementalScraper:
             self.logger.error(f"Database error: {e}")
             return set()
     
+    def update_scraping_status(self, phase: str, page: int = None, total_pages: int = None, cars_processed: int = None, total_cars: int = None):
+        """Update scraping status in real-time for health endpoint visibility"""
+        try:
+            conn = self.get_db_connection()
+            cur = conn.cursor()
+            
+            # Build status message
+            if phase == "phase1":
+                status_msg = f"Phase 1: Collecting listings (page {page}/{total_pages})"
+            elif phase == "phase2":
+                progress_pct = int((cars_processed / total_cars * 100)) if total_cars else 0
+                status_msg = f"Phase 2: Processing details ({cars_processed}/{total_cars} - {progress_pct}%)"
+            elif phase == "phase3":
+                status_msg = f"Phase 3: Inserting to database ({cars_processed}/{total_cars})"
+            else:
+                status_msg = phase
+            
+            # Update the most recent incomplete log using a subquery
+            cur.execute("""
+                UPDATE scraping_logs 
+                SET error_message = %s
+                WHERE id = (
+                    SELECT id FROM scraping_logs
+                    WHERE source_name = 'bilbasen' 
+                      AND success = TRUE 
+                      AND completed_at IS NULL
+                    ORDER BY started_at DESC
+                    LIMIT 1
+                )
+            """, (status_msg,))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+        except Exception as e:
+            # Don't fail the scraper if status update fails
+            self.logger.debug(f"Status update failed: {e}")
+    
     def update_scraping_log(self, cars_scraped: int, cars_new: int, cars_updated: int, images_downloaded: int):
         """Update the most recent ScrapingLog entry with final statistics"""
         self.logger.info("=" * 60)
@@ -474,7 +512,8 @@ class IncrementalScraper:
                     cars_new = %s,
                     cars_updated = %s,
                     images_downloaded = %s,
-                    completed_at = NOW()
+                    completed_at = NOW(),
+                    error_message = NULL
                 WHERE id = %s
                 RETURNING id, cars_scraped, cars_new, images_downloaded
             """, (cars_scraped, cars_new, cars_updated, images_downloaded, log_id))
@@ -587,6 +626,10 @@ class IncrementalScraper:
                     consecutive_known += 1
             
             self.logger.info(f"  Page {page}: {page_new} new, {page_known} known (consecutive: {consecutive_known})")
+            
+            # Update status every 10 pages
+            if page % 10 == 0:
+                self.update_scraping_status("phase1", page=page, total_pages=100)
             
             if consecutive_known >= CONFIG['KNOWN_ID_STOP_THRESHOLD']:
                 self.logger.info(f"Hit {consecutive_known} consecutive known IDs - caught up!")
@@ -1066,9 +1109,13 @@ class IncrementalScraper:
         
         try:
             images_dir = CONFIG['IMAGES_DIR']
-            self.logger.info(f"Creating images directory: {images_dir}")
-            os.makedirs(images_dir, exist_ok=True)
-            self.logger.info("Images directory created successfully")
+            # Check if path is symlink or directory (avoid makedirs on symlinks)
+            if not (os.path.islink(images_dir) or os.path.isdir(images_dir)):
+                self.logger.info(f"Creating images directory: {images_dir}")
+                os.makedirs(images_dir, exist_ok=True)
+                self.logger.info("Images directory created successfully")
+            else:
+                self.logger.info(f"Images directory already exists (symlink or dir): {images_dir}")
             
             processed_cars = []
             completed = 0
@@ -1102,6 +1149,7 @@ class IncrementalScraper:
                         
                         if completed % 20 == 0 or completed == len(new_listings):
                             self.logger.info(f"Progress: {completed}/{len(new_listings)} ({len(processed_cars)} valid)")
+                            self.update_scraping_status("phase2", cars_processed=completed, total_cars=len(new_listings))
                     except TimeoutError:
                         self.logger.error(f"Timeout processing {listing.get('uri', 'unknown')}")
                         self.stats.increment('error_count')
@@ -1118,11 +1166,16 @@ class IncrementalScraper:
         
         # Phase 3: Insert to database
         self.logger.info(f"\n--- Phase 3: Inserting {len(processed_cars)} cars ---")
+        self.update_scraping_status("phase3", cars_processed=0, total_cars=len(processed_cars))
         
         inserted = 0
-        for car_data in processed_cars:
+        for i, car_data in enumerate(processed_cars, 1):
             if self.insert_car_to_db(car_data):
                 inserted += 1
+            
+            # Update status every 50 cars
+            if i % 50 == 0 or i == len(processed_cars):
+                self.update_scraping_status("phase3", cars_processed=i, total_cars=len(processed_cars))
         
         self.stats.new_count = inserted
         

@@ -12,11 +12,16 @@ DB_CONFIG = {
     'dbname': os.getenv('DB_NAME', 'car_prediction'),
     'user': os.getenv('DB_USER', 'bpr_user'),
     'password': os.getenv('DB_PASS', os.getenv('POSTGRES_PASSWORD', 'postgres')),
-    'host': os.getenv('DB_HOST', 'localhost'),
+    'host': os.getenv('DB_HOST', 'db'),  # 'db' for Docker, 'localhost' for local
     'port': os.getenv('DB_PORT', '5432')
 }
 
-IMAGES_DIR = os.path.join(os.path.dirname(__file__), 'bilbasen_scrape', 'images')
+# Navigate from app/data_utils/ to data/bilbasen_scrape/images
+IMAGES_DIR = os.path.join(os.path.dirname(__file__), '../../data/bilbasen_scrape/images')
+
+# If running in Docker container, use absolute path
+if os.path.exists('/app/data/bilbasen_scrape/images'):
+    IMAGES_DIR = '/app/data/bilbasen_scrape/images'
 
 def main():
     print(f"Connecting to database at {DB_CONFIG['host']}:{DB_CONFIG['port']}...")

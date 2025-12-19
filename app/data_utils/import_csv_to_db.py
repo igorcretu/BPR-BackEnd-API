@@ -188,7 +188,7 @@ def import_csv_to_db(csv_path):
     
     # Database connection
     db_config = {
-        'host': os.getenv('POSTGRES_HOST', 'localhost'),
+        'host': os.getenv('POSTGRES_HOST', 'db'),  # 'db' for Docker
         'port': os.getenv('POSTGRES_PORT', '5432'),
         'database': os.getenv('POSTGRES_DB', 'car_prediction'),
         'user': os.getenv('POSTGRES_USER', 'bpr_user'),
