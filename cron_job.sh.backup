@@ -1,0 +1,197 @@
+#!/bin/bash
+
+# Bachelor Project - Nightly Update Script
+# Runs scraping followed by model training at 2 AM daily
+
+# Configuration
+PROJECT_DIR="/home/igor/BachelorApi"
+SCRAPER_DIR="/home/igor/BachelorApi/BPR-BackEnd-ML-Model"
+API_DIR="/home/igor/BachelorApi/BPR-BackEnd-API"
+LOG_DIR="$PROJECT_DIR/BPR-BackEnd-API/logs"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+LOG_FILE="$LOG_DIR/nightly_update_$TIMESTAMP.log"
+SECONDS=0
+
+# Create logs directory if it doesn't exist
+mkdir -p "$LOG_DIR"
+
+# Start logging
+echo "========================================" | tee -a "$LOG_FILE"
+echo "🌙 Nightly Update Started: $(date)" | tee -a "$LOG_FILE"
+echo "========================================" | tee -a "$LOG_FILE"
+
+# Function to log with timestamp
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Function to handle errors
+handle_error() {
+    log "❌ ERROR: $1"
+    log "⚠️  Nightly update failed. Check logs: $LOG_FILE"
+    exit 1
+}
+
+# ============================================================================
+# STEP 1: WEB SCRAPING
+# ============================================================================
+
+log "📊 Step 1: Starting web scraping..."
+cd "$SCRAPER_DIR" || handle_error "Cannot access scraper directory: $SCRAPER_DIR"
+
+# Check if scraper is already running
+if pgrep -f "bilbasen_incremental.py" > /dev/null; then
+    log "⚠️  Scraper is already running. Skipping scraping step."
+else
+    # Run the scraper
+    log "Running incremental scraper..."
+    python3 bilbasen_incremental.py 2>&1 | tee -a "$LOG_FILE"
+    SCRAPER_EXIT_CODE=${PIPESTATUS[0]}
+
+    if [ $SCRAPER_EXIT_CODE -ne 0 ]; then
+        handle_error "Scraper failed with exit code $SCRAPER_EXIT_CODE"
+    fi
+
+    log "✅ Scraping completed successfully"
+
+    # Get scraping statistics
+    NEW_LISTINGS=$(grep -oP "(\d+) new (listings|cars)" "$LOG_FILE" | tail -1 || echo "0 new listings")
+    log "📈 Scraping results: $NEW_LISTINGS"
+fi
+
+# ============================================================================
+# STEP 2: MODEL TRAINING
+# ============================================================================
+
+log "🤖 Step 2: Starting model training..."
+cd "$SCRAPER_DIR" || handle_error "Cannot access scraper directory: $SCRAPER_DIR"
+
+# Check if training is already running
+if pgrep -f "train_models.py" > /dev/null; then
+    log "⚠️  Training is already running. Skipping training step."
+else
+    # Trigger training via API endpoint
+    log "Triggering model training via API..."
+    TRAINING_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST http://localhost:5000/api/trigger-training)
+    HTTP_STATUS=$(echo "$TRAINING_RESPONSE" | grep -oP 'HTTP_STATUS:\K\d+')
+    
+    if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "202" ]; then
+        log "✅ Training triggered successfully (HTTP $HTTP_STATUS)"
+        log "Response: $(echo "$TRAINING_RESPONSE" | sed '/HTTP_STATUS/d')"
+        
+        # Wait for training to complete (check every 30 seconds, max 2 hours)
+        TRAINING_TIMEOUT=240  # 2 hours in 30-second intervals
+        TRAINING_COUNTER=0
+        
+        while [ $TRAINING_COUNTER -lt $TRAINING_TIMEOUT ]; do
+            sleep 30
+            if ! pgrep -f "train_models.py" > /dev/null; then
+                log "✅ Model training completed"
+                break
+            fi
+            TRAINING_COUNTER=$((TRAINING_COUNTER + 1))
+            if [ $((TRAINING_COUNTER % 10)) -eq 0 ]; then
+                log "Training still in progress... ($((TRAINING_COUNTER / 2)) minutes elapsed)"
+            fi
+        done
+        
+        if [ $TRAINING_COUNTER -ge $TRAINING_TIMEOUT ]; then
+            log "⚠️  Training timeout reached (2 hours). Training may still be running."
+        fi
+    else
+        log "⚠️  Failed to trigger training (HTTP $HTTP_STATUS)"
+        log "Response: $(echo "$TRAINING_RESPONSE" | sed '/HTTP_STATUS/d')"
+    fi
+fi
+
+# ============================================================================
+# STEP 3: RESTART API (to reload new models)
+# ============================================================================
+
+log "🔄 Step 3: Restarting Flask API to reload models..."
+cd "$API_DIR" || handle_error "Cannot access API directory: $API_DIR"
+
+# Restart the Docker container
+log "Restarting bpr-flask container..."
+docker restart bpr-flask 2>&1 | tee -a "$LOG_FILE"
+
+# Wait for container to be healthy
+log "Waiting for API to become healthy..."
+HEALTH_TIMEOUT=60
+HEALTH_COUNTER=0
+
+while [ $HEALTH_COUNTER -lt $HEALTH_TIMEOUT ]; do
+    sleep 2
+    CONTAINER_STATUS=$(docker inspect --format='{{.State.Health.Status}}' bpr-flask 2>/dev/null || echo "unknown")
+    
+    if [ "$CONTAINER_STATUS" = "healthy" ]; then
+        log "✅ API is healthy and ready"
+        break
+    fi
+    
+    HEALTH_COUNTER=$((HEALTH_COUNTER + 1))
+    
+    if [ $((HEALTH_COUNTER % 15)) -eq 0 ]; then
+        log "Waiting for health check... ($HEALTH_COUNTER seconds elapsed, status: $CONTAINER_STATUS)"
+    fi
+done
+
+if [ $HEALTH_COUNTER -ge $HEALTH_TIMEOUT ]; then
+    log "⚠️  Health check timeout. API may not be ready."
+else
+    # Verify API is actually responding
+    API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5000/health)
+    if [ "$API_RESPONSE" = "200" ]; then
+        log "✅ API health endpoint responding (HTTP 200)"
+    else
+        log "⚠️  API health check returned HTTP $API_RESPONSE"
+    fi
+fi
+# Option A: If using systemd
+# sudo systemctl restart bpr-api.service
+
+# Option B: If using Docker
+# cd "$PROJECT_DIR" && docker-compose restart backend
+
+# Option C: If using PM2 or similar
+# pm2 restart bpr-api
+
+# Option D: Simple restart (adjust to your setup)
+if pgrep -f "flask run" > /dev/null; then
+    log "Stopping existing Flask process..."
+    pkill -f "flask run"
+    sleep 2
+fi
+
+# Uncomment and adjust based on your deployment method
+# log "Starting Flask API..."
+# cd "$PROJECT_DIR" && nohup python3 app.py >> "$LOG_DIR/flask.log" 2>&1 &
+
+loGet final model status
+log "📊 Checking final model status..."
+MODEL_STATUS=$(curl -s http://localhost:5000/api/ml/health 2>/dev/null | grep -oP '"active_models":\K\d+' || echo "unknown")
+
+# Final summary
+log "========================================="
+log "🎉 Nightly Update Completed Successfully!"
+log "📊 Active ML models: $MODEL_STATU
+# ============================================================================
+
+log "🧹 Step 4: Cleanup old logs..."
+
+# Keep only last 30 days of logs
+find "$LOG_DIR" -name "nightly_update_*.log" -mtime +30 -delete
+log "Old logs cleaned up (kept last 30 days)"
+
+# Calculate duration
+DURATION=$SECONDS
+log "⏱️  Total duration: $((DURATION / 60)) minutes and $((DURATION % 60)) seconds"
+
+# Final summary
+log "========================================="
+log "🎉 Nightly Update Completed Successfully!"
+log "📊 New listings: $NEW_LISTINGS"
+log "📁 Full log: $LOG_FILE"
+log "========================================="
+
+exit 0

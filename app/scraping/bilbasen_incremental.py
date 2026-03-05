@@ -49,7 +49,7 @@ CONFIG = {
     'COOKIE_FILE': 'bilbasen_cookies.json',
     
     'LOG_DIR': 'logs',
-    'IMAGES_DIR': '/app/data/bilbasen_scrape/images',  # Use mounted data directory
+    'IMAGES_DIR': os.getenv('IMAGES_DIR', '/home/igor/BachelorApi/BPR-BackEnd-ML-Model/bilbasen_scrape/images'),  # Default to local path, Docker overrides via env
 }
 
 # Danish to English translation map (from full scraper)
@@ -496,7 +496,29 @@ class IncrementalScraper:
             log_to_update = cur.fetchone()
             
             if not log_to_update:
-                self.logger.warning("⚠️  No ScrapingLog entry found to update (no incomplete success=TRUE logs)")
+                # No existing log found - create a new one
+                self.logger.info("📝 No incomplete log found, creating new ScrapingLog entry")
+                cur.execute("""
+                    INSERT INTO scraping_logs (
+                        source_name, started_at, completed_at, 
+                        cars_scraped, cars_new, cars_updated, 
+                        images_downloaded, success
+                    ) VALUES (
+                        'bilbasen', NOW(), NOW(),
+                        %s, %s, %s, %s, TRUE
+                    )
+                    RETURNING id, cars_scraped, cars_new, images_downloaded
+                """, (cars_scraped, cars_new, cars_updated, images_downloaded))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                if result:
+                    self.logger.info(f"✅ Created new ScrapingLog ID: {result[0]}")
+                    self.logger.info(f"   Stats: {result[1]} scraped, {result[2]} new, {result[3]} images")
+                else:
+                    self.logger.error("❌ Insert returned no result")
+                    
                 cur.close()
                 conn.close()
                 self.logger.info("=" * 60)

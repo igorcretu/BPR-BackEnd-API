@@ -12,7 +12,7 @@ DB_CONFIG = {
     'dbname': os.getenv('DB_NAME', 'car_prediction'),
     'user': os.getenv('DB_USER', 'bpr_user'),
     'password': os.getenv('DB_PASS', os.getenv('POSTGRES_PASSWORD', 'postgres')),
-    'host': os.getenv('DB_HOST', 'db'),  # 'db' for Docker, 'localhost' for local
+    'host': os.getenv('DB_HOST', 'localhost'),  # 'db' for Docker, 'localhost' for local
     'port': os.getenv('DB_PORT', '5432')
 }
 
