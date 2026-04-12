@@ -27,7 +27,7 @@ xgboost==2.0.3
 lightgbm==4.1.0
 
 # Web Scraping (if needed)
-requests==2.31.0
+requests==2.33.0
 beautifulsoup4==4.12.2
 playwright==1.40.0
 
