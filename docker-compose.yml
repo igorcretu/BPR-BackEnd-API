@@ -38,7 +38,7 @@ services:
       FLASK_ENV: ${FLASK_ENV:-development}
       DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD:-bpr_password}@db:5432/${POSTGRES_DB:-car_prediction}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
-      PREDICTION_QUEUE_MODE: ${PREDICTION_QUEUE_MODE:-hybrid}
+      PREDICTION_QUEUE_MODE: ${PREDICTION_QUEUE_MODE:-sync}
       PREDICTION_QUEUE_THRESHOLD: ${PREDICTION_QUEUE_THRESHOLD:-5}
       PREDICTION_QUEUE_PRIORITY_DEFAULT: ${PREDICTION_QUEUE_PRIORITY_DEFAULT:-100}
     ports:
@@ -60,37 +60,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-
-  prediction-worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: bpr-prediction-worker
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      FLASK_APP: app.main
-      FLASK_ENV: ${FLASK_ENV:-development}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-bpr_user}:${POSTGRES_PASSWORD:-bpr_password}@db:5432/${POSTGRES_DB:-car_prediction}
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
-      PREDICTION_QUEUE_MODE: ${PREDICTION_QUEUE_MODE:-hybrid}
-      PREDICTION_QUEUE_THRESHOLD: ${PREDICTION_QUEUE_THRESHOLD:-5}
-      PREDICTION_QUEUE_PRIORITY_DEFAULT: ${PREDICTION_QUEUE_PRIORITY_DEFAULT:-100}
-      PREDICTION_QUEUE_POLL_INTERVAL: ${PREDICTION_QUEUE_POLL_INTERVAL:-1.5}
-      PREDICTION_QUEUE_MAX_ATTEMPTS: ${PREDICTION_QUEUE_MAX_ATTEMPTS:-3}
-    command: ["python", "-m", "app.worker"]
-    networks:
-      - bpr-network
-    volumes:
-      # For development: mount source code
-      - ./app:/app/app
-      - ./logs:/app/logs
-      # Mount data directory (includes scraping data and images)
-      - ./data:/app/data
-      # Mount trained models directory
-      - ./models:/app/models
 
 volumes:
   postgres_data:

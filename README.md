@@ -39,7 +39,7 @@ A powerful Flask-based REST API providing car listings, advanced filtering, and 
 ### DevOps & Deployment
 - **Docker Support**: Containerized deployment with multi-stage builds
 - **Docker Compose**: Production and development configurations
-- **Cloudflare Tunnels**: Secure public HTTPS access (https://test.bachelorproject26.site)
+- **Cloudflare Tunnels**: Secure public HTTPS access (https://test.crig.dev)
 - **GitHub Actions**: CI/CD pipeline for automated deployment to Raspberry Pi
 - **Health Checks**: API health monitoring at `/api/health` endpoint
 - **Comprehensive Logging**: Rotating file logs with request ID tracking

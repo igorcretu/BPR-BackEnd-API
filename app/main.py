@@ -109,8 +109,8 @@ def parse_allowed_origins():
 
     return [
         "https://bpr-g26.netlify.app",
-        "https://test.bachelorproject26.site",
-        "https://bachelorproject26.site",
+        "https://test.crig.dev",
+        "https://crig.dev",
         "http://localhost:5173",
         "http://127.0.0.1:5173", 
         # Added explicit scheme for new frontend deployment

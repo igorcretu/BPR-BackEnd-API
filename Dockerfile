@@ -86,7 +86,7 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=40s --retries=3 \
 # - error-log: - (log to stderr for Docker)
 CMD ["gunicorn", \
      "--bind", "0.0.0.0:5000", \
-     "--workers", "8", \
+     "--workers", "2", \
      "--threads", "2", \
      "--timeout", "120", \
      "--worker-class", "sync", \

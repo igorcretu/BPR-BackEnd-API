@@ -115,8 +115,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
               -i ~/.ssh/pi_deploy \
-              -o ProxyCommand="cloudflared access tcp --hostname ssh.bachelorproject26.site" \
-              ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
+              -o ProxyCommand="cloudflared access tcp --hostname ssh.crig.dev" \
+              ${{ secrets.PI_USERNAME }}@ssh.crig.dev << 'EOF'
             cd ~/BachelorApi/BPR-BackEnd-API
             
             # Pull latest API code
@@ -158,8 +158,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
               -i ~/.ssh/pi_deploy \
-              -o ProxyCommand="cloudflared access ssh --hostname ssh.bachelorproject26.site" \
-              ${{ secrets.PI_USERNAME }}@ssh.bachelorproject26.site << 'EOF'
+              -o ProxyCommand="cloudflared access ssh --hostname ssh.crig.dev" \
+              ${{ secrets.PI_USERNAME }}@ssh.crig.dev << 'EOF'
             # Wait for Gunicorn to fully start
             echo "Waiting for backend to start..."
             sleep 30
@@ -185,7 +185,7 @@ jobs:
             # Public API check with retries
             attempt=0
             while [ $attempt -lt $max_attempts ]; do
-              if curl -f https://test.bachelorproject26.site/health; then
+              if curl -f https://test.crig.dev/health; then
                 echo "✅ Public API health check passed!"
                 break
               fi
@@ -206,7 +206,7 @@ jobs:
         run: |
           if [ "${{ job.status }}" = "success" ]; then
             echo "✅ Deployment successful!"
-            echo "API available at: https://test.bachelorproject26.site"
+            echo "API available at: https://test.crig.dev"
           else
             echo "❌ Deployment failed!"
           fi
