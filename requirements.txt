@@ -24,7 +24,7 @@ catboost==1.2.2
 # XGBoost for training script
 xgboost==2.0.3
 # LightGBM for gradient boosting models
-lightgbm==4.1.0
+lightgbm==4.6.0
 
 # Web Scraping (if needed)
 requests==2.31.0
